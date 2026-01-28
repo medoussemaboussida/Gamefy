@@ -5,9 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class OfferService {
 
-    private final OfferRepository repository;
+    private OfferRepository repository;
 
 }

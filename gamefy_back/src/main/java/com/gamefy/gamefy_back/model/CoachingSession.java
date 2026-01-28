@@ -45,7 +45,7 @@ public class CoachingSession {
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
                 ", status=" + status +
-                ", coach=" + (coach != null ? coach.getId() : null) +
+                ", coach=" + coach +
                 '}';
     }
 }

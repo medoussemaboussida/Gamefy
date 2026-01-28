@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/offers")
-@RequiredArgsConstructor
 public class OfferController {
 
-    private final OfferService service;
+    private OfferService service;
 
 }

@@ -36,8 +36,8 @@ public class PcAvailability {
     public String toString() {
         return "PcAvailability{" +
                 "id=" + id +
-                ", pc=" + (pc != null ? pc.getId() : null) +
-                ", reservation=" + (reservation != null ? reservation.getId() : null) +
+                ", pc=" + pc +
+                ", reservation=" + reservation +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
                 '}';

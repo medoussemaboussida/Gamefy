@@ -38,11 +38,11 @@ public class Payment {
     public String toString() {
         return "Payment{" +
                 "id=" + id +
-                ", reservation=" + (reservation != null ? reservation.getId() : null) +
+                ", reservation=" + reservation +
                 ", coachCut=" + coachCut +
                 ", totalPrice=" + totalPrice +
-                ", packGamefy=" + (packGamefy != null ? packGamefy.getId() : null) +
-                ", packCoaching=" + (packCoaching != null ? packCoaching.getId() : null) +
+                ", packGamefy=" + packGamefy +
+                ", packCoaching=" + packCoaching +
                 '}';
     }
 }

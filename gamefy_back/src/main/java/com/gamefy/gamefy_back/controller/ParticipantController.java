@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/participants")
-@RequiredArgsConstructor
 public class ParticipantController {
 
-    private final ParticipantService service;
+    private ParticipantService service;
 
 }

@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService service;
+    private AuthService service;
 
 }

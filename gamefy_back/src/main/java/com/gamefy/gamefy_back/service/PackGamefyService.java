@@ -5,9 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class PackGamefyService {
 
-    private final PackGamefyRepository repository;
+    private PackGamefyRepository repository;
 
 }

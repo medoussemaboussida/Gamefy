@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/pc-availabilities")
-@RequiredArgsConstructor
 public class PcAvailabilityController {
 
-    private final PcAvailabilityService service;
+    private PcAvailabilityService service;
 
 }

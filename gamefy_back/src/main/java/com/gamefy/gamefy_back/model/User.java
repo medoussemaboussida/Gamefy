@@ -77,8 +77,6 @@ public class User {
                 ", email='" + email + '\'' +
                 ", role=" + role +
                 ", profilePhoto='" + profilePhoto + '\'' +
-                ", packCoaching=" + (packCoaching != null ? packCoaching.getId() : null) +
-                ", packGamefy=" + (packGamefy != null ? packGamefy.getId() : null) +
                 ", resetPwdToken='" + resetPwdToken + '\'' +
                 ", twoFaToken='" + twoFaToken + '\'' +
                 '}';

@@ -5,9 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class PcAvailabilityService {
 
-    private final PcAvailabilityRepository repository;
+    private PcAvailabilityRepository repository;
 
 }

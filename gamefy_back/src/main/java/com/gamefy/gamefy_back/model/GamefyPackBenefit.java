@@ -34,7 +34,7 @@ public class GamefyPackBenefit {
     public String toString() {
         return "GamefyPackBenefit{" +
                 "id=" + id +
-                ", packGamefy=" + (packGamefy != null ? packGamefy.getId() : null) +
+                ", packGamefy=" + packGamefy +
                 ", benefitType=" + benefitType +
                 ", rateRule=" + rateRule +
                 '}';

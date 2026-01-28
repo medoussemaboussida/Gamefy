@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/work-days-schedules")
-@RequiredArgsConstructor
 public class WorkDaysScheduleController {
 
-    private final WorkDaysScheduleService service;
+    private WorkDaysScheduleService service;
 
 }

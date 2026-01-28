@@ -38,8 +38,8 @@ public class CoachingSlot {
                 "id=" + id +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
-                ", coachingSession=" + (coachingSession != null ? coachingSession.getId() : null) +
-                ", reservation=" + (reservation != null ? reservation.getId() : null) +
+                ", coachingSession=" + coachingSession +
+                ", reservation=" + reservation +
                 '}';
     }
 }

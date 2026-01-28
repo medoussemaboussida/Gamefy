@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/pack-coachings")
-@RequiredArgsConstructor
 public class PackCoachingController {
 
-    private final PackCoachingService service;
+    private PackCoachingService service;
 
 }

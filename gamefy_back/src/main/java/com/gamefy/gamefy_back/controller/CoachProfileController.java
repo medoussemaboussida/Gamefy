@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/coach-profiles")
-@RequiredArgsConstructor
 public class CoachProfileController {
 
-    private final CoachProfileService service;
+    private CoachProfileService service;
 
 }

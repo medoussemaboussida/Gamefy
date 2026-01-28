@@ -5,9 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class CoachingSessionService {
 
-    private final CoachingSessionRepository repository;
+    private CoachingSessionRepository repository;
 
 }

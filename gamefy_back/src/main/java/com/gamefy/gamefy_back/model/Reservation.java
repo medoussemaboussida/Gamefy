@@ -75,8 +75,8 @@ public class Reservation {
     public String toString() {
         return "Reservation{" +
                 "id=" + id +
-                ", coach=" + (coach != null ? coach.getId() : null) +
-                ", player=" + (player != null ? player.getId() : null) +
+                ", coach=" + coach +
+                ", player=" + player +
                 ", coachLocation='" + coachLocation + '\'' +
                 ", playerLocation='" + playerLocation + '\'' +
                 ", startTime=" + startTime +
@@ -85,7 +85,10 @@ public class Reservation {
                 ", reservationType=" + reservationType +
                 ", status=" + status +
                 ", priceTime=" + priceTime +
-                ", offer=" + (offer != null ? offer.getId() : null) +
+                ", offer=" + offer +
+                ", payment=" + payment +
+                ", pcAvailabilities=" + pcAvailabilities +
+                ", coachingSlots=" + coachingSlots +
                 '}';
     }
 }

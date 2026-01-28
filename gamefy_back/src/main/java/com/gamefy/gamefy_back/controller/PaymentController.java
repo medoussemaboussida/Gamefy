@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/payments")
-@RequiredArgsConstructor
 public class PaymentController {
 
-    private final PaymentService service;
+    private PaymentService service;
 
 }

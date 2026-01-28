@@ -29,10 +29,10 @@ public class CoachProfile {
     @Override
     public String toString() {
         return "CoachProfile{" +
-                "id=" + id +
-                ", coach=" + (coach != null ? coach.getId() : null) +
-                ", game='" + game + '\'' +
+                "coach=" + coach +
+                ", id=" + id +
                 ", hourlyPrice=" + hourlyPrice +
+                ", game='" + game + '\'' +
                 '}';
     }
 }

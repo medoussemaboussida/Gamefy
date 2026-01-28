@@ -34,8 +34,8 @@ public class Participant {
     public String toString() {
         return "Participant{" +
                 "id=" + id +
-                ", user=" + (user != null ? user.getId() : null) +
-                ", event=" + (event != null ? event.getId() : null) +
+                ", user=" + user +
+                ", event=" + event +
                 ", participantStatus=" + participantStatus +
                 '}';
     }

@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/reservations")
-@RequiredArgsConstructor
 public class ReservationController {
 
-    private final ReservationService service;
+    private ReservationService service;
 
 }

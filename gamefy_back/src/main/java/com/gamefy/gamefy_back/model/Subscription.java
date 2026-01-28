@@ -27,7 +27,7 @@ public class Subscription {
     public String toString() {
         return "Subscription{" +
                 "id=" + id +
-                ", player=" + (player != null ? player.getId() : null) +
+                ", player=" + player +
                 ", totalHours=" + totalHours +
                 '}';
     }

@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/fixed-prices")
-@RequiredArgsConstructor
 public class FixedPriceController {
 
-    private final FixedPriceService service;
+    private FixedPriceService service;
 
 }

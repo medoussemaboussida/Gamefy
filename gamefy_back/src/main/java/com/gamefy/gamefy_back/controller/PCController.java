@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gamefy/pcs")
-@RequiredArgsConstructor
 public class PCController {
 
-    private final PCService service;
+    private PCService service;
 
 }
