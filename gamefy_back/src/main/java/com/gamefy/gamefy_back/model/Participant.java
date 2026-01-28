@@ -13,16 +13,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Participant {
 
-    @EmbeddedId
-    private ParticipantId id = new ParticipantId();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @MapsId("userId")
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @MapsId("eventId")
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
@@ -34,10 +29,8 @@ public class Participant {
     public String toString() {
         return "Participant{" +
                 "id=" + id +
-                ", user=" + user +
                 ", event=" + event +
                 ", participantStatus=" + participantStatus +
                 '}';
     }
 }
-
