@@ -63,4 +63,23 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password reset successful"));
     }
 
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> googleLogin(
+            @RequestBody GoogleLoginDto request,
+            HttpServletResponse response) {
+        
+        Map<String, String> tokens = service.loginWithGoogle(request.getIdToken());
+        
+        // Create HttpOnly cookie for refresh token
+        Cookie refreshTokenCookie = new Cookie("refreshToken", tokens.get("refreshToken"));
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(false); // Set to true in production
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+        response.addCookie(refreshTokenCookie);
+        
+        LoginResponse loginResponse = new LoginResponse("Google Login Successful", tokens.get("accessToken"));
+        return ResponseEntity.ok(loginResponse);
+    }
+
 }

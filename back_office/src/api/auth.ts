@@ -26,4 +26,11 @@ export const authApi = {
             body: JSON.stringify({ token, newPassword }),
         });
     },
+
+    googleLogin: async (idToken: string): Promise<LoginResponse> => {
+        return apiClient("/gamefy/auth/google", {
+            method: "POST",
+            body: JSON.stringify({ idToken }),
+        });
+    },
 };
