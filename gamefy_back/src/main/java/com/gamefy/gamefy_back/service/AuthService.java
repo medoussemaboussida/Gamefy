@@ -123,6 +123,21 @@ public class AuthService {
         userRepository.save(user);
     }
 
+    public Map<String, String> refreshToken(String refreshToken) {
+        if (jwtService.validateToken(refreshToken) && jwtService.isRefreshToken(refreshToken)) {
+            String email = jwtService.extractEmail(refreshToken);
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            String newAccessToken = jwtService.generateAccessToken(user);
+            
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("accessToken", newAccessToken);
+            return tokens;
+        }
+        throw new RuntimeException("Invalid or expired refresh token");
+    }
+
     /**
      * Get user by email
      */

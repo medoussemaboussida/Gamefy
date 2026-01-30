@@ -21,4 +21,8 @@ export const authApi = {
     googleLogin: async (idToken: string): Promise<LoginResponse> => {
         return apiClient.post("/gamefy/auth/google", { idToken });
     },
+
+    refreshToken: async (): Promise<LoginResponse> => {
+        return apiClient.post("/gamefy/auth/refresh");
+    },
 };
