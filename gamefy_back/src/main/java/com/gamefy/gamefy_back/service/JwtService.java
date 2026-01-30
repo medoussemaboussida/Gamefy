@@ -73,4 +73,18 @@ public class JwtService {
             return false;
         }
     }
+
+    public boolean isRefreshToken(String token) {
+        try {
+            String tokenType = (String) Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .get("tokenType");
+            return "refresh".equals(tokenType);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
