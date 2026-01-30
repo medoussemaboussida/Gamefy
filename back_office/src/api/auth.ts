@@ -25,4 +25,8 @@ export const authApi = {
     refreshToken: async (): Promise<LoginResponse> => {
         return apiClient.post("/gamefy/auth/refresh");
     },
+
+    logout: async (): Promise<{ message: string }> => {
+        return apiClient.post("/gamefy/auth/logout");
+    },
 };

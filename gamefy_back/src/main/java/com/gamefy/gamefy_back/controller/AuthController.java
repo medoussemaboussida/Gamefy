@@ -99,4 +99,15 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(0); // Delete the cookie
+        response.addCookie(cookie);
+        
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+    }
+
 }
