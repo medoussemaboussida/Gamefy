@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply antialiased overflow-x-hidden m-0 p-0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #030014;
+    color: white;
+    min-height: 100vh;
+  }
+}
+
+/* Suppress native browser reveal/clear buttons to avoid duplicate "eyes" */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #030014;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-cyan-500/50 transition-colors;
+}
