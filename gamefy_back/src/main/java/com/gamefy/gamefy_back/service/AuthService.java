@@ -7,6 +7,9 @@ import com.gamefy.gamefy_back.model.enums.UserStatus;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
@@ -63,37 +66,57 @@ public class AuthService {
         return generateAuthResponse(user);
     }
 
-    public Map<String, String> loginWithGoogle(String idTokenString) {
+    public Map<String, String> loginWithGoogle(String token) {
         try {
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                    .setAudience(Collections.singletonList(googleClientId))
-                    .build();
+            String email;
+            String firstName;
+            String lastName;
 
-            GoogleIdToken idToken = verifier.verify(idTokenString);
-            if (idToken != null) {
-                GoogleIdToken.Payload payload = idToken.getPayload();
+            if (token != null && token.split("\\.").length == 3) {
+                // ID Token Flow
+                GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                        .setAudience(Collections.singletonList(googleClientId))
+                        .build();
 
-                String email = payload.getEmail();
-                String firstName = (String) payload.get("given_name");
-                String lastName = (String) payload.get("family_name");
-
-                User user = userRepository.findByEmail(email).orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setEmail(email);
-                    newUser.setFirstName(firstName != null ? firstName : "Google");
-                    newUser.setLastName(lastName != null ? lastName : "User");
-                    newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // Random password for OAuth users
-                    newUser.setRole(Roles.ADMIN); // Default role for social login
-                    newUser.setStatus(UserStatus.ACTIVE);
-                    return userRepository.save(newUser);
-                });
-
-                return generateAuthResponse(user);
+                GoogleIdToken idToken = verifier.verify(token);
+                if (idToken != null) {
+                    GoogleIdToken.Payload payload = idToken.getPayload();
+                    email = payload.getEmail();
+                    firstName = (String) payload.get("given_name");
+                    lastName = (String) payload.get("family_name");
+                } else {
+                    throw new BadCredentialsException("Invalid Google ID token");
+                }
             } else {
-                throw new BadCredentialsException("Invalid Google ID token");
+                // Access Token Flow (for custom buttons)
+                HttpRequest request = new NetHttpTransport().createRequestFactory()
+                        .buildGetRequest(new GenericUrl("https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + token));
+                HttpResponse response = request.execute();
+                Map<String, Object> payload = new GsonFactory().createJsonParser(response.getContent()).parseAndClose(Map.class);
+                
+                email = (String) payload.get("email");
+                firstName = (String) payload.get("given_name");
+                lastName = (String) payload.get("family_name");
             }
+
+            if (email == null) {
+                throw new BadCredentialsException("Could not retrieve email from Google");
+            }
+
+            User user = userRepository.findByEmail(email).orElseGet(() -> {
+                User newUser = new User();
+                newUser.setEmail(email);
+                newUser.setFirstName(firstName != null ? firstName : "Google");
+                newUser.setLastName(lastName != null ? lastName : "User");
+                newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+                newUser.setRole(Roles.PLAYER); // Default to PLAYER for front-office users
+                newUser.setStatus(UserStatus.ACTIVE);
+                return userRepository.save(newUser);
+            });
+
+            return generateAuthResponse(user);
         } catch (Exception e) {
-            throw new BadCredentialsException("Could not verify Google ID token: " + e.getMessage());
+            throw new BadCredentialsException("Could not verify Google account: " + e.getMessage());
         }
     }
 
