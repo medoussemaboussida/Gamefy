@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.model;
 
 import com.gamefy.gamefy_back.model.enums.Roles;
+import com.gamefy.gamefy_back.model.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,6 +40,10 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Roles role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status;
 
     @Column(name = "profile_photo")
     private String profilePhoto;
@@ -99,7 +104,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return status == UserStatus.ACTIVE;
     }
 
     @Override
@@ -110,6 +115,7 @@ public class User implements UserDetails {
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", role=" + role +
+                ", status=" + status +
                 ", profilePhoto='" + profilePhoto + '\'' +
                 ", resetPwdToken='" + resetPwdToken + '\'' +
                 ", twoFaToken='" + twoFaToken + '\'' +

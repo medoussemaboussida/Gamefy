@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import logo from "../assets/images/auth_logo.png";
 import logoCollapsed from "../assets/images/logo_collapsed.png";
+import { authApi } from "../api/auth";
+import toast from "react-hot-toast";
 
 const Sidebar = () => {
   const [isHovered, setIsHovered] = useState(false);
@@ -41,6 +43,35 @@ const Sidebar = () => {
   const handleItemClick = (path) => {
     navigate(path);
     if (isMobile) setIsMobileOpen(false);
+  };
+
+  const handleLogout = async () => {
+    const loadingToast = toast.loading("Logging out...", {
+      style: {
+        background: '#24003E',
+        color: '#1CF3CA',
+        border: '1px solid rgba(28, 243, 202, 0.3)',
+      }
+    });
+    try {
+      await authApi.logout();
+      localStorage.removeItem("accessToken");
+      toast.success("Logged out successfully", {
+        id: loadingToast,
+        style: {
+          border: '1px solid #1CF3CA',
+          padding: '16px',
+          color: '#1CF3CA',
+          background: '#24003E',
+          boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+        },
+      });
+      navigate("/signin");
+    } catch (err) {
+      localStorage.removeItem("accessToken"); // Still clear token even on error
+      toast.error("Logged out", { id: loadingToast });
+      navigate("/signin");
+    }
   };
 
   const SidebarContent = (
@@ -82,11 +113,13 @@ const Sidebar = () => {
                 : "text-[#1CF3CA] hover:bg-[#1CF3CA] hover:text-black font-medium"
                 }`}
             >
-              <item.icon
-                size={20}
-                className={`flex-shrink-0 transition-colors ${isActive ? "text-[#FF89EB]" : "text-[#1CF3CA] group-hover:text-black"
-                  }`}
-              />
+              <div className="w-8 flex justify-center flex-shrink-0">
+                <item.icon
+                  size={20}
+                  className={`transition-colors ${isActive ? "text-[#FF89EB]" : "text-[#1CF3CA] group-hover:text-black"
+                    }`}
+                />
+              </div>
               <span
                 className={`font-['Inter'] font-medium text-[14px] whitespace-nowrap transition-all duration-300 ${!isMobile && !isHovered
                   ? "opacity-0 -translate-x-4 pointer-events-none w-0 overflow-hidden"
@@ -106,8 +139,8 @@ const Sidebar = () => {
           onClick={() => handleItemClick("/player/profile")}
           className={`w-full flex items-center p-3 rounded-full text-[#1CF3CA] hover:bg-[#1CF3CA] hover:text-black transition-all ${!isHovered && !isMobile ? "justify-center" : "justify-start px-6 gap-4"}`}
         >
-          <div className="w-8 h-8 rounded-full bg-[#1CF3CA]/10 flex items-center justify-center flex-shrink-0 border border-[#1CF3CA]/20 group">
-            <User size={18} className="text-[#1CF3CA] group-hover:text-black transition-colors" />
+          <div className="w-8 flex justify-center flex-shrink-0">
+            <User size={20} className="text-[#1CF3CA] group-hover:text-black transition-colors" />
           </div>
           <span
             className={`font-['Inter'] font-medium text-[14px] whitespace-nowrap transition-all duration-300 ${!isMobile && !isHovered
@@ -120,10 +153,12 @@ const Sidebar = () => {
         </button>
 
         <button
-          onClick={() => handleItemClick("/logout")}
+          onClick={handleLogout}
           className={`w-full flex items-center p-3 rounded-full text-[#1CF3CA] hover:bg-[#1CF3CA] hover:text-black transition-all ${!isHovered && !isMobile ? "justify-center" : "justify-start px-6 gap-4"}`}
         >
-          <LogOut size={20} className="flex-shrink-0 text-[#1CF3CA] group-hover:text-black transition-colors" />
+          <div className="w-8 flex justify-center flex-shrink-0">
+            <LogOut size={20} className="text-[#1CF3CA] group-hover:text-black transition-colors" />
+          </div>
           <span
             className={`font-['Inter'] font-medium text-[14px] whitespace-nowrap transition-all duration-300 ${!isMobile && !isHovered
               ? "opacity-0 w-0 overflow-hidden"

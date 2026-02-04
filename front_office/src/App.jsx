@@ -7,6 +7,7 @@ import SignUp from "./pages/auth/SignUp";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import PlayerDashboard from "./pages/player/PlayerDashboard";
+import CoachDashboard from "./pages/coach/CoachDashboard";
 import './App.css'
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/player/dashboard" element={<PlayerDashboard />} />
+        <Route path="/coach/dashboard" element={<CoachDashboard />} />
 
         {/* Add more routes as needed */}
       </Routes>
