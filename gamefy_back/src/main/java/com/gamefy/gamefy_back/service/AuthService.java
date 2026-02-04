@@ -3,6 +3,7 @@ package com.gamefy.gamefy_back.service;
 import com.gamefy.gamefy_back.emailManager.EmailService;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.enums.Roles;
+import com.gamefy.gamefy_back.model.enums.UserStatus;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -32,12 +33,16 @@ public class AuthService {
     private String googleClientId;
 
     public User signup(String firstName, String lastName, String email, String password) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
         User user = new User();
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password)); // Encrypt password
-        user.setRole(Roles.ADMIN);
+        user.setRole(Roles.PLAYER);
+        user.setStatus(UserStatus.ACTIVE);
         
         // Save and return the user
         return userRepository.save(user);
@@ -79,6 +84,7 @@ public class AuthService {
                     newUser.setLastName(lastName != null ? lastName : "User");
                     newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // Random password for OAuth users
                     newUser.setRole(Roles.ADMIN); // Default role for social login
+                    newUser.setStatus(UserStatus.ACTIVE);
                     return userRepository.save(newUser);
                 });
 
@@ -103,7 +109,7 @@ public class AuthService {
     }
 
     //generate a token and send it to email
-    public void forgotPassword(String email) {
+    public void forgotPassword(String email, String clientUrl) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
@@ -111,7 +117,11 @@ public class AuthService {
         user.setResetPwdToken(token);
         userRepository.save(user);
 
-        emailService.sendResetPasswordEmail(email, token);
+        if (clientUrl != null && clientUrl.contains("5174")) {
+            emailService.sendFrontOfficeResetEmail(email, token);
+        } else {
+            emailService.sendBackOfficeResetEmail(email, token);
+        }
     }
     //change new password
     public void resetPassword(String token, String newPassword) {
@@ -133,6 +143,7 @@ public class AuthService {
             
             Map<String, String> tokens = new HashMap<>();
             tokens.put("accessToken", newAccessToken);
+            tokens.put("userId", user.getId().toString());
             return tokens;
         }
         throw new RuntimeException("Invalid or expired refresh token");
@@ -143,6 +154,14 @@ public class AuthService {
      */
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    /**
+     * Get user by ID
+     */
+    public User getUserById(Integer id) {
+        return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 

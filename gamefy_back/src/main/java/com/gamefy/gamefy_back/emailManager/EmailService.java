@@ -11,8 +11,16 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    public void sendResetPasswordEmail(String to, String token) {
-        String resetLink = "http://localhost:5173/reset-password?token=" + token;
+    public void sendBackOfficeResetEmail(String to, String token) {
+        sendResetEmail(to, token, "http://localhost:5173");
+    }
+
+    public void sendFrontOfficeResetEmail(String to, String token) {
+        sendResetEmail(to, token, "http://localhost:5174");
+    }
+
+    private void sendResetEmail(String to, String token, String baseUrl) {
+        String resetLink = baseUrl + "/reset-password?token=" + token;
         
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);

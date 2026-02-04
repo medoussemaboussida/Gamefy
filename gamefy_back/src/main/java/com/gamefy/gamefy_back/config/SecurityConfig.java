@@ -47,7 +47,7 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173") // Default Vite port
+                        .allowedOrigins("http://localhost:5173", "http://localhost:5174") // Allow both back-office (5173) and front-office (5174)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

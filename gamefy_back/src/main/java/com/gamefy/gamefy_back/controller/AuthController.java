@@ -20,14 +20,23 @@ public class AuthController {
     private final AuthService service;
 
     @PostMapping("/signup")
-    public ResponseEntity<User> signup(@RequestBody SignupDto request) {
-        User user = service.signup(
-            request.getFirstName(),
-            request.getLastName(),
-            request.getEmail(),
-            request.getPassword()
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    public ResponseEntity<?> signup(@RequestBody SignupDto request) {
+        try {
+            User user = service.signup(
+                request.getFirstName(),
+                request.getLastName(),
+                request.getEmail(),
+                request.getPassword()
+            );
+            return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        } catch (RuntimeException e) {
+            if ("Email already exists".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Email already exists"));
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PostMapping("/login")
@@ -46,14 +55,15 @@ public class AuthController {
         refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
         response.addCookie(refreshTokenCookie);
         
-        // Return access token in response body with a success message
-        LoginResponse loginResponse = new LoginResponse("Login Successful", tokens.get("accessToken"));
+        // Return access token and role in response body with a success message
+        String role = service.getUserByEmail(request.getEmail()).getRole().name();
+        LoginResponse loginResponse = new LoginResponse("Login Successful", tokens.get("accessToken"), role);
         return ResponseEntity.ok(loginResponse);
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody ForgotPasswordDto request) {
-        service.forgotPassword(request.getEmail());
+        service.forgotPassword(request.getEmail(), request.getClientUrl());
         return ResponseEntity.ok(Map.of("message", "Reset link sent to your email"));
     }
 
@@ -78,7 +88,9 @@ public class AuthController {
         refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
         response.addCookie(refreshTokenCookie);
         
-        LoginResponse loginResponse = new LoginResponse("Google Login Successful", tokens.get("accessToken"));
+        // Fetch user and return response
+        User user = service.getUserById(Integer.parseInt(tokens.get("userId")));
+        LoginResponse loginResponse = new LoginResponse("Google Login Successful", tokens.get("accessToken"), user.getRole().name());
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -92,7 +104,8 @@ public class AuthController {
 
         try {
             Map<String, String> tokens = service.refreshToken(refreshToken);
-            LoginResponse loginResponse = new LoginResponse("Token Refreshed", tokens.get("accessToken"));
+            User user = service.getUserById(Integer.parseInt(tokens.get("userId")));
+            LoginResponse loginResponse = new LoginResponse("Token Refreshed", tokens.get("accessToken"), user.getRole().name());
             return ResponseEntity.ok(loginResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
