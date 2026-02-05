@@ -115,15 +115,11 @@ const ResetPassword = () => {
 
             {/* Content Container */}
             <div className="relative z-10 w-full max-w-[550px] px-6 py-12 flex flex-col items-center">
-                {/* Logo */}
-                <div className="mb-[69px]">
-                    <img src={logo} alt="Gamefy" className="h-12 md:h-20 w-auto" />
-                </div>
 
                 {/* Title & Description */}
                 <div className="text-center mb-[42px] space-y-4">
                     <h1 className="text-white text-[24px] font-bold font-['Inter']">
-                        Set A New Password
+                        Set a new password
                     </h1>
                     <p className="text-white/80 text-[14px] font-medium font-['Inter'] max-w-[420px] leading-tight">
                         Your previous password has been reset. Please set a new password for your account.

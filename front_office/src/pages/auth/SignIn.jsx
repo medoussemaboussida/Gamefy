@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Check, Loader2 } from "lucide-react";
+import { useGoogleLogin } from "@react-oauth/google";
 import logo from "../../assets/images/auth_logo.png";
 import wallpaper from "../../assets/images/Auth_second_wallpaper.png";
 import google_icon from "../../assets/icons/google.png";
@@ -105,6 +106,68 @@ const SignIn = () => {
     }
   };
 
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsLoading(true);
+      const loadingToast = toast.loading("Connecting with Google...", {
+        style: {
+          background: '#24003E',
+          color: '#1CF3CA',
+          border: '1px solid rgba(28, 243, 202, 0.3)',
+        }
+      });
+
+      try {
+        // Send access_token to backend
+        const response = await authApi.googleLogin(tokenResponse.access_token);
+        localStorage.setItem("accessToken", response.accessToken);
+
+        toast.success("Signed in with Google!", {
+          id: loadingToast,
+          style: {
+            border: '1px solid #1CF3CA',
+            padding: '16px',
+            color: '#1CF3CA',
+            background: '#24003E',
+            boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+          },
+        });
+
+        if (response.role === "PLAYER") {
+          navigate("/player/dashboard");
+        } else if (response.role === "COACH") {
+          navigate("/coach/dashboard");
+        } else {
+          navigate("/player/dashboard");
+        }
+      } catch (err) {
+        toast.error(err.message || "Google sign-in failed", {
+          id: loadingToast,
+          style: {
+            border: '1px solid #DE3D3D',
+            padding: '16px',
+            color: '#DE3D3D',
+            background: '#360200',
+            boxShadow: '0 0 15px rgba(222, 61, 61, 0.4)',
+          },
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: () => {
+      toast.error("Google login failed", {
+        style: {
+          border: '1px solid #DE3D3D',
+          padding: '16px',
+          color: '#DE3D3D',
+          background: '#360200',
+          boxShadow: '0 0 15px rgba(222, 61, 61, 0.4)',
+        },
+      });
+    }
+  });
+
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden font-sans">
       <div
@@ -204,6 +267,7 @@ const SignIn = () => {
           {/* Google Sign In */}
           <button
             type="button"
+            onClick={() => googleLogin()}
             className="w-full max-w-[412px] h-[47px] rounded-full bg-white flex items-center justify-center gap-3 text-gray-800 font-medium text-lg hover:bg-gray-100 transition-colors shadow-md active:scale-[0.98] font-['Inter']"
           >
             <img src={google_icon} alt="Google" className="w-[20px] h-[20px]" />

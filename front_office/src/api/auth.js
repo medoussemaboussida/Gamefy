@@ -16,4 +16,7 @@ export const authApi = {
     resetPassword: async (token, newPassword) => {
         return apiClient.post("/gamefy/auth/reset-password", { token, newPassword });
     },
+    googleLogin: async (idToken) => {
+        return apiClient.post("/gamefy/auth/google", { idToken });
+    },
 };

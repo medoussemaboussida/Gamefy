@@ -13,7 +13,6 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-    // Generate a secure random key for the current session
     private final SecretKey secretKey = Jwts.SIG.HS256.key().build();
 
     @Value("${jwt.access-token-expiration:900000}") // 15 minutes
