@@ -9,12 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/gamefy/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService service;
@@ -98,16 +100,20 @@ public class AuthController {
     public ResponseEntity<LoginResponse> refresh(
             @CookieValue(name = "refreshToken", required = false) String refreshToken) {
         
+        log.info("Refresh token request received");
         if (refreshToken == null) {
+            log.warn("Refresh token cookie missing");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         try {
             Map<String, String> tokens = service.refreshToken(refreshToken);
             User user = service.getUserById(Integer.parseInt(tokens.get("userId")));
+            log.info("Token successfully refreshed for user ID: {}", user.getId());
             LoginResponse loginResponse = new LoginResponse("Token Refreshed", tokens.get("accessToken"), user.getRole().name());
             return ResponseEntity.ok(loginResponse);
         } catch (Exception e) {
+            log.error("Token refresh failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
