@@ -1,0 +1,246 @@
+import { useEffect, useState } from "react";
+import PageBreadcrumb from "../components/common/PageBreadCrumb";
+import ComponentCard from "../components/common/ComponentCard";
+import PageMeta from "../components/common/PageMeta";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableRow,
+} from "../components/ui/table";
+import Badge from "../components/ui/badge/Badge";
+import { userApi } from "../api/user";
+import toast from "react-hot-toast";
+import Button from "../components/ui/button/Button";
+import { Dropdown } from "../components/ui/dropdown/Dropdown";
+import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
+import { ChevronDownIcon } from "../icons";
+
+interface User {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    status: string;
+}
+
+export default function UserManagement() {
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedRole, setSelectedRole] = useState<string>("ALL");
+    const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+
+    const [isRoleOpen, setIsRoleOpen] = useState(false);
+    const [isStatusOpen, setIsStatusOpen] = useState(false);
+
+    const roleOptions = [
+        { value: "ALL", label: "All Roles" },
+        { value: "PLAYER", label: "Player" },
+        { value: "COACH", label: "Coach" },
+        { value: "WEB_MASTER", label: "Web Master" },
+        { value: "ADMIN", label: "Admin" },
+    ];
+
+    const statusOptions = [
+        { value: "ALL", label: "All Statuses" },
+        { value: "ACTIVE", label: "Active" },
+        { value: "INACTIVE", label: "Inactive" },
+    ];
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const data = await userApi.getAllUsers() as any;
+                setUsers(data as User[]);
+            } catch (error: any) {
+                toast.error(error.message || "Failed to fetch users");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+    const filteredUsers = users.filter((user) => {
+        const roleMatch = selectedRole === "ALL" || user.role === selectedRole;
+        const statusMatch = selectedStatus === "ALL" || user.status === selectedStatus;
+        return roleMatch && statusMatch;
+    });
+
+    const getRoleLabel = (value: string) => roleOptions.find(opt => opt.value === value)?.label || value;
+    const getStatusLabel = (value: string) => statusOptions.find(opt => opt.value === value)?.label || value;
+
+    const getRoleBadgeColor = (role: string): any => {
+        switch (role) {
+            case "ADMIN":
+                return "error";
+            case "COACH":
+                return "warning";
+            case "WEB_MASTER":
+                return "info";
+            case "PLAYER":
+                return "primary";
+            default:
+                return "light";
+        }
+    };
+
+    return (
+        <>
+            <PageMeta
+                title="User Management | Gamefy Admin"
+                description="Manage your platform users"
+            />
+            <PageBreadcrumb pageTitle="User Management" />
+            <div className="space-y-6">
+                <ComponentCard title="Platform Users">
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                        {/* Role Filter Dropdown */}
+                        <div className="relative">
+                            <Button
+                                onClick={() => setIsRoleOpen(!isRoleOpen)}
+                                variant="primary"
+                                size="sm"
+                                className="w-40 dropdown-toggle"
+                                endIcon={
+                                    <ChevronDownIcon
+                                        className={`w-5 h-5 transition-transform duration-200 ${isRoleOpen ? "rotate-180" : ""
+                                            }`}
+                                    />
+                                }
+                            >
+                                {getRoleLabel(selectedRole)}
+                            </Button>
+                            <Dropdown
+                                isOpen={isRoleOpen}
+                                onClose={() => setIsRoleOpen(false)}
+                                className="w-40 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-900 dark:border-gray-800"
+                            >
+                                {roleOptions.map((option) => (
+                                    <DropdownItem
+                                        key={option.value}
+                                        onClick={() => {
+                                            setSelectedRole(option.value);
+                                            setIsRoleOpen(false);
+                                        }}
+                                        className={`flex items-center w-full px-4 py-2 text-sm text-left ${selectedRole === option.value
+                                            ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
+                                            : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+                                            }`}
+                                    >
+                                        {option.label}
+                                    </DropdownItem>
+                                ))}
+                            </Dropdown>
+                        </div>
+
+                        {/* Status Filter Dropdown */}
+                        <div className="relative">
+                            <Button
+                                onClick={() => setIsStatusOpen(!isStatusOpen)}
+                                variant="primary"
+                                size="sm"
+                                className="w-40 dropdown-toggle"
+                                endIcon={
+                                    <ChevronDownIcon
+                                        className={`w-5 h-5 transition-transform duration-200 ${isStatusOpen ? "rotate-180" : ""
+                                            }`}
+                                    />
+                                }
+                            >
+                                {getStatusLabel(selectedStatus)}
+                            </Button>
+                            <Dropdown
+                                isOpen={isStatusOpen}
+                                onClose={() => setIsStatusOpen(false)}
+                                className="w-40 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-900 dark:border-gray-800"
+                            >
+                                {statusOptions.map((option) => (
+                                    <DropdownItem
+                                        key={option.value}
+                                        onClick={() => {
+                                            setSelectedStatus(option.value);
+                                            setIsStatusOpen(false);
+                                        }}
+                                        className={`flex items-center w-full px-4 py-2 text-sm text-left ${selectedStatus === option.value
+                                            ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
+                                            : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+                                            }`}
+                                    >
+                                        {option.label}
+                                    </DropdownItem>
+                                ))}
+                            </Dropdown>
+                        </div>
+                    </div>
+                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+                        <div className="max-w-full overflow-x-auto">
+                            <Table>
+                                <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                                    <TableRow>
+                                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                            Name
+                                        </TableCell>
+                                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                            Email
+                                        </TableCell>
+                                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                            Role
+                                        </TableCell>
+                                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                            Status
+                                        </TableCell>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="px-5 py-10 text-center text-gray-500">
+                                                Loading users...
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : filteredUsers.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="px-5 py-10 text-center text-gray-500">
+                                                No users match the selected filters
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredUsers.map((user) => (
+                                            <TableRow key={user.id}>
+                                                <TableCell className="px-5 py-4 sm:px-6 text-start">
+                                                    <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                                                        {user.firstName} {user.lastName}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                                                    {user.email}
+                                                </TableCell>
+                                                <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                                                    <Badge size="sm" color={getRoleBadgeColor(user.role)}>
+                                                        {user.role}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                                                    <Badge
+                                                        size="sm"
+                                                        color={user.status === "ACTIVE" ? "success" : "error"}
+                                                    >
+                                                        {user.status}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+                </ComponentCard>
+            </div>
+        </>
+    );
+}
