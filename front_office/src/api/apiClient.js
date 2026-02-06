@@ -25,18 +25,23 @@ apiClient.interceptors.response.use(
     (response) => response.data,
     async (error) => {
         const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // If error is 401 or 403 (Unauthorized/Forbidden) and not a retry
+        if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
             originalRequest._retry = true;
             try {
+                console.log("Access token expired, attempting refresh...");
                 const refreshResponse = await axios.post(`${BASE_URL}/gamefy/auth/refresh`, {}, {
                     withCredentials: true
                 });
                 const newAccessToken = refreshResponse.data.accessToken;
+                console.log("Token refreshed successfully");
                 localStorage.setItem("accessToken", newAccessToken);
                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                 return apiClient(originalRequest);
             } catch (refreshError) {
+                console.error("Refresh token failed or expired", refreshError);
                 localStorage.removeItem("accessToken");
+                window.location.href = "/";
                 return Promise.reject(refreshError);
             }
         }
