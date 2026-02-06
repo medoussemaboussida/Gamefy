@@ -33,15 +33,16 @@ apiClient.interceptors.response.use(
                 const refreshResponse = await axios.post(`${BASE_URL}/gamefy/auth/refresh`, {}, {
                     withCredentials: true
                 });
-                const newAccessToken = refreshResponse.data.accessToken;
+                const { accessToken } = refreshResponse.data;
                 console.log("Token refreshed successfully");
-                localStorage.setItem("accessToken", newAccessToken);
-                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+                localStorage.setItem("accessToken", accessToken);
+                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                 return apiClient(originalRequest);
             } catch (refreshError) {
                 console.error("Refresh token failed or expired", refreshError);
                 localStorage.removeItem("accessToken");
-                window.location.href = "/";
+                window.location.href = "/"; // Redirect to landing/login
                 return Promise.reject(refreshError);
             }
         }
