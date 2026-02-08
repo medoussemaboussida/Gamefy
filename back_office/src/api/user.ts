@@ -4,4 +4,7 @@ export const userApi = {
     getAllUsers: async () => {
         return apiClient.get("/gamefy/users");
     },
+    createUser: async (userData: any) => {
+        return apiClient.post("/gamefy/users", userData);
+    },
 };

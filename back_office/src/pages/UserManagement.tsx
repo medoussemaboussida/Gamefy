@@ -15,7 +15,8 @@ import toast from "react-hot-toast";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
-import { ChevronDownIcon } from "../icons";
+import { ChevronDownIcon, PlusIcon } from "../icons";
+import AddUserModal from "../components/modals/addUser";
 
 interface User {
     id: number;
@@ -34,6 +35,7 @@ export default function UserManagement() {
 
     const [isRoleOpen, setIsRoleOpen] = useState(false);
     const [isStatusOpen, setIsStatusOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const roleOptions = [
         { value: "ALL", label: "All Roles" },
@@ -49,18 +51,18 @@ export default function UserManagement() {
         { value: "INACTIVE", label: "Inactive" },
     ];
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const data = await userApi.getAllUsers() as any;
-                setUsers(data as User[]);
-            } catch (error: any) {
-                toast.error(error.message || "Failed to fetch users");
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchUsers = async () => {
+        try {
+            const data = await userApi.getAllUsers() as any;
+            setUsers(data as User[]);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to fetch users");
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchUsers();
     }, []);
 
@@ -175,6 +177,16 @@ export default function UserManagement() {
                                 ))}
                             </Dropdown>
                         </div>
+
+                        {/* Add User Button */}
+                        <Button
+                            onClick={() => setIsAddModalOpen(true)}
+                            variant="primary"
+                            size="sm"
+                            className="ml-auto"
+                        >
+                            Create Accounts
+                        </Button>
                     </div>
                     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
                         <div className="max-w-full overflow-x-auto">
@@ -241,6 +253,12 @@ export default function UserManagement() {
                     </div>
                 </ComponentCard>
             </div>
+
+            <AddUserModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSuccess={fetchUsers}
+            />
         </>
     );
 }
