@@ -28,4 +28,11 @@ public class UserController {
     public ResponseEntity<User> createUser(@RequestBody CreateUserDto request) {
         return ResponseEntity.ok(service.createUser(request));
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+        service.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
 }

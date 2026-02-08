@@ -33,6 +33,18 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    public void sendAccountDeletedEmail(String to) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Account Deactivation Notice - Gamefy");
+        message.setText("Hello,\n\n" +
+                "We are writing to inform you that your account on Gamefy has been removed by an administrator.\n" +
+                "Your account is no longer available for use.\n\n" +
+                "If you believe this is a mistake, please contact support.");
+        
+        mailSender.send(message);
+    }
+
     private void sendResetEmail(String to, String token, String baseUrl) {
         String resetLink = baseUrl + "/reset-password?token=" + token;
         
