@@ -7,4 +7,7 @@ export const userApi = {
     createUser: async (userData: any) => {
         return apiClient.post("/gamefy/users", userData);
     },
+    deleteUser: async (id: number) => {
+        return apiClient.delete(`/gamefy/users/${id}`);
+    },
 };

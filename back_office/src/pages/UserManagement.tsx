@@ -15,8 +15,9 @@ import toast from "react-hot-toast";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
-import { ChevronDownIcon, PlusIcon } from "../icons";
+import { ChevronDownIcon, PlusIcon, TrashBinIcon } from "../icons";
 import AddUserModal from "../components/modals/addUser";
+import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
 
 interface User {
     id: number;
@@ -36,6 +37,13 @@ export default function UserManagement() {
     const [isRoleOpen, setIsRoleOpen] = useState(false);
     const [isStatusOpen, setIsStatusOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+
+    const currentUserRole = localStorage.getItem("userRole");
+    const currentUserId = localStorage.getItem("userId");
+    const isAdmin = currentUserRole === "ADMIN";
 
     const roleOptions = [
         { value: "ALL", label: "All Roles" },
@@ -74,6 +82,22 @@ export default function UserManagement() {
 
     const getRoleLabel = (value: string) => roleOptions.find(opt => opt.value === value)?.label || value;
     const getStatusLabel = (value: string) => statusOptions.find(opt => opt.value === value)?.label || value;
+
+    const handleConfirmDelete = async () => {
+        if (!userToDelete) return;
+        setDeleteLoading(true);
+        try {
+            await userApi.deleteUser(userToDelete.id);
+            toast.success("User deleted successfully!");
+            fetchUsers();
+            setIsDeleteModalOpen(false);
+            setUserToDelete(null);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to delete user");
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
 
     const getRoleBadgeColor = (role: string): any => {
         switch (role) {
@@ -185,6 +209,7 @@ export default function UserManagement() {
                             size="sm"
                             className="ml-auto"
                         >
+                            <PlusIcon className="w-4 h-4 mr-2" />
                             Create Accounts
                         </Button>
                     </div>
@@ -205,6 +230,11 @@ export default function UserManagement() {
                                         <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                                             Status
                                         </TableCell>
+                                        {isAdmin && (
+                                            <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                                Actions
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
@@ -244,6 +274,22 @@ export default function UserManagement() {
                                                         {user.status}
                                                     </Badge>
                                                 </TableCell>
+                                                {isAdmin && (
+                                                    <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                                                        {user.id.toString() !== currentUserId && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setUserToDelete(user);
+                                                                    setIsDeleteModalOpen(true);
+                                                                }}
+                                                                className="text-gray-500 hover:text-error-500 transition-colors"
+                                                                title="Delete User"
+                                                            >
+                                                                <TrashBinIcon className="w-5 h-5" />
+                                                            </button>
+                                                        )}
+                                                    </TableCell>
+                                                )}
                                             </TableRow>
                                         ))
                                     )}
@@ -258,6 +304,17 @@ export default function UserManagement() {
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
                 onSuccess={fetchUsers}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setUserToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                userName={userToDelete ? `${userToDelete.firstName} ${userToDelete.lastName}` : ""}
+                loading={deleteLoading}
             />
         </>
     );

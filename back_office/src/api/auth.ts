@@ -3,6 +3,8 @@ import { apiClient } from "./apiClient";
 export interface LoginResponse {
     message: string;
     accessToken: string;
+    role: string;
+    userId: number;
 }
 
 export const authApi = {

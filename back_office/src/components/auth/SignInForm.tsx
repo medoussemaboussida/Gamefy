@@ -24,6 +24,8 @@ export default function SignInForm() {
     try {
       const response = await authApi.googleLogin(credentialResponse.credential);
       localStorage.setItem("accessToken", response.accessToken);
+      localStorage.setItem("userRole", response.role);
+      localStorage.setItem("userId", response.userId.toString());
       navigate("/home");
     } catch (err: any) {
       setError(err.message || "Google sign-in failed.");
@@ -41,6 +43,8 @@ export default function SignInForm() {
       const response = await authApi.login(email, password);
       // Store the token in localStorage or a more secure way
       localStorage.setItem("accessToken", response.accessToken);
+      localStorage.setItem("userRole", response.role);
+      localStorage.setItem("userId", response.userId.toString());
       // Redirect to dashboard on success
       navigate("/home");
     } catch (err: any) {
