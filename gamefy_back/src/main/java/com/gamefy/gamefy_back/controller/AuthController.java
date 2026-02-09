@@ -57,9 +57,9 @@ public class AuthController {
         refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
         response.addCookie(refreshTokenCookie);
         
-        // Return access token and role in response body with a success message
-        String role = service.getUserByEmail(request.getEmail()).getRole().name();
-        LoginResponse loginResponse = new LoginResponse("Login Successful", tokens.get("accessToken"), role);
+        // Return access token, role and userId in response body
+        User user = service.getUserByEmail(request.getEmail());
+        LoginResponse loginResponse = new LoginResponse("Login Successful", tokens.get("accessToken"), user.getRole().name(), user.getId());
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -92,7 +92,7 @@ public class AuthController {
         
         // Fetch user and return response
         User user = service.getUserById(Integer.parseInt(tokens.get("userId")));
-        LoginResponse loginResponse = new LoginResponse("Google Login Successful", tokens.get("accessToken"), user.getRole().name());
+        LoginResponse loginResponse = new LoginResponse("Google Login Successful", tokens.get("accessToken"), user.getRole().name(), user.getId());
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -110,7 +110,7 @@ public class AuthController {
             Map<String, String> tokens = service.refreshToken(refreshToken);
             User user = service.getUserById(Integer.parseInt(tokens.get("userId")));
             log.info("Token successfully refreshed for user ID: {}", user.getId());
-            LoginResponse loginResponse = new LoginResponse("Token Refreshed", tokens.get("accessToken"), user.getRole().name());
+            LoginResponse loginResponse = new LoginResponse("Token Refreshed", tokens.get("accessToken"), user.getRole().name(), user.getId());
             return ResponseEntity.ok(loginResponse);
         } catch (Exception e) {
             log.error("Token refresh failed: {}", e.getMessage());

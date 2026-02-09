@@ -57,6 +57,17 @@ public class UserService {
         return savedUser;
     }
 
+    public void deleteUser(Integer id) {
+        User user = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        
+        // Notify user before deletion
+        emailService.sendAccountDeletedEmail(user.getEmail());
+        
+        // Delete user
+        repository.delete(user);
+    }
+
     private String generateRandomPassword(int length) {
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
