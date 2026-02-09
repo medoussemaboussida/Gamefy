@@ -23,6 +23,8 @@ export default function UserDropdown() {
       console.error("Logout failed:", error);
     } finally {
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userId");
       navigate("/");
     }
   };
