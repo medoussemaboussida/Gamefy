@@ -1,41 +1,105 @@
+import blogs_img from "../../../assets/images/vitrine_page_images/blogs.png";
+
 const BlogSection = () => {
     return (
-        <section className="py-20">
-            <div className="max-w-7xl mx-auto px-4">
-                <div className="text-center mb-16">
-                    <h2 className="text-4xl md:text-5xl font-black mb-4 uppercase text-[#333]">
-                        BLOGS & <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-green-400">NEWS</span>
+        <section className="relative py-24 bg-[#24003E] overflow-hidden font-['Inter']">
+            {/* Background Glows */}
+            <div className="absolute top-[-300px] -left-20 w-[700px] h-[700px] bg-[#DD00B8] rounded-full blur-[180px] opacity-25 z-0"></div>
+            <div className="absolute bottom-1/4 -right-24 w-[600px] h-[600px] bg-[#06F0F6] rounded-full blur-[150px] opacity-15 z-0"></div>
+
+            <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+                {/* Header */}
+                <div className="mb-16">
+                    <h2 className="text-[62px] font-bold leading-[1.1] mb-6 tracking-tight uppercase">
+                        <span
+                            className="bg-clip-text text-transparent"
+                            style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
+                        >
+                            BLOGS & NEWS
+                        </span>
                     </h2>
-                    <p className="text-black/50 font-medium max-w-xl mx-auto">
-                        Stay updated with the latest trends, tournament results, and gaming news from our community.
+                    <p className="text-white font-normal text-[20px] max-w-3xl mx-auto leading-relaxed opacity-80">
+                        Stay up to date with Gamefy events, community news, and esports content.
                     </p>
                 </div>
 
                 {/* Featured Blog Card */}
-                <div className="relative rounded-[2.5rem] overflow-hidden group border border-black/5 mb-8 aspect-[21/9] text-white">
+                <div className="relative w-full max-w-[1239px] mx-auto rounded-[5px] overflow-hidden group border border-white/5 shadow-2xl">
                     <img
-                        src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80"
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        alt="Gaming Community"
+                        src={blogs_img}
+                        alt="Gamefy x Pathe"
+                        className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
 
-                    <div className="absolute bottom-10 left-10 right-10 flex flex-col md:flex-row justify-between items-end gap-6 text-left">
-                        <div className="max-w-2xl">
-                            <h3 className="text-2xl md:text-4xl font-black mb-3 tracking-tight">GAMEFY X PATHE: THE ULTIMATE PARTNERSHIP</h3>
-                            <p className="text-white/70 text-sm md:text-base font-medium">We are proud to announce our partnership with Pathé Cinemas to bring you the biggest e-sports events on the big screen.</p>
+                    {/* Content Overlay */}
+                    <div className="absolute inset-0 flex flex-col justify-end p-10 md:p-16">
+                        {/* Partnership Badge */}
+                        <div className="absolute top-8 left-8">
+                            <span className="px-4 py-1.5 border border-[#06F0F6] rounded-full text-[#06F0F6] text-[12px] font-bold uppercase tracking-widest bg-[#06F0F6]/10 backdrop-blur-md">
+                                PARTNERSHIP
+                            </span>
                         </div>
-                        <button className="px-10 py-4 bg-cyan-400 text-black rounded-full font-black tracking-widest text-sm hover:bg-white transition-all whitespace-nowrap">
-                            READ FULL STORY
-                        </button>
+
+                        <div className="flex flex-col md:flex-row items-end justify-between gap-10">
+                            <div className="max-w-3xl text-left">
+                                <h3 className="text-[60px] font-bold leading-[1.1] mb-5 tracking-tight text-[#24003E] uppercase">
+                                    GAMEFY X PATHE
+                                </h3>
+                                <p className="text-[#24003E] font-normal text-[16px] leading-relaxed max-w-2xl">
+                                    Gamefy collaborated with Pathé to organize a large-scale esports and gaming event, uniting the local gaming community in a premium venue designed for entertainment and competition.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-6">
+                                <button className="bg-[#24003E] text-[#06F0F6] px-10 py-5 rounded-full font-medium text-[18px] tracking-wide hover:scale-105 transition-all uppercase shadow-lg">
+                                    See Event Recap
+                                </button>
+                                <a href="#updates" className="text-[#24003E] text-[14px] font-bold underline underline-offset-4 hover:opacity-80 transition-all uppercase tracking-widest">
+                                    Explore Updates
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex justify-center mt-12">
-                    <button className="text-black/30 hover:text-cyan-400 font-black tracking-widest text-sm transition-all flex items-center gap-2">
-                        VIEW ALL NEWS
-                        <span className="text-xl">→</span>
-                    </button>
+                {/* Carousel Indicators */}
+                {/* <div className="flex justify-center gap-3 mt-12">
+                    <div className="h-2 w-8 rounded-full bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8]"></div>
+                    <div className="h-2 w-8 rounded-full bg-white/20"></div>
+                </div> */}
+
+                {/* Newsletter Section */}
+                <div className="mt-32 w-full max-w-[1239px] mx-auto relative z-10 px-4 flex justify-center">
+                    <div
+                        className="glass-card rounded-[20px] border border-white/10 backdrop-blur-3xl bg-white/5 px-12 flex flex-col lg:flex-row items-center justify-between gap-12"
+                        style={{ width: '1238px', height: '196px' }}
+                    >
+                        <div className="text-left">
+                            <h2 className="text-[40px] font-bold leading-tight mb-4 uppercase">
+                                <span
+                                    className="bg-clip-text text-transparent"
+                                    style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
+                                >
+                                    SUBSCRIBE TO NEWSLETTER
+                                </span>
+                            </h2>
+                            <p className="text-white text-[16px] font-normal leading-relaxed max-w-xl">
+                                Share your experience, grow your reputation, and earn by coaching competitive players at Gamefy Academy.
+                            </p>
+                        </div>
+
+                        {/* Subscription Form */}
+                        <div className="w-full lg:max-w-md relative flex items-center">
+                            <input
+                                type="email"
+                                placeholder="Enter your email address"
+                                className="w-full bg-[#1b002e]/60 border border-white/20 rounded-full py-5 px-10 text-white placeholder:text-white/40 focus:outline-none focus:border-[#06F0F6]/50 transition-all text-lg"
+                            />
+                            <button className="absolute right-2 px-10 py-4 bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-full font-medium text-white text-[16px] hover:scale-105 transition-all shadow-lg">
+                                Subscribe
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

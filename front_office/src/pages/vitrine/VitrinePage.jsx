@@ -12,7 +12,6 @@ const VitrinePage = () => {
             <TournamentAndRooms />
             <Coaches />
             <BlogSection />
-            <Newsletter />
         </div>
     );
 };
