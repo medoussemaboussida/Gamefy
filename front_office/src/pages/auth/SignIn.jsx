@@ -60,6 +60,8 @@ const SignIn = () => {
     try {
       const response = await authApi.login(formData.email, formData.password);
       localStorage.setItem("accessToken", response.accessToken);
+      localStorage.setItem("userRole", response.role);
+      localStorage.setItem("userId", response.userId.toString());
 
       toast.success("Welcome back!", {
         id: loadingToast,
@@ -121,6 +123,8 @@ const SignIn = () => {
         // Send access_token to backend
         const response = await authApi.googleLogin(tokenResponse.access_token);
         localStorage.setItem("accessToken", response.accessToken);
+        localStorage.setItem("userRole", response.role);
+        localStorage.setItem("userId", response.userId.toString());
 
         toast.success("Signed in with Google!", {
           id: loadingToast,

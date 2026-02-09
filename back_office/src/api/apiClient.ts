@@ -49,11 +49,13 @@ apiClient.interceptors.response.use(
           withCredentials: true
         });
 
-        const { accessToken } = refreshResponse.data;
+        const { accessToken, role, userId } = refreshResponse.data;
         console.log("Token refreshed successfully");
 
-        // Store the new token
+        // Store the new tokens/info
         localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("userRole", role);
+        localStorage.setItem("userId", userId.toString());
 
         // Update the original request and retry
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
@@ -63,6 +65,8 @@ apiClient.interceptors.response.use(
         console.error("Refresh token failed or expired", refreshError);
         // If refresh fails, clear everything and redirect to login
         localStorage.removeItem("accessToken");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("userId");
         window.location.href = "/";
         return Promise.reject(refreshError);
       }

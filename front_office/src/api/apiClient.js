@@ -10,6 +10,10 @@ const apiClient = axios.create({
     },
 });
 
+/**
+ * Request Interceptor
+ * Automatically adds the JWT token to the Authorization header if it exists.
+ */
 apiClient.interceptors.request.use(
     (config) => {
         const jwt = localStorage.getItem("accessToken");
@@ -18,38 +22,62 @@ apiClient.interceptors.request.use(
         }
         return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+        return Promise.reject(error);
+    }
 );
 
+/**
+ * Response Interceptor
+ * Unwraps the response data and handles automatic token refresh on 401/403.
+ */
 apiClient.interceptors.response.use(
-    (response) => response.data,
+    (response) => {
+        return response.data;
+    },
     async (error) => {
         const originalRequest = error.config;
+
         // If error is 401 or 403 (Unauthorized/Forbidden) and not a retry
         if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
             originalRequest._retry = true;
+
             try {
                 console.log("Access token expired, attempting refresh...");
+                // Attempt to refresh the token
                 const refreshResponse = await axios.post(`${BASE_URL}/gamefy/auth/refresh`, {}, {
                     withCredentials: true
                 });
-                const { accessToken } = refreshResponse.data;
+
+                const { accessToken, role, userId } = refreshResponse.data;
                 console.log("Token refreshed successfully");
 
+                // Store the new tokens/info
                 localStorage.setItem("accessToken", accessToken);
+                localStorage.setItem("userRole", role);
+                localStorage.setItem("userId", userId.toString());
+
+                // Update the original request and retry
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                 return apiClient(originalRequest);
+
             } catch (refreshError) {
                 console.error("Refresh token failed or expired", refreshError);
+                // If refresh fails, clear everything and redirect to login
                 localStorage.removeItem("accessToken");
-                window.location.href = "/"; // Redirect to landing/login
+                localStorage.removeItem("userRole");
+                localStorage.removeItem("userId");
+                window.location.href = "/";
                 return Promise.reject(refreshError);
             }
         }
-        const message = error.response?.data?.message ||
-            (error.response?.status === 403 ? "Access Denied. Please check your credentials." :
-                (error.response?.status === 409 ? "This email is already registered." : error.message)) ||
-            "A connection error occurred. Please try again.";
+
+        // Extract a user-friendly error message
+        const message =
+            error.response?.data?.message ||
+            error.message ||
+            "An unexpected error occurred";
+
         return Promise.reject(new Error(message));
     }
 );

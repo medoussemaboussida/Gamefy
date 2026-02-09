@@ -56,6 +56,8 @@ const Sidebar = () => {
     try {
       await authApi.logout();
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userId");
       toast.success("Logged out successfully", {
         id: loadingToast,
         style: {
@@ -69,6 +71,8 @@ const Sidebar = () => {
       navigate("/signin");
     } catch (err) {
       localStorage.removeItem("accessToken"); // Still clear token even on error
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userId");
       toast.error("Logged out", { id: loadingToast });
       navigate("/signin");
     }
