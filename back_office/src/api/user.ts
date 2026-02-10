@@ -1,13 +1,28 @@
 import { apiClient } from "./apiClient";
 
+export interface CreateUserRequestDto {
+    username: string;
+    email: string;
+    role: string;
+    password?: string;
+}
+
+export interface UserResponseDto {
+    id: number;
+    username: string;
+    email: string;
+    role: string;
+    active: boolean;
+}
+
 export const userApi = {
-    getAllUsers: async () => {
+    getAllUsers: async (): Promise<UserResponseDto[]> => {
         return apiClient.get("/gamefy/users");
     },
-    createUser: async (userData: any) => {
-        return apiClient.post("/gamefy/users", userData);
+    createUser: async (dto: CreateUserRequestDto): Promise<UserResponseDto> => {
+        return apiClient.post("/gamefy/users", dto);
     },
-    deleteUser: async (id: number) => {
+    deleteUser: async (id: number): Promise<void> => {
         return apiClient.delete(`/gamefy/users/${id}`);
     },
 };

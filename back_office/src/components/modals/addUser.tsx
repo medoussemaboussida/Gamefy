@@ -40,7 +40,10 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess 
         e.preventDefault();
         setLoading(true);
         try {
-            await userApi.createUser(formData);
+            await userApi.createUser({
+                ...formData,
+                username: formData.email.split('@')[0] // Fallback username
+            });
             toast.success("User created successfully! Email sent. 📧");
             onSuccess();
             onClose();
