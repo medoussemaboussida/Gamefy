@@ -11,6 +11,7 @@ import {
 } from "../components/ui/table";
 import Badge from "../components/ui/badge/Badge";
 import { userApi } from "../api/user";
+import { getUserId, getUserRole } from "../utils/jwt";
 import toast from "react-hot-toast";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
@@ -41,8 +42,8 @@ export default function UserManagement() {
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
-    const currentUserRole = localStorage.getItem("userRole");
-    const currentUserId = localStorage.getItem("userId");
+    const currentUserRole = getUserRole();
+    const currentUserId = getUserId();
     const isAdmin = currentUserRole === "ADMIN";
 
     const roleOptions = [
@@ -276,7 +277,7 @@ export default function UserManagement() {
                                                 </TableCell>
                                                 {isAdmin && (
                                                     <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                                                        {user.id.toString() !== currentUserId && (
+                                                        {currentUserId !== null && user.id !== currentUserId && (
                                                             <button
                                                                 onClick={() => {
                                                                     setUserToDelete(user);

@@ -54,8 +54,6 @@ apiClient.interceptors.response.use(
 
         // Store the new tokens/info
         localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("userRole", role);
-        localStorage.setItem("userId", userId.toString());
 
         // Update the original request and retry
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
