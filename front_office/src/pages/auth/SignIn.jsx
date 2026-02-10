@@ -58,7 +58,7 @@ const SignIn = () => {
     });
 
     try {
-      const response = await authApi.login(formData.email, formData.password);
+      const response = await authApi.login({ email: formData.email, password: formData.password });
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("userRole", response.role);
       localStorage.setItem("userId", response.userId.toString());
@@ -121,7 +121,7 @@ const SignIn = () => {
 
       try {
         // Send access_token to backend
-        const response = await authApi.googleLogin(tokenResponse.access_token);
+        const response = await authApi.googleLogin({ idToken: tokenResponse.access_token });
         localStorage.setItem("accessToken", response.accessToken);
         localStorage.setItem("userRole", response.role);
         localStorage.setItem("userId", response.userId.toString());

@@ -1,34 +1,56 @@
 import { apiClient } from "./apiClient";
 
-export interface LoginResponse {
+export interface LoginRequestDto {
+    email: string;
+    password: string;
+}
+
+export interface ForgotPasswordRequestDto {
+    email: string;
+}
+
+export interface ResetPasswordRequestDto {
+    token: string;
+    newPassword: string;
+}
+
+export interface GoogleLoginRequestDto {
+    idToken: string;
+}
+
+export interface AuthResponseDto {
     message: string;
     accessToken: string;
     role: string;
     userId: number;
 }
 
+export interface MessageResponseDto {
+    message: string;
+}
+
 export const authApi = {
-    login: async (email: string, password: string): Promise<LoginResponse> => {
-        return apiClient.post("/gamefy/auth/login", { email, password });
+    login: async (dto: LoginRequestDto): Promise<AuthResponseDto> => {
+        return apiClient.post("/gamefy/auth/login", dto);
     },
 
-    forgotPassword: async (email: string): Promise<{ message: string }> => {
-        return apiClient.post("/gamefy/auth/forgot-password", { email });
+    forgotPassword: async (dto: ForgotPasswordRequestDto): Promise<MessageResponseDto> => {
+        return apiClient.post("/gamefy/auth/forgot-password", dto);
     },
 
-    resetPassword: async (token: string, newPassword: string): Promise<{ message: string }> => {
-        return apiClient.post("/gamefy/auth/reset-password", { token, newPassword });
+    resetPassword: async (dto: ResetPasswordRequestDto): Promise<MessageResponseDto> => {
+        return apiClient.post("/gamefy/auth/reset-password", dto);
     },
 
-    googleLogin: async (idToken: string): Promise<LoginResponse> => {
-        return apiClient.post("/gamefy/auth/google", { idToken });
+    googleLogin: async (dto: GoogleLoginRequestDto): Promise<AuthResponseDto> => {
+        return apiClient.post("/gamefy/auth/google", dto);
     },
 
-    refreshToken: async (): Promise<LoginResponse> => {
+    refreshToken: async (): Promise<AuthResponseDto> => {
         return apiClient.post("/gamefy/auth/refresh");
     },
 
-    logout: async (): Promise<{ message: string }> => {
+    logout: async (): Promise<MessageResponseDto> => {
         return apiClient.post("/gamefy/auth/logout");
     },
 };

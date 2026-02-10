@@ -22,7 +22,7 @@ export default function SignInForm() {
     setError(null);
     setLoading(true);
     try {
-      const response = await authApi.googleLogin(credentialResponse.credential);
+      const response = await authApi.googleLogin({ idToken: credentialResponse.credential });
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("userRole", response.role);
       localStorage.setItem("userId", response.userId.toString());
@@ -40,7 +40,7 @@ export default function SignInForm() {
     setLoading(true);
 
     try {
-      const response = await authApi.login(email, password);
+      const response = await authApi.login({ email, password });
       // Store the token in localStorage or a more secure way
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("userRole", response.role);

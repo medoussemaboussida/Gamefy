@@ -1,23 +1,23 @@
 import { Link } from "react-router-dom";
 import { Globe, Instagram, Facebook, Twitter, ShieldCheck as WhatsApp, Disc as Discord, Linkedin } from "lucide-react";
-import logo from "../assets/images/gamefy_logo.png";
+import auth_logo from "../assets/images/auth_logo.png";
+import footer_bg from "../assets/images/vitrine_page_images/Footer.png";
 
 const Footer = () => {
     return (
-        <footer className="relative pt-24 pb-12 overflow-hidden text-white font-sans">
-            {/* Background Glows */}
-            <div className="absolute inset-0 bg-[#030014] -z-10"></div>
-            <div className="absolute inset-0 -z-10 opacity-60">
-                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-600/40 rounded-full blur-[120px] -mr-40 -mt-20"></div>
-                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-500/30 rounded-full blur-[100px] -ml-40 -mb-20"></div>
-            </div>
+        <footer
+            className="relative pt-24 pb-12 overflow-hidden text-white font-sans bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${footer_bg})` }}
+        >
+            {/* Background Overlay to ensure readability */}
+            <div className="absolute inset-0 bg-[#030014]/60 -z-10"></div>
 
             <div className="max-w-[1500px] mx-auto px-10 relative z-10">
                 <div className="flex flex-col lg:flex-row justify-between items-start gap-16 mb-24">
                     {/* Brand & Language */}
                     <div className="flex flex-col items-start gap-12">
                         <Link to="/">
-                            <img src={logo} alt="Gamefy" className="h-12 w-auto" />
+                            <img src={auth_logo} alt="Gamefy" className="w-[134px] h-[40.36px] object-contain" />
                         </Link>
 
                         <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-sm font-normal hover:bg-white/5 transition-colors">

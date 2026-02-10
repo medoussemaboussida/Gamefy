@@ -1,47 +1,120 @@
+import React from "react";
+import coaching_wallpaper from "../../../assets/images/vitrine_page_images/coaching_wallpaper.jpg";
+import coach1 from "../../../assets/images/vitrine_page_images/coaches/coach_1.png";
+import coach2 from "../../../assets/images/vitrine_page_images/coaches/coach_2.png";
+import coach3 from "../../../assets/images/vitrine_page_images/coaches/coach_3.png";
+import coach4 from "../../../assets/images/vitrine_page_images/coaches/coach_4.png";
+
 const Coaches = () => {
-    const coaches = [
-        { name: "Coach X", role: "FPS Pro", img: "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&q=80" },
-        { name: "Coach Y", role: "MOBA Specialist", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80" },
-        { name: "Coach Z", role: "Strategy Guru", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80" },
-        { name: "Coach K", role: "E-sports Mental", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80" }
+    const coachData = [
+        { name: 'Haithem "Dean" Attaia', game: "League Of Legends", tag: "TFT", img: coach1 },
+        { name: 'Foulen "Juggernaut" Foulen', game: "League Of Legends", tag: "TFT", img: coach2 },
+        { name: 'Foulen "Skream" Foulen', game: "League Of Legends", tag: "TFT", img: coach3 },
+        { name: 'Foulen "Heisen" Foulen', game: "League Of Legends", tag: "TFT", img: coach4 },
     ];
 
     return (
-        <section className="py-20 relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-1 bg-gradient-to-r from-transparent via-purple-600/20 to-transparent rotate-12"></div>
+        <section className="relative py-24 min-h-[1200px] flex flex-col items-center overflow-hidden font-['Inter']">
+            {/* Background Image & Overlay */}
+            <div
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
+                style={{ backgroundImage: `url(${coaching_wallpaper})` }}
+            >
+                <div className="absolute inset-0 bg-[#24003E]/40"></div>
+            </div>
 
-            <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
-                <h2 className="text-4xl md:text-6xl font-[900] mb-4 uppercase text-[#333]">
-                    RANK UP WITH <br />
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#ff00ff] via-purple-600 to-cyan-400 italic">PROFESSIONAL COACHES</span>
+            <div className="max-w-7xl mx-auto px-6 relative z-10 text-center pt-20 mb-20">
+                <h2 className="text-[62px] font-bold leading-[1.1] mb-8 tracking-tight uppercase drop-shadow-2xl flex flex-col items-center">
+                    <span
+                        className="bg-clip-text text-transparent"
+                        style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
+                    >
+                        RANK UP WITH
+                    </span>
+                    <span
+                        className="bg-clip-text text-transparent"
+                        style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
+                    >
+                        PROFESSIONAL COACHES
+                    </span>
                 </h2>
 
-                <p className="text-black/40 font-medium max-w-2xl mx-auto mb-16">
-                    Learn from elite players who have dominated the professional scene and are ready to share their secrets with you.
+                <p className="text-white font-normal text-[20px] max-w-3xl mx-auto leading-relaxed opacity-90 drop-shadow-lg">
+                    Train faster with certified esports coaches. Get personalized feedback, strategy improvement, and mindset coaching for competitive games.
                 </p>
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 text-white">
-                    {coaches.map((coach) => (
-                        <div key={coach.name} className="group relative rounded-2xl overflow-hidden border border-black/5 bg-white shadow-xl transition-all hover:border-cyan-400/50">
-                            <div className="h-72 overflow-hidden">
-                                <img src={coach.img} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={coach.name} />
-                            </div>
-                            <div className="p-6 text-left">
-                                <h3 className="text-xl font-black mb-1 group-hover:text-cyan-400 transition-colors uppercase italic text-black">{coach.name}</h3>
-                                <p className="text-black/40 text-xs font-black tracking-widest uppercase">{coach.role}</p>
+            {/* Coaches Grid */}
+            <div className="flex flex-wrap justify-center gap-2 relative z-10 px-4">
+                {coachData.map((coach, index) => (
+                    <div
+                        key={index}
+                        className="w-[297px] h-[403px] glass-card rounded-[9px] border border-white/10 backdrop-blur-md bg-white/5 p-4 flex flex-col group hover:border-[#2BDFC8]/30 transition-all duration-500"
+                    >
+                        {/* Coach Photo */}
+                        <div className="relative w-full h-[280px] rounded-[9px] overflow-hidden mb-5">
+                            <img
+                                src={coach.img}
+                                alt={coach.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            />
+                            <div className="absolute top-4 right-4 bg-[#06F0F6]/10 backdrop-blur-md w-[68px] h-[29px] rounded-full border border-[#06F0F6] flex items-center justify-center gap-1">
+                                <svg className="w-[15px] h-[15px] text-[#06F0F6]" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                </svg>
+                                <span className="text-white text-[19px] font-bold leading-none">4.9</span>
                             </div>
                         </div>
-                    ))}
-                </div>
 
-                {/* CTA Card */}
-                <div className="bg-gradient-to-br from-[#1a1a2e] to-[#16213e] p-8 md:p-12 rounded-[2rem] border border-white/10 flex flex-col md:flex-row justify-between items-center gap-8 text-left text-white">
-                    <div>
-                        <h3 className="text-3xl md:text-4xl font-black uppercase mb-2">BECOME A COACH</h3>
-                        <p className="text-white/50 max-w-lg font-medium">Are you a professional player looking to share your passion and expertise with new generations of gamers?</p>
+                        {/* Coach Info */}
+                        <div className="px-2">
+                            <h3 className="text-white font-normal text-[19px] mb-3 leading-tight tracking-tight">
+                                {coach.name}
+                            </h3>
+                            <div className="flex items-center gap-2">
+                                <span className="px-3 py-1 bg-[#2BDFC8]/10 border border-[#2BDFC8]/30 rounded-full text-[#2BDFC8] text-[12px] font-normal uppercase tracking-wider">
+                                    {coach.game}
+                                </span>
+                                <span className="px-3 py-1 bg-[#2BDFC8]/10 border border-[#2BDFC8]/30 rounded-full text-[#2BDFC8] text-[12px] font-normal uppercase tracking-wider">
+                                    {coach.tag}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <button className="whitespace-nowrap px-10 py-5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full font-black text-white shadow-xl hover:shadow-pink-500/20 transition-all transform hover:scale-105 tracking-widest text-sm">
-                        APPLY TODAY
+                ))}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-10 relative z-10">
+                <a
+                    href="#how"
+                    className="text-[#06F0F6] font-medium text-[16px] tracking-wide underline underline-offset-[12px] decoration-2 hover:text-white transition-all drop-shadow-md"
+                >
+                    How Coaching Works?
+                </a>
+                <button className="bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] text-white px-12 py-5 rounded-full font-medium text-[16px] tracking-wide shadow-[0_0_30px_rgba(221,0,184,0.3)] hover:scale-105 transition-all uppercase group flex items-center gap-3">
+                    Login to See All Coaches
+                </button>
+            </div>
+
+            {/* Become a Coach CTA */}
+            <div className="mt-24 w-full max-w-[1239px] relative z-10 px-4">
+                <div className="glass-card rounded-[20px] border border-white/10 backdrop-blur-xl bg-white/5 p-12 flex flex-col md:flex-row items-center justify-between gap-10">
+                    <div className="max-w-3xl">
+                        <h2 className="text-[62px] font-bold leading-tight mb-4 uppercase">
+                            <span
+                                className="bg-clip-text text-transparent"
+                                style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
+                            >
+                                BECOME A COACH
+                            </span>
+                        </h2>
+                        <p className="text-white text-[20px] font-normal leading-relaxed">
+                            Share your experience, grow your reputation, and earn by coaching competitive players at Gamefy Academy.
+                        </p>
+                    </div>
+                    <button className="bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] text-white px-12 py-5 rounded-full font-medium text-[16px] tracking-wide shadow-[0_0_30px_rgba(221,0,184,0.3)] hover:scale-105 transition-all uppercase whitespace-nowrap">
+                        Login To Apply
                     </button>
                 </div>
             </div>

@@ -3,7 +3,6 @@ import Partners from "./sections/Partners";
 import TournamentAndRooms from "./sections/TournamentAndRooms";
 import Coaches from "./sections/Coaches";
 import BlogSection from "./sections/BlogSection";
-import Newsletter from "./sections/Newsletter";
 
 const VitrinePage = () => {
     return (
@@ -12,7 +11,6 @@ const VitrinePage = () => {
             <TournamentAndRooms />
             <Coaches />
             <BlogSection />
-            <Newsletter />
         </div>
     );
 };

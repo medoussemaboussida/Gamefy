@@ -1,22 +1,22 @@
 import { apiClient } from "./apiClient";
 
 export const authApi = {
-    signUp: async (userData) => {
-        return apiClient.post("/gamefy/auth/signup", userData);
+    signUp: async (dto) => {
+        return apiClient.post("/gamefy/auth/signup", dto);
     },
-    login: async (email, password) => {
-        return apiClient.post("/gamefy/auth/login", { email, password });
+    login: async (dto) => {
+        return apiClient.post("/gamefy/auth/login", dto);
     },
     logout: async () => {
         return apiClient.post("/gamefy/auth/logout");
     },
-    forgotPassword: async (email, clientUrl) => {
-        return apiClient.post("/gamefy/auth/forgot-password", { email, clientUrl });
+    forgotPassword: async (dto) => {
+        return apiClient.post("/gamefy/auth/forgot-password", dto);
     },
-    resetPassword: async (token, newPassword) => {
-        return apiClient.post("/gamefy/auth/reset-password", { token, newPassword });
+    resetPassword: async (dto) => {
+        return apiClient.post("/gamefy/auth/reset-password", dto);
     },
-    googleLogin: async (idToken) => {
-        return apiClient.post("/gamefy/auth/google", { idToken });
+    googleLogin: async (dto) => {
+        return apiClient.post("/gamefy/auth/google", dto);
     },
 };
