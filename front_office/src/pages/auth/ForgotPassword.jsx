@@ -36,7 +36,7 @@ const ForgotPassword = () => {
         });
 
         try {
-            await authApi.forgotPassword(email, window.location.origin);
+            await authApi.forgotPassword({ email, clientUrl: window.location.origin });
             toast.success("Recovery link sent! Check your email", {
                 id: loadingToast,
                 style: {

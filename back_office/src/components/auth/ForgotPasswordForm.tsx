@@ -18,7 +18,7 @@ export default function ForgotPasswordForm() {
         setLoading(true);
 
         try {
-            const response = await authApi.forgotPassword(email);
+            const response = await authApi.forgotPassword({ email });
             setMessage(response.message);
         } catch (err: any) {
             setError(err.message || "Failed to send reset link.");

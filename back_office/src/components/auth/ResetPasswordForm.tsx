@@ -33,7 +33,7 @@ export default function ResetPasswordForm() {
         setLoading(true);
 
         try {
-            const response = await authApi.resetPassword(token, newPassword);
+            const response = await authApi.resetPassword({ token: token!, newPassword });
             setMessage(response.message);
         } catch (err: any) {
             setError(err.message || "Failed to reset password.");

@@ -77,7 +77,7 @@ const ResetPassword = () => {
         });
 
         try {
-            await authApi.resetPassword(token, formData.password);
+            await authApi.resetPassword({ token, newPassword: formData.password });
             toast.success("Password reset successful! You can now sign in.", {
                 id: loadingToast,
                 style: {
