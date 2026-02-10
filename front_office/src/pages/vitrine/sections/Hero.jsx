@@ -1,6 +1,30 @@
 import React from "react";
 import vitrine_wallpaper from "../../../assets/images/vitrine_page_images/vitrine_wallpaper.jpg";
 import partners_img from "../../../assets/images/vitrine_page_images/partners.png";
+import { motion } from "framer-motion";
+
+const heroVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.2,
+            delayChildren: 0.3
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.8,
+            ease: "easeOut"
+        }
+    }
+};
 
 const Hero = () => {
     return (
@@ -14,8 +38,14 @@ const Hero = () => {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 text-center relative z-10 pt-[250px] flex flex-col items-center">
-                <h1 className="text-[63px] leading-[1.1] mb-8 tracking-tight text-white uppercase drop-shadow-2xl">
+            <motion.div
+                variants={heroVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: false, amount: 0.4 }}
+                className="max-w-7xl mx-auto px-4 text-center relative z-10 pt-[250px] flex flex-col items-center"
+            >
+                <motion.h1 variants={itemVariants} className="text-[63px] leading-[1.1] mb-8 tracking-tight text-white uppercase drop-shadow-2xl">
                     <span
                         className="bg-clip-text text-transparent"
                         style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
@@ -30,13 +60,13 @@ const Hero = () => {
                     >
                         UNLOCK YOUR FREE GIFT
                     </span>
-                </h1>
+                </motion.h1>
 
-                <p className="text-white font-['Lato'] font-normal text-[21px] max-w-4xl mx-auto mb-16 leading-relaxed drop-shadow-lg opacity-90">
+                <motion.p variants={itemVariants} className="text-white font-['Lato'] font-normal text-[21px] max-w-4xl mx-auto mb-16 leading-relaxed drop-shadow-lg opacity-90">
                     Play in premium gaming rooms, train with pro coaches, and earn exclusive in-game rewards on your first login.
-                </p>
+                </motion.p>
 
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-12">
+                <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-center items-center gap-12">
                     <a
                         href="#"
                         className="text-[#06F0F6] font-medium text-[16px] tracking-wide underline underline-offset-[12px] decoration-2 hover:text-white transition-all drop-shadow-md"
@@ -47,8 +77,8 @@ const Hero = () => {
                     <button className="w-[196px] h-[64px] flex items-center justify-center bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-full font-medium text-[16px] text-white tracking-wide shadow-[0_0_30px_rgba(221,0,184,0.3)] hover:scale-105 transition-all uppercase">
                         Unlock Your Gift
                     </button>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
 
             {/* Partners section at the bottom */}
             <div className="w-full pb-20 relative z-10 mt-auto overflow-hidden">

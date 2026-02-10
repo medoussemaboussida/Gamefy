@@ -4,6 +4,30 @@ import coach1 from "../../../assets/images/vitrine_page_images/coaches/coach_1.p
 import coach2 from "../../../assets/images/vitrine_page_images/coaches/coach_2.png";
 import coach3 from "../../../assets/images/vitrine_page_images/coaches/coach_3.png";
 import coach4 from "../../../assets/images/vitrine_page_images/coaches/coach_4.png";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.2,
+            delayChildren: 0.1
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.8,
+            ease: "easeOut"
+        }
+    }
+};
 
 const Coaches = () => {
     const coachData = [
@@ -23,8 +47,14 @@ const Coaches = () => {
                 <div className="absolute inset-0 bg-[#24003E]/40"></div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 relative z-10 text-center pt-20 mb-20">
-                <h2 className="text-[62px] font-bold leading-[1.1] mb-8 tracking-tight uppercase drop-shadow-2xl flex flex-col items-center">
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: false, amount: 0.3 }}
+                className="max-w-7xl mx-auto px-6 relative z-10 text-center pt-20 mb-20"
+            >
+                <motion.h2 variants={itemVariants} className="text-[62px] font-bold leading-[1.1] mb-8 tracking-tight uppercase drop-shadow-2xl flex flex-col items-center">
                     <span
                         className="bg-clip-text text-transparent"
                         style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
@@ -37,18 +67,25 @@ const Coaches = () => {
                     >
                         PROFESSIONAL COACHES
                     </span>
-                </h2>
+                </motion.h2>
 
-                <p className="text-white font-normal text-[20px] max-w-3xl mx-auto leading-relaxed opacity-90 drop-shadow-lg">
+                <motion.p variants={itemVariants} className="text-white font-normal text-[20px] max-w-3xl mx-auto leading-relaxed opacity-90 drop-shadow-lg">
                     Train faster with certified esports coaches. Get personalized feedback, strategy improvement, and mindset coaching for competitive games.
-                </p>
-            </div>
+                </motion.p>
+            </motion.div>
 
             {/* Coaches Grid */}
-            <div className="flex flex-wrap justify-center gap-2 relative z-10 px-4">
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: false, amount: 0.3 }}
+                className="flex flex-wrap justify-center gap-2 relative z-10 px-4"
+            >
                 {coachData.map((coach, index) => (
-                    <div
+                    <motion.div
                         key={index}
+                        variants={itemVariants}
                         className="w-[297px] h-[403px] glass-card rounded-[9px] border border-white/10 backdrop-blur-md bg-white/5 p-4 flex flex-col group hover:border-[#2BDFC8]/30 transition-all duration-500"
                     >
                         {/* Coach Photo */}
@@ -80,9 +117,9 @@ const Coaches = () => {
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
 
             {/* Footer Actions */}
             <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-10 relative z-10">

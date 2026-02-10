@@ -1,4 +1,28 @@
 import blogs_img from "../../../assets/images/vitrine_page_images/blogs.png";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.2,
+            delayChildren: 0.1
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.8,
+            ease: "easeOut"
+        }
+    }
+};
 
 const BlogSection = () => {
     return (
@@ -7,24 +31,30 @@ const BlogSection = () => {
             <div className="absolute top-[-300px] -left-20 w-[700px] h-[700px] bg-[#DD00B8] rounded-full blur-[180px] opacity-25 z-0"></div>
             <div className="absolute bottom-1/4 -right-24 w-[600px] h-[600px] bg-[#06F0F6] rounded-full blur-[150px] opacity-15 z-0"></div>
 
-            <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: false, amount: 0.3 }}
+                className="max-w-7xl mx-auto px-6 relative z-10 text-center"
+            >
                 {/* Header */}
                 <div className="mb-16">
-                    <h2 className="text-[62px] font-bold leading-[1.1] mb-6 tracking-tight uppercase">
+                    <motion.h2 variants={itemVariants} className="text-[62px] font-bold leading-[1.1] mb-6 tracking-tight uppercase">
                         <span
                             className="bg-clip-text text-transparent"
                             style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
                         >
                             BLOGS & NEWS
                         </span>
-                    </h2>
-                    <p className="text-white font-normal text-[20px] max-w-3xl mx-auto leading-relaxed opacity-80">
+                    </motion.h2>
+                    <motion.p variants={itemVariants} className="text-white font-normal text-[20px] max-w-3xl mx-auto leading-relaxed opacity-80">
                         Stay up to date with Gamefy events, community news, and esports content.
-                    </p>
+                    </motion.p>
                 </div>
 
                 {/* Featured Blog Card */}
-                <div className="relative w-full max-w-[1239px] mx-auto rounded-[5px] overflow-hidden group border border-white/5 shadow-2xl">
+                <motion.div variants={itemVariants} className="relative w-full max-w-[1239px] mx-auto rounded-[5px] overflow-hidden group border border-white/5 shadow-2xl">
                     <img
                         src={blogs_img}
                         alt="Gamefy x Pathe"
@@ -60,7 +90,7 @@ const BlogSection = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Carousel Indicators */}
                 {/* <div className="flex justify-center gap-3 mt-12">
@@ -69,7 +99,7 @@ const BlogSection = () => {
                 </div> */}
 
                 {/* Newsletter Section */}
-                <div className="mt-32 w-full max-w-[1239px] mx-auto relative z-10 px-4 flex justify-center">
+                <motion.div variants={itemVariants} className="mt-32 w-full max-w-[1239px] mx-auto relative z-10 px-4 flex justify-center">
                     <div
                         className="glass-card rounded-[20px] border border-white/10 backdrop-blur-3xl bg-white/5 px-12 flex flex-col lg:flex-row items-center justify-between gap-12"
                         style={{ width: '1238px', height: '196px' }}
@@ -100,8 +130,8 @@ const BlogSection = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
         </section>
     );
 };
