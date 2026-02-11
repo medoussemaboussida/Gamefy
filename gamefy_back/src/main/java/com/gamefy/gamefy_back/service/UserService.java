@@ -68,6 +68,24 @@ public class UserService {
         repository.delete(user);
     }
 
+    public User updateUserStatus(Long userId, Boolean enabled) {
+        User user = repository.findById(userId.intValue())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        // Update status based on enabled parameter
+        user.setStatus(enabled ? UserStatus.ACTIVE : UserStatus.INACTIVE);
+        User updatedUser = repository.save(user);
+        
+        // Send appropriate email notification
+        if (enabled) {
+            emailService.sendAccountActivatedEmail(user.getEmail());
+        } else {
+            emailService.sendAccountDisabledEmail(user.getEmail());
+        }
+        
+        return updatedUser;
+    }
+
     private String generateRandomPassword(int length) {
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
