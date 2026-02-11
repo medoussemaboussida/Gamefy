@@ -8,6 +8,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import PlayerDashboard from "./pages/player/PlayerDashboard";
 import CoachDashboard from "./pages/coach/CoachDashboard";
+import SignUpCoach from "./pages/auth/SignUpCoach";
+
 import './App.css'
 
 function App() {
@@ -27,6 +29,7 @@ function App() {
 
         {/* Auth pages usually don't have global Header/Footer */}
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/become-coach" element={<SignUpCoach />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
