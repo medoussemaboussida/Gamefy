@@ -51,6 +51,22 @@ public class AuthService {
         return userRepository.save(user);
     }
 
+    public User signupCoach(String firstName, String lastName, String email, String password) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
+        User user = new User();
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password)); // Encrypt password
+        user.setRole(Roles.COACH);
+        user.setStatus(UserStatus.INACTIVE); // Coach is inactive by default waiting for approval
+
+        // Save and return the user
+        return userRepository.save(user);
+    }
+
 
     public Map<String, String> login(String email, String password) {
         // Find user by email
