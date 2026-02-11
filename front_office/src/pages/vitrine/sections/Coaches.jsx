@@ -52,9 +52,9 @@ const Coaches = () => {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: false, amount: 0.3 }}
-                className="max-w-7xl mx-auto px-6 relative z-10 text-center pt-20 mb-20"
+                className="max-w-7xl mx-auto px-4 md:px-6 relative z-10 text-center pt-16 md:pt-20 mb-16 md:mb-20"
             >
-                <motion.h2 variants={itemVariants} className="text-[62px] font-bold leading-[1.1] mb-8 tracking-tight uppercase drop-shadow-2xl flex flex-col items-center">
+                <motion.h2 variants={itemVariants} className="text-4xl sm:text-5xl md:text-6xl lg:text-[62px] font-bold leading-[1.1] mb-6 md:mb-8 tracking-tight uppercase drop-shadow-2xl flex flex-col items-center">
                     <span
                         className="bg-clip-text text-transparent"
                         style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
@@ -69,7 +69,7 @@ const Coaches = () => {
                     </span>
                 </motion.h2>
 
-                <motion.p variants={itemVariants} className="text-white font-normal text-[20px] max-w-3xl mx-auto leading-relaxed opacity-90 drop-shadow-lg">
+                <motion.p variants={itemVariants} className="text-white font-normal text-base md:text-lg lg:text-[20px] max-w-3xl mx-auto leading-relaxed opacity-90 drop-shadow-lg">
                     Train faster with certified esports coaches. Get personalized feedback, strategy improvement, and mindset coaching for competitive games.
                 </motion.p>
             </motion.div>
@@ -80,13 +80,13 @@ const Coaches = () => {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: false, amount: 0.3 }}
-                className="flex flex-wrap justify-center gap-2 relative z-10 px-4"
+                className="flex flex-wrap justify-center gap-3 md:gap-4 lg:gap-2 relative z-10 px-4"
             >
                 {coachData.map((coach, index) => (
                     <motion.div
                         key={index}
                         variants={itemVariants}
-                        className="w-[297px] h-[403px] glass-card rounded-[9px] border border-white/10 backdrop-blur-md bg-white/5 p-4 flex flex-col group hover:border-[#2BDFC8]/30 transition-all duration-500"
+                        className="w-full sm:w-[280px] md:w-[290px] lg:w-[297px] h-auto min-h-[400px] md:min-h-[403px] glass-card rounded-[9px] border border-white/10 backdrop-blur-md bg-white/5 p-4 flex flex-col group hover:border-[#2BDFC8]/30 transition-all duration-500"
                     >
                         {/* Coach Photo */}
                         <div className="relative w-full h-[280px] rounded-[9px] overflow-hidden mb-5">

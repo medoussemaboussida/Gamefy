@@ -43,9 +43,9 @@ const Hero = () => {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: false, amount: 0.4 }}
-                className="max-w-7xl mx-auto px-4 text-center relative z-10 pt-[250px] flex flex-col items-center"
+                className="max-w-7xl mx-auto px-4 text-center relative z-10 pt-32 md:pt-40 lg:pt-[250px] flex flex-col items-center"
             >
-                <motion.h1 variants={itemVariants} className="text-[63px] leading-[1.1] mb-8 tracking-tight text-white uppercase drop-shadow-2xl">
+                <motion.h1 variants={itemVariants} className="text-4xl sm:text-5xl md:text-6xl lg:text-[63px] leading-[1.1] mb-6 md:mb-8 tracking-tight text-white uppercase drop-shadow-2xl">
                     <span
                         className="bg-clip-text text-transparent"
                         style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
@@ -62,7 +62,7 @@ const Hero = () => {
                     </span>
                 </motion.h1>
 
-                <motion.p variants={itemVariants} className="text-white font-['Lato'] font-normal text-[21px] max-w-4xl mx-auto mb-16 leading-relaxed drop-shadow-lg opacity-90">
+                <motion.p variants={itemVariants} className="text-white font-['Lato'] font-normal text-base md:text-lg lg:text-[21px] max-w-4xl mx-auto mb-12 md:mb-16 leading-relaxed drop-shadow-lg opacity-90">
                     Play in premium gaming rooms, train with pro coaches, and earn exclusive in-game rewards on your first login.
                 </motion.p>
 

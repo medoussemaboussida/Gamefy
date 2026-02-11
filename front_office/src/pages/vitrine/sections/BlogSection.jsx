@@ -36,11 +36,11 @@ const BlogSection = () => {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: false, amount: 0.3 }}
-                className="max-w-7xl mx-auto px-6 relative z-10 text-center"
+                className="max-w-7xl mx-auto px-4 md:px-6 relative z-10 text-center"
             >
                 {/* Header */}
-                <div className="mb-16">
-                    <motion.h2 variants={itemVariants} className="text-[62px] font-bold leading-[1.1] mb-6 tracking-tight uppercase">
+                <div className="mb-12 md:mb-16">
+                    <motion.h2 variants={itemVariants} className="text-4xl sm:text-5xl md:text-6xl lg:text-[62px] font-bold leading-[1.1] mb-4 md:mb-6 tracking-tight uppercase">
                         <span
                             className="bg-clip-text text-transparent"
                             style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
@@ -48,7 +48,7 @@ const BlogSection = () => {
                             BLOGS & NEWS
                         </span>
                     </motion.h2>
-                    <motion.p variants={itemVariants} className="text-white font-normal text-[20px] max-w-3xl mx-auto leading-relaxed opacity-80">
+                    <motion.p variants={itemVariants} className="text-white font-normal text-base md:text-lg lg:text-[20px] max-w-3xl mx-auto leading-relaxed opacity-80">
                         Stay up to date with Gamefy events, community news, and esports content.
                     </motion.p>
                 </div>
@@ -62,20 +62,20 @@ const BlogSection = () => {
                     />
 
                     {/* Content Overlay */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-10 md:p-16">
+                    <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-10 lg:p-16">
                         {/* Partnership Badge */}
-                        <div className="absolute top-8 left-8">
+                        <div className="absolute top-6 left-6 md:top-8 md:left-8">
                             <span className="px-4 py-1.5 border border-[#06F0F6] rounded-full text-[#06F0F6] text-[12px] font-bold uppercase tracking-widest bg-[#06F0F6]/10 backdrop-blur-md">
                                 PARTNERSHIP
                             </span>
                         </div>
 
-                        <div className="flex flex-col md:flex-row items-end justify-between gap-10">
+                        <div className="flex flex-col md:flex-row items-end justify-between gap-6 md:gap-10">
                             <div className="max-w-3xl text-left">
-                                <h3 className="text-[60px] font-bold leading-[1.1] mb-5 tracking-tight text-[#24003E] uppercase">
+                                <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-bold leading-[1.1] mb-3 md:mb-5 tracking-tight text-[#24003E] uppercase">
                                     GAMEFY X PATHE
                                 </h3>
-                                <p className="text-[#24003E] font-normal text-[16px] leading-relaxed max-w-2xl">
+                                <p className="text-[#24003E] font-normal text-sm md:text-base lg:text-[16px] leading-relaxed max-w-2xl">
                                     Gamefy collaborated with Pathé to organize a large-scale esports and gaming event, uniting the local gaming community in a premium venue designed for entertainment and competition.
                                 </p>
                             </div>
@@ -99,13 +99,13 @@ const BlogSection = () => {
                 </div> */}
 
                 {/* Newsletter Section */}
-                <motion.div variants={itemVariants} className="mt-32 w-full max-w-[1239px] mx-auto relative z-10 px-4 flex justify-center">
+                <motion.div variants={itemVariants} className="mt-24 md:mt-32 w-full max-w-[1239px] mx-auto relative z-10 px-4 flex justify-center">
                     <div
-                        className="glass-card rounded-[20px] border border-white/10 backdrop-blur-3xl bg-white/5 px-12 flex flex-col lg:flex-row items-center justify-between gap-12"
-                        style={{ width: '1238px', height: '196px' }}
+                        className="glass-card rounded-[20px] border border-white/10 backdrop-blur-3xl bg-white/5 px-6 md:px-10 lg:px-12 py-10 md:py-0 flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-12 w-full"
+                        style={{ minHeight: '196px' }}
                     >
-                        <div className="text-left">
-                            <h2 className="text-[40px] font-bold leading-tight mb-4 uppercase">
+                        <div className="text-left w-full lg:w-auto">
+                            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-bold leading-tight mb-3 md:mb-4 uppercase">
                                 <span
                                     className="bg-clip-text text-transparent"
                                     style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
@@ -113,7 +113,7 @@ const BlogSection = () => {
                                     SUBSCRIBE TO NEWSLETTER
                                 </span>
                             </h2>
-                            <p className="text-white text-[16px] font-normal leading-relaxed max-w-xl">
+                            <p className="text-white text-sm md:text-base lg:text-[16px] font-normal leading-relaxed max-w-xl">
                                 Share your experience, grow your reputation, and earn by coaching competitive players at Gamefy Academy.
                             </p>
                         </div>
