@@ -12,12 +12,12 @@ const Footer = () => {
             {/* Background Overlay to ensure readability */}
             <div className="absolute inset-0 bg-[#030014]/60 -z-10"></div>
 
-            <div className="max-w-[1500px] mx-auto px-10 relative z-10">
-                <div className="flex flex-col lg:flex-row justify-between items-start gap-16 mb-24">
+            <div className="max-w-[1500px] mx-auto px-4 md:px-6 lg:px-10 relative z-10">
+                <div className="flex flex-col lg:flex-row justify-between items-start gap-12 md:gap-16 mb-16 md:mb-24">
                     {/* Brand & Language */}
-                    <div className="flex flex-col items-start gap-12">
+                    <div className="flex flex-col items-start gap-8 md:gap-12">
                         <Link to="/">
-                            <img src={auth_logo} alt="Gamefy" className="w-[134px] h-[40.36px] object-contain" />
+                            <img src={auth_logo} alt="Gamefy" className="w-24 sm:w-28 md:w-[134px] h-auto object-contain" />
                         </Link>
 
                         <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-sm font-normal hover:bg-white/5 transition-colors">
@@ -30,7 +30,7 @@ const Footer = () => {
                     </div>
 
                     {/* Links Columns */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-12 lg:gap-24">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 lg:gap-24 w-full lg:w-auto">
                         {/* Gamefy Column */}
                         <div className="flex flex-col gap-6">
                             <h4 className="text-[#888] font-normal text-sm tracking-widest uppercase">Gamefy</h4>

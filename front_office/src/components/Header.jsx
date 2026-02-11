@@ -29,15 +29,14 @@ const Header = () => {
                 : "bg-transparent py-6"
                 }`}
         >
-            <div className="max-w-[1500px] mx-auto px-6 md:px-10">
+            <div className="max-w-[1500px] mx-auto px-4 md:px-6 lg:px-10">
                 <div className="flex justify-between items-center">
                     {/* Logo */}
                     <Link to="/" className="flex-shrink-0">
                         <img
                             src={logo}
                             alt="Gamefy"
-                            style={{ width: "134px", height: "40.36px" }}
-                            className="object-contain"
+                            className="w-24 sm:w-28 md:w-[134px] h-auto object-contain"
                         />
                     </Link>
 

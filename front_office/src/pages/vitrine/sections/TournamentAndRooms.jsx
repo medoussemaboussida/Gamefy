@@ -35,14 +35,14 @@ const TournamentAndRooms = () => {
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#06F0F6] rounded-full blur-[200px] opacity-10 z-0"></div>
 
       {/* --- Tournament Part --- */}
-      <div className="relative pt-24 pb-32 z-10 flex flex-col items-center">
-        <div className="max-w-7xl mx-auto px-6 w-full flex justify-center">
+      <div className="relative pt-16 md:pt-20 lg:pt-24 pb-24 md:pb-28 lg:pb-32 z-10 flex flex-col items-center">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 w-full flex justify-center">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, amount: 0.3 }}
-            className="relative w-[1239px] h-[591px] rounded-[50px] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] group"
+            className="relative w-full max-w-[1239px] min-h-[500px] md:min-h-[550px] lg:h-[591px] rounded-[30px] md:rounded-[40px] lg:rounded-[50px] overflow-hidden border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)] group"
           >
             {/* Main Image Background */}
             <div className="absolute inset-0 z-0">
@@ -55,11 +55,11 @@ const TournamentAndRooms = () => {
             </div>
 
             {/* Content Overlay */}
-            <div className="absolute inset-0 z-10 p-20 md:p-10 flex flex-col justify-end">
-              <div className="flex flex-col lg:flex-row justify-between items-end gap-10">
+            <div className="absolute inset-0 z-10 p-6 md:p-10 lg:p-20 flex flex-col justify-end">
+              <div className="flex flex-col lg:flex-row justify-between items-end gap-6 md:gap-8 lg:gap-10">
                 {/* Left Content */}
-                <div className="max-w-xl pb-4">
-                  <motion.h2 variants={itemVariants} className="text-[54px] font-bold leading-[1.1] mb-4 tracking-tight text-white uppercase drop-shadow-2xl">
+                <div className="max-w-xl pb-2 md:pb-4">
+                  <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-bold leading-[1.1] mb-3 md:mb-4 tracking-tight text-white uppercase drop-shadow-2xl">
                     <span
                       className="bg-clip-text text-transparent"
                       style={{
@@ -70,21 +70,21 @@ const TournamentAndRooms = () => {
                       TOURNAMENT NAME
                     </span>
                   </motion.h2>
-                  <motion.p variants={itemVariants} className="text-white font-regular text-[16px] mb-4 leading-relaxed drop-shadow-lg opacity-90 max-w-lg">
+                  <motion.p variants={itemVariants} className="text-white font-regular text-sm md:text-base lg:text-[16px] mb-3 md:mb-4 leading-relaxed drop-shadow-lg opacity-90 max-w-lg">
                     Play in high-end gaming rooms equipped with pro setups,
                     ergonomic chairs, and immersive lighting for the ultimate
                     gaming experience.
                   </motion.p>
 
                   <motion.div variants={itemVariants}>
-                    <button className="w-[196px] h-[64px] flex items-center justify-center bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-full font-medium text-[14px] text-white tracking-wide shadow-[0_0_30px_rgba(221,0,184,0.3)] hover:scale-105 transition-all uppercase">
+                    <button className="w-full sm:w-[180px] md:w-[196px] h-[56px] md:h-[64px] flex items-center justify-center bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-full font-medium text-sm md:text-[14px] text-white tracking-wide shadow-[0_0_30px_rgba(221,0,184,0.3)] hover:scale-105 transition-all uppercase">
                       Tournament Details
                     </button>
                   </motion.div>
                 </div>
 
                 {/* Countdown Card */}
-                <motion.div variants={itemVariants} className="bg-black/10 backdrop-blur-xl p-8 rounded-[35px] min-w-[340px] text-center mb-3">
+                <motion.div variants={itemVariants} className="bg-black/10 backdrop-blur-xl p-6 md:p-8 rounded-[25px] md:rounded-[35px] min-w-[280px] sm:min-w-[320px] md:min-w-[340px] text-center mb-2 md:mb-3">
                   <p className="text-white/60 text-[11px] font-medium uppercase tracking-[0.3em] mb-6">
                     Tournament Start in:
                   </p>
@@ -126,12 +126,12 @@ const TournamentAndRooms = () => {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: false, amount: 0.3 }}
-        className="relative pt-20 pb-24 z-10"
+        className="relative pt-16 md:pt-20 pb-20 md:pb-24 z-10"
       >
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
           {/* Header */}
-          <div className="mb-12">
-            <motion.h2 variants={itemVariants} className="text-[54px] font-bold leading-[1] mb-6 tracking-tight text-white uppercase">
+          <div className="mb-10 md:mb-12">
+            <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-bold leading-[1] mb-4 md:mb-6 tracking-tight text-white uppercase">
               DISCOVER{" "}
               <span
                 className="bg-clip-text text-transparent"
@@ -143,7 +143,7 @@ const TournamentAndRooms = () => {
                 OUR ROOMS
               </span>
             </motion.h2>
-            <motion.p variants={itemVariants} className="text-white font-regular text-20 max-w-2xl leading-relaxed opacity-80">
+            <motion.p variants={itemVariants} className="text-white font-regular text-base md:text-lg lg:text-20 max-w-2xl leading-relaxed opacity-80">
               Play in high-end gaming rooms equipped with pro setups, ergonomic
               chairs, and immersive lighting for the ultimate gaming experience.
             </motion.p>
