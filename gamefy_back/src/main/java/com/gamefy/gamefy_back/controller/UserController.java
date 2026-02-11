@@ -35,4 +35,13 @@ public class UserController {
         service.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<User> updateUserStatus(
+            @PathVariable Long id,
+            @RequestParam Boolean enabled) {
+        User updatedUser = service.updateUserStatus(id, enabled);
+        return ResponseEntity.ok(updatedUser);
+    }
 }

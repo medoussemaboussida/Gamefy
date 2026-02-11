@@ -25,4 +25,9 @@ export const userApi = {
     deleteUser: async (id: number): Promise<void> => {
         return apiClient.delete(`/gamefy/users/${id}`);
     },
+    updateUserStatus: async (id: number, enabled: boolean): Promise<UserResponseDto> => {
+        return apiClient.put(`/gamefy/users/${id}/status`, null, {
+            params: { enabled }
+        });
+    },
 };
