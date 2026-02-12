@@ -245,16 +245,16 @@ export default function UserManagement() {
                 ))}
               </Dropdown>
             </div>
-
-            {/* Add User Button */}
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              variant="primary"
-              size="sm"
-              className="ml-auto"
-            >
-              Create Accounts
-            </Button>
+            <div className="relative">
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                variant="primary"
+                size="sm"
+                className="ml-auto"
+              >
+                Create Accounts
+              </Button>
+            </div>
           </div>
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
             <div className="max-w-full overflow-x-auto">
