@@ -1,6 +1,8 @@
 package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.CreateUserDto;
+import com.gamefy.gamefy_back.dto.UpdateProfileDto;
+import com.gamefy.gamefy_back.dto.UpdateProfileDto;
 import com.gamefy.gamefy_back.emailManager.EmailService;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.enums.Roles;
@@ -84,6 +86,31 @@ public class UserService {
         }
         
         return updatedUser;
+    }
+
+    public User getUserById(Integer id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+
+    public User updateProfile(Integer userId, UpdateProfileDto request) {
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+        }
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        if (request.getProfilePhoto() != null) {
+            user.setProfilePhoto(request.getProfilePhoto());
+        }
+
+        return repository.save(user);
     }
 
     private String generateRandomPassword(int length) {
