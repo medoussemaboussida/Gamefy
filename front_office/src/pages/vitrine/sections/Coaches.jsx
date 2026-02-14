@@ -5,6 +5,7 @@ import coach2 from "../../../assets/images/vitrine_page_images/coaches/coach_2.p
 import coach3 from "../../../assets/images/vitrine_page_images/coaches/coach_3.png";
 import coach4 from "../../../assets/images/vitrine_page_images/coaches/coach_4.png";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -36,7 +37,7 @@ const Coaches = () => {
         { name: 'Foulen "Skream" Foulen', game: "League Of Legends", tag: "TFT", img: coach3 },
         { name: 'Foulen "Heisen" Foulen', game: "League Of Legends", tag: "TFT", img: coach4 },
     ];
-
+const navigate = useNavigate();
     return (
         <section className="relative py-24 min-h-[1200px] flex flex-col items-center overflow-hidden font-['Inter']">
             {/* Background Image & Overlay */}
@@ -138,6 +139,7 @@ const Coaches = () => {
             <div className="mt-24 w-full max-w-[1239px] relative z-10 px-4">
                 <div className="glass-card rounded-[20px] border border-white/10 backdrop-blur-xl bg-white/5 p-12 flex flex-col md:flex-row items-center justify-between gap-10">
                     <div className="max-w-3xl">
+                        
                         <h2 className="text-[62px] font-bold leading-tight mb-4 uppercase">
                             <span
                                 className="bg-clip-text text-transparent"
@@ -150,7 +152,7 @@ const Coaches = () => {
                             Share your experience, grow your reputation, and earn by coaching competitive players at Gamefy Academy.
                         </p>
                     </div>
-                    <button className="bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] text-white px-12 py-5 rounded-full font-medium text-[16px] tracking-wide shadow-[0_0_30px_rgba(221,0,184,0.3)] hover:scale-105 transition-all uppercase whitespace-nowrap">
+                    <button className="bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] text-white px-12 py-5 rounded-full font-medium text-[16px] tracking-wide shadow-[0_0_30px_rgba(221,0,184,0.3)] hover:scale-105 transition-all uppercase whitespace-nowrap" onClick={() => navigate("/become-coach")}>
                         Login To Apply
                     </button>
                 </div>

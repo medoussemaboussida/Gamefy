@@ -41,6 +41,26 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/signup/coach")
+    public ResponseEntity<?> signupCoach(@RequestBody SignupDto request) {
+        try {
+            User user = service.signupCoach(
+                request.getFirstName(),
+                request.getLastName(),
+                request.getEmail(),
+                request.getPassword()
+            );
+            return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        } catch (RuntimeException e) {
+            if ("Email already exists".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Email already exists"));
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @RequestBody LoginDto request,

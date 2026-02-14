@@ -86,4 +86,12 @@ export const authApi = {
     googleLogin: async (dto) => {
         return apiClient.post("/gamefy/auth/google", dto);
     },
+    
+        /**
+     * @param {SignUpRequestDto} dto
+     * @returns {Promise<AuthResponseDto>}
+     */
+    signUpCoach: async (dto) => {
+        return apiClient.post("/gamefy/auth/signup/coach", dto);
+    },
 };
