@@ -15,10 +15,14 @@ import logoCollapsed from "../assets/images/logo_collapsed.png";
 import { authApi } from "../api/auth";
 import toast from "react-hot-toast";
 
+import { getUserId } from "../utils/jwt";
+import { profileApi } from "../api/profile";
+
 const Sidebar = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [user, setUser] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -29,7 +33,21 @@ const Sidebar = () => {
       setIsMobile(mobile);
       if (!mobile) setIsMobileOpen(false);
     };
+
+    const fetchUser = async () => {
+      const userId = getUserId();
+      if (userId) {
+        try {
+          const data = await profileApi.getProfile(userId);
+          setUser(data);
+        } catch (error) {
+          console.error("Sidebar user fetch failed", error);
+        }
+      }
+    };
+
     window.addEventListener("resize", handleResize);
+    fetchUser();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -77,6 +95,10 @@ const Sidebar = () => {
       navigate("/signin");
     }
   };
+
+  const profilePhotoUrl = user?.profilePhoto
+    ? (user.profilePhoto.startsWith("http") ? user.profilePhoto : `http://localhost:8080/api${user.profilePhoto.startsWith("/") ? "" : "/"}${user.profilePhoto}`)
+    : null;
 
   const SidebarContent = (
     <div
@@ -140,11 +162,15 @@ const Sidebar = () => {
       {/* User Info Section */}
       <div className="w-full space-y-4 px-3 mt-auto pt-6 border-t border-white/5">
         <button
-          onClick={() => handleItemClick("/player/profile")}
-          className={`w-full flex items-center p-3 rounded-full text-[#1CF3CA] hover:bg-[#1CF3CA] hover:text-black transition-all ${!isHovered && !isMobile ? "justify-center" : "justify-start px-6 gap-4"}`}
+          onClick={() => handleItemClick("/profile")}
+          className={`w-full flex items-center p-3 rounded-full text-[#1CF3CA] hover:bg-[#1CF3CA] hover:text-black transition-all group ${!isHovered && !isMobile ? "justify-center" : "justify-start px-6 gap-4"}`}
         >
-          <div className="w-8 flex justify-center flex-shrink-0">
-            <User size={20} className="text-[#1CF3CA] group-hover:text-black transition-colors" />
+          <div className="w-8 h-8 flex justify-center flex-shrink-0 overflow-hidden rounded-full border border-[#1CF3CA]/30">
+            {profilePhotoUrl ? (
+              <img src={profilePhotoUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <User size={20} className="text-[#1CF3CA] group-hover:text-black transition-colors" />
+            )}
           </div>
           <span
             className={`font-['Inter'] font-medium text-[14px] whitespace-nowrap transition-all duration-300 ${!isMobile && !isHovered
@@ -152,13 +178,13 @@ const Sidebar = () => {
               : "opacity-100"
               }`}
           >
-            DAHMAX
+            {user ? `${user.firstName} ${user.lastName}` : "Loading..."}
           </span>
         </button>
 
         <button
           onClick={handleLogout}
-          className={`w-full flex items-center p-3 rounded-full text-[#1CF3CA] hover:bg-[#1CF3CA] hover:text-black transition-all ${!isHovered && !isMobile ? "justify-center" : "justify-start px-6 gap-4"}`}
+          className={`w-full flex items-center p-3 rounded-full text-[#1CF3CA] hover:bg-[#1CF3CA] hover:text-black transition-all group ${!isHovered && !isMobile ? "justify-center" : "justify-start px-6 gap-4"}`}
         >
           <div className="w-8 flex justify-center flex-shrink-0">
             <LogOut size={20} className="text-[#1CF3CA] group-hover:text-black transition-colors" />

@@ -10,7 +10,7 @@ import PlayerDashboard from "./pages/player/PlayerDashboard";
 import CoachDashboard from "./pages/coach/CoachDashboard";
 import SignUpCoach from "./pages/auth/SignUpCoach";
 
-import './App.css'
+import ProfilePage from "./pages/profile";
 
 function App() {
   return (
@@ -26,6 +26,8 @@ function App() {
             <Footer />
           </>
         } />
+
+        <Route path="/profile" element={<ProfilePage />} />
 
         {/* Auth pages usually don't have global Header/Footer */}
         <Route path="/signin" element={<SignIn />} />

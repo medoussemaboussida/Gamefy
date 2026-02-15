@@ -1,0 +1,254 @@
+import React, { useState, useEffect, useRef } from "react";
+import Sidebar from "../components/Sidebar";
+import { useNavigate } from "react-router-dom";
+import { User, Mail, Shield, Camera, Edit2, Loader2, ChevronRight, LogOut, Search, Bell } from "lucide-react";
+import toast from "react-hot-toast";
+import { profileApi } from "../api/profile";
+import { authApi } from "../api/auth";
+import { getUserId } from "../utils/jwt";
+import ProfileForm from "../modals/ProfileForm";
+
+const ProfilePage = () => {
+    const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const fetchProfile = async () => {
+        const userId = getUserId();
+        if (!userId) {
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const data = await profileApi.getProfile(userId);
+            setUser(data);
+        } catch (error) {
+            toast.error("Failed to load profile");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProfile();
+    }, []);
+
+    const handleLogout = async () => {
+        try {
+            await authApi.logout();
+        } catch (error) {
+            console.error("Logout failed", error);
+        } finally {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("userRole");
+            localStorage.removeItem("userId");
+            navigate("/");
+            toast.success("Signed out successfully");
+        }
+    };
+
+    const handlePhotoClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error("Please upload a PNG or JPG image");
+            return;
+        }
+
+        const loadingToast = toast.loading("Uploading photo...", {
+            style: {
+                background: '#24003E',
+                color: '#1CF3CA',
+                border: '1px solid rgba(28, 243, 202, 0.3)',
+            }
+        });
+
+        try {
+            const updatedUser = await profileApi.uploadPhoto(file);
+            setUser(updatedUser);
+            toast.success("Photo updated successfully!", { id: loadingToast });
+        } catch (error) {
+            toast.error(error.message || "Upload failed", { id: loadingToast });
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-[#24003E] flex items-center justify-center">
+                <Loader2 size={48} className="text-[#1CF3CA] animate-spin" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-[#24003E] flex items-center justify-center text-white">
+                <p>Please sign in to view your profile.</p>
+            </div>
+        );
+    }
+
+    const profilePhotoUrl = user.profilePhoto
+        ? (user.profilePhoto.startsWith("http") ? user.profilePhoto : `http://localhost:8080/api${user.profilePhoto.startsWith("/") ? "" : "/"}${user.profilePhoto}`)
+        : null;
+
+    return (
+        <div className="min-h-screen bg-[#24003E] flex overflow-hidden font-sans">
+            <Sidebar />
+
+            <main className="flex-1 md:ml-[88px] px-10 md:px-12 pt-8 pb-12 transition-all duration-300 overflow-y-auto">
+                <div className="max-w-[1400px] mx-auto space-y-12">
+
+                    {/* Dashboard Style Header */}
+                    <header className="flex flex-col md:flex-row items-center justify-between w-full gap-6 md:gap-0">
+                        <h2 className="text-white text-[18px] font-bold font-['Inter'] self-start md:self-auto pl-14 md:pl-0">
+                            User Profile
+                        </h2>
+
+                        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
+                            <div className="relative group flex-1 md:flex-none">
+                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                    <Search size={18} className="text-[#1CF3CA]" />
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Search"
+                                    className="w-full md:w-[380px] h-[40px] bg-transparent border border-[#1CF3CA]/40 rounded-full pl-11 pr-4 text-white text-[14px] font-medium font-['Inter'] placeholder:text-white/40 focus:outline-none focus:border-[#1CF3CA] transition-all"
+                                />
+                            </div>
+                            <button className="relative p-2 text-[#1CF3CA] hover:bg-white/5 rounded-full transition-all flex-shrink-0">
+                                <Bell size={24} />
+                                <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF89EB] rounded-full"></span>
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Profile Banner Section */}
+                    <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-[50px] blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                        <div className="relative bg-[#320141] border border-white/5 rounded-[50px] p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 md:gap-12 overflow-hidden shadow-2xl">
+                            {/* Photo Section */}
+                            <div className="relative">
+                                <div className="w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-[#1CF3CA] overflow-hidden bg-gray-950 shadow-2xl">
+                                    {profilePhotoUrl ? (
+                                        <img src={profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-white/20">
+                                            <User size={64} />
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={handlePhotoClick}
+                                    className="absolute bottom-2 right-2 p-3 bg-[#1CF3CA] hover:bg-[#19d4b0] text-black rounded-full shadow-xl transition-all active:scale-90"
+                                >
+                                    <Camera size={20} />
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    hidden
+                                    accept="image/*"
+                                />
+                            </div>
+
+                            {/* Info Section */}
+                            <div className="flex-grow text-center md:text-left space-y-4">
+                                <h1 className="text-[32px] md:text-[54px] font-black font-['Inter'] leading-tight md:leading-none tracking-tight uppercase">
+                                    <span className="bg-gradient-to-r from-white to-[#2BDFC8] bg-clip-text text-transparent">
+                                        {user.firstName} <br className="md:hidden" /> {user.lastName}
+                                    </span>
+                                </h1>
+                                <p className="text-white text-lg flex items-center justify-center md:justify-start text-[16px] gap-2 font-['Inter']">
+                                    <Mail size={18} className="text-[#2BDFC8]" />
+                                    {user.email}
+                                </p>
+
+                                <div className="pt-4 flex flex-wrap justify-center md:justify-start gap-4">
+                                    <button
+                                        onClick={() => setIsModalOpen(true)}
+                                        className="inline-flex items-center gap-2 px-8 py-3 bg-[#1CF3CA]/10 hover:bg-[#1CF3CA]/20 border border-[#1CF3CA]/30 text-[#1CF3CA] rounded-full font-medium transition-all"
+                                    >
+                                        <Edit2 size={18} />
+                                        Edit Details
+                                    </button>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="inline-flex items-center gap-2 px-8 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 rounded-full font-medium transition-all"
+                                    >
+                                        <LogOut size={18} />
+                                        Sign Out
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Stats / Detailed Info Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Security Card */}
+                        <div className="bg-[#582167] border border-white/5 rounded-[32px] p-8 space-y-6 group hover:border-[#1CF3CA]/30 transition-all">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-white/5 rounded-2xl">
+                                        <Shield className="text-[#1CF3CA]" size={24} />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white font-['Inter']">Account Safety</h3>
+                                </div>
+                                <span className="text-xs text-[#1CF3CA] uppercase font-black tracking-widest font-['Inter'] opacity-70">Secure</span>
+                            </div>
+
+                            <div className="space-y-4 pt-2">
+                                <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+                                    <span className="text-white/60 font-medium">Account Role</span>
+                                    <span className="text-[#FF89EB] font-bold text-sm uppercase">{user.role}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Activity Overview */}
+                        <div className="bg-[#582167] border border-white/5 rounded-[32px] p-8 space-y-6 group hover:border-[#1CF3CA]/30 transition-all">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-white/5 rounded-2xl">
+                                        <ChevronRight className="text-[#DD00B8]" size={24} />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white font-['Inter']">Gaming Status</h3>
+                                </div>
+                                <span className="text-[#DD00B8] font-black text-xs uppercase tracking-widest font-['Inter']">Active</span>
+                            </div>
+
+                            <div className="space-y-4 pt-2">
+                                <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+                                    <span className="text-white/60 font-medium">Member Since</span>
+                                    <span className="text-white/40 text-sm">Jan 2024</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            {/* Edit Modal */}
+            {isModalOpen && (
+                <ProfileForm
+                    user={user}
+                    onClose={() => setIsModalOpen(false)}
+                    onUpdate={(updatedUser) => setUser(updatedUser)}
+                />
+            )}
+        </div>
+    );
+};
+
+export default ProfilePage;

@@ -1,10 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { Search, Bell, CircleDot } from 'lucide-react';
 import roomImg from '../../assets/images/room.png';
 import eventImg from '../../assets/images/event.png';
+import { getUserId } from '../../utils/jwt';
+import { profileApi } from '../../api/profile';
 
 const PlayerDashboard = () => {
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const userId = getUserId();
+            if (userId) {
+                try {
+                    const data = await profileApi.getProfile(userId);
+                    setUser(data);
+                } catch (error) {
+                    console.error("Dashboard user fetch failed", error);
+                }
+            }
+        };
+        fetchUser();
+    }, []);
+
     const features = [
         "High-End PCs",
         "Pro Headsets",
@@ -70,11 +89,10 @@ const PlayerDashboard = () => {
                         </div>
                     </header>
 
-                    {/* Welcome Section */}
                     <div className="flex justify-center text-center w-full px-4">
                         <h1 className="text-[32px] md:text-[64px] font-black font-['Inter'] leading-tight md:leading-none tracking-tight">
-                            <span className="bg-gradient-to-r from-white to-[#2BDFC8] bg-clip-text text-transparent">
-                                WELCOME BACK , <br className="md:hidden" /> DAHMAX !
+                            <span className="bg-gradient-to-r from-white to-[#2BDFC8] bg-clip-text text-transparent uppercase">
+                                WELCOME BACK , <br className="md:hidden" /> {user ? user.firstName : "..."} !
                             </span>
                         </h1>
                     </div>
