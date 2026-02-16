@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gamefy.gamefy_back.model.enums.Roles;
 import com.gamefy.gamefy_back.model.enums.UserStatus;
 import jakarta.persistence.*;
@@ -62,6 +63,7 @@ public class User implements UserDetails {
     @Column(name = "2fa_token")
     private String twoFaToken;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "coach", cascade = CascadeType.ALL, orphanRemoval = true)
     private CoachProfile coachProfile;
 

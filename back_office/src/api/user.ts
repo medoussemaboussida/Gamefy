@@ -17,6 +17,15 @@ export interface UserResponseDto {
     profilePhoto: string | null;
 }
 
+export interface CoachProfileDto {
+    id: number;
+    coachId: number;
+    firstName: string;
+    lastName: string;
+    game: string;
+    hourlyPrice: number;
+}
+
 export const userApi = {
     getAllUsers: async (): Promise<UserResponseDto[]> => {
         return apiClient.get("/gamefy/users");
@@ -34,6 +43,15 @@ export const userApi = {
     },
     getUserById: async (id: number): Promise<UserResponseDto> => {
         return apiClient.get(`/gamefy/users/${id}`);
+    },
+    getCoachProfile: async (userId: number): Promise<CoachProfileDto> => {
+        return apiClient.get(`/gamefy/coaches/profile/${userId}`);
+    },
+    adminUpdateCoachProfile: async (userId: number, dto: { game: string; hourlyPrice: number }): Promise<CoachProfileDto> => {
+        return apiClient.put(`/gamefy/coaches/profile/${userId}`, dto);
+    },
+    adminDeleteCoachProfile: async (userId: number): Promise<void> => {
+        return apiClient.delete(`/gamefy/coaches/profile/${userId}`);
     },
     updateProfile: async (dto: any): Promise<UserResponseDto> => {
         return apiClient.put("/gamefy/users/profile", dto);

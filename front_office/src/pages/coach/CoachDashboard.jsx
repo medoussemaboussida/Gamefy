@@ -1,8 +1,32 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
-import { Search, Bell, MoreHorizontal, ChevronDown } from "lucide-react";
+import { Search, Bell, MoreHorizontal, ChevronDown, Gamepad2, Banknote, Edit3, PlusCircle } from "lucide-react";
+import { coachProfileApi } from "../../api/coach_profile";
+import CoachProfileForm from "../../modals/CoachProfileForm";
+import toast from "react-hot-toast";
 
 const CoachDashboard = () => {
+  const [profile, setProfile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchProfile = async () => {
+    try {
+      const data = await coachProfileApi.getMyProfile();
+      setProfile(data);
+    } catch (error) {
+      if (error.message !== "Coach profile not found for user ID: " + localStorage.getItem("userId")) {
+        console.error("Failed to load coach profile", error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
   const sessions = [
     {
       id: 1,
@@ -42,7 +66,6 @@ const CoachDashboard = () => {
             </h2>
 
             <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
-              {/* Search Bar */}
               <div className="relative group flex-1 md:flex-none">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                   <Search size={18} className="text-[#1CF3CA]" />
@@ -54,7 +77,6 @@ const CoachDashboard = () => {
                 />
               </div>
 
-              {/* Notification Icon */}
               <button className="relative p-2 text-[#1CF3CA] hover:bg-white/5 rounded-full transition-all flex-shrink-0">
                 <Bell size={24} />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF89EB] rounded-full"></span>
@@ -63,7 +85,7 @@ const CoachDashboard = () => {
           </header>
 
           {/* Stats Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 w-full">
             {/* Sessions Card */}
             <div className="bg-[#582167] border border-white/5 rounded-[32px] p-8 relative h-[137px] flex flex-col justify-between group hover:border-[#1CF3CA]/30 transition-all">
               <div className="flex justify-between items-center">
@@ -89,6 +111,40 @@ const CoachDashboard = () => {
                 55
               </div>
             </div>
+
+            {/* Coach Profile Card */}
+            <div className={`bg-[#320141] border ${profile ? 'border-[#1CF3CA]/20' : 'border-dashed border-white/20'} rounded-[32px] p-8 relative h-[137px] flex flex-col justify-center group hover:border-[#1CF3CA]/40 transition-all overflow-hidden`}>
+              {profile ? (
+                <div className="flex items-center justify-between w-full">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-white/60 text-xs font-bold uppercase tracking-widest">
+                      <Gamepad2 size={14} className="text-[#1CF3CA]" /> {profile.game}
+                    </div>
+                    <div className="text-white text-[24px] font-black font-['Inter'] flex items-baseline gap-1">
+                      {profile.hourlyPrice} <span className="text-[14px] text-white/40 font-medium">TND/hr</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="p-3 bg-[#1CF3CA]/10 text-[#1CF3CA] rounded-2xl hover:bg-[#1CF3CA] hover:text-black transition-all shadow-lg shadow-[#1CF3CA]/5"
+                  >
+                    <Edit3 size={20} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="w-full h-full flex flex-col items-center justify-center gap-3 group/btn"
+                >
+                  <PlusCircle size={32} className="text-[#1CF3CA] group-hover/btn:scale-110 transition-transform" />
+                  <span className="text-white/60 text-[14px] font-bold font-['Inter'] group-hover/btn:text-white transition-colors">
+                    Create your coaching profile now
+                  </span>
+                </button>
+              )}
+              {/* Background Glow Effect */}
+              {profile && <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-[#1CF3CA] blur-[60px] opacity-10"></div>}
+            </div>
           </div>
 
           {/* Latest Coaching Sessions Section */}
@@ -104,9 +160,6 @@ const CoachDashboard = () => {
 
             <div className="overflow-x-auto w-full">
               <table className="w-full border-collapse">
-                <thead>
-                  {/* Optional: Add headers if needed, but screenshot shows a list style */}
-                </thead>
                 <tbody>
                   {sessions.map((session, index) => (
                     <tr
@@ -137,6 +190,14 @@ const CoachDashboard = () => {
           </div>
         </div>
       </main>
+
+      {isModalOpen && (
+        <CoachProfileForm
+          profile={profile}
+          onClose={() => setIsModalOpen(false)}
+          onSave={(newProfile) => setProfile(newProfile)}
+        />
+      )}
     </div>
   );
 };

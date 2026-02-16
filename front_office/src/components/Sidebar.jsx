@@ -15,7 +15,7 @@ import logoCollapsed from "../assets/images/logo_collapsed.png";
 import { authApi } from "../api/auth";
 import toast from "react-hot-toast";
 
-import { getUserId } from "../utils/jwt";
+import { getUserId, getUserRole } from "../utils/jwt";
 import { profileApi } from "../api/profile";
 
 const Sidebar = () => {
@@ -51,8 +51,9 @@ const Sidebar = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const role = getUserRole();
   const navItems = [
-    { name: "Dashboard", icon: LayoutDashboard, path: "/player/dashboard" },
+    { name: "Dashboard", icon: LayoutDashboard, path: role === "COACH" ? "/coach/dashboard" : "/player/dashboard" },
     { name: "Rooms", icon: Monitor, path: "/player/rooms" },
     { name: "Events", icon: Calendar, path: "/player/events" },
     { name: "Packs", icon: Gift, path: "/player/packs" },
@@ -169,7 +170,7 @@ const Sidebar = () => {
             {profilePhotoUrl ? (
               <img src={profilePhotoUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              <User size={20} className="text-[#1CF3CA] group-hover:text-black transition-colors" />
+              <User size={20} className="text-[#1CF3CA] group-hover:text-black transition-colors mt-1" />
             )}
           </div>
           <span
