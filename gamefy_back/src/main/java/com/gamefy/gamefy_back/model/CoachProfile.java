@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class CoachProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "coach_id", nullable = false, unique = true)
     private User coach;
