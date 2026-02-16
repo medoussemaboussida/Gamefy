@@ -16,9 +16,10 @@ import toast from "react-hot-toast";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
-import { ChevronDownIcon, PlusIcon, TrashBinIcon } from "../icons";
+import { ChevronDownIcon, TrashBinIcon } from "../icons";
 import AddUserModal from "../components/modals/addUser";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
+import CoachProfileModal from "../components/modals/CoachProfileModal";
 
 interface User {
   id: number;
@@ -44,6 +45,8 @@ export default function UserManagement() {
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(
     null,
   );
+  const [isCoachModalOpen, setIsCoachModalOpen] = useState(false);
+  const [selectedCoach, setSelectedCoach] = useState<User | null>(null);
 
   const currentUserRole = getUserRole();
   const currentUserId = getUserId();
@@ -173,9 +176,8 @@ export default function UserManagement() {
                 className="w-40 dropdown-toggle"
                 endIcon={
                   <ChevronDownIcon
-                    className={`w-5 h-5 transition-transform duration-200 ${
-                      isRoleOpen ? "rotate-180" : ""
-                    }`}
+                    className={`w-5 h-5 transition-transform duration-200 ${isRoleOpen ? "rotate-180" : ""
+                      }`}
                   />
                 }
               >
@@ -193,11 +195,10 @@ export default function UserManagement() {
                       setSelectedRole(option.value);
                       setIsRoleOpen(false);
                     }}
-                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${
-                      selectedRole === option.value
-                        ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
-                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
-                    }`}
+                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${selectedRole === option.value
+                      ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
+                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+                      }`}
                   >
                     {option.label}
                   </DropdownItem>
@@ -214,9 +215,8 @@ export default function UserManagement() {
                 className="w-40 dropdown-toggle"
                 endIcon={
                   <ChevronDownIcon
-                    className={`w-5 h-5 transition-transform duration-200 ${
-                      isStatusOpen ? "rotate-180" : ""
-                    }`}
+                    className={`w-5 h-5 transition-transform duration-200 ${isStatusOpen ? "rotate-180" : ""
+                      }`}
                   />
                 }
               >
@@ -234,11 +234,10 @@ export default function UserManagement() {
                       setSelectedStatus(option.value);
                       setIsStatusOpen(false);
                     }}
-                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${
-                      selectedStatus === option.value
-                        ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
-                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
-                    }`}
+                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${selectedStatus === option.value
+                      ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
+                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+                      }`}
                   >
                     {option.label}
                   </DropdownItem>
@@ -285,6 +284,14 @@ export default function UserManagement() {
                     >
                       Status
                     </TableCell>
+                    {(isAdmin || currentUserRole === "WEB_MASTER") && (
+                      <TableCell
+                        isHeader
+                        className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                      >
+                        Coach Profile
+                      </TableCell>
+                    )}
                     {isAdmin && (
                       <TableCell
                         isHeader
@@ -332,7 +339,7 @@ export default function UserManagement() {
                         </TableCell>
                         <TableCell className="px-5 py-4 text-gray-900 text-start text-theme-sm dark:text-gray-400">
                           {(isAdmin || currentUserRole === "WEB_MASTER") &&
-                          currentUserId !== user.id ? (
+                            currentUserId !== user.id ? (
                             <div className="relative">
                               <button
                                 onClick={() =>
@@ -392,6 +399,24 @@ export default function UserManagement() {
                             </Badge>
                           )}
                         </TableCell>
+                        {(isAdmin || currentUserRole === "WEB_MASTER") && (
+                          <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                            {user.role === "COACH" ? (
+                              <button
+                                onClick={() => {
+                                  setSelectedCoach(user);
+                                  setIsCoachModalOpen(true);
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white transition-all group"
+                                title="View Coaching Profile"
+                              >
+                                <span>Profile</span>
+                              </button>
+                            ) : (
+                              <span className="text-gray-400 italic text-xs">N/A</span>
+                            )}
+                          </TableCell>
+                        )}
                         {isAdmin && (
                           <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                             {currentUserId !== null &&
@@ -439,6 +464,19 @@ export default function UserManagement() {
         }
         loading={deleteLoading}
       />
+
+      {selectedCoach && (
+        <CoachProfileModal
+          isOpen={isCoachModalOpen}
+          onClose={() => {
+            setIsCoachModalOpen(false);
+            setSelectedCoach(null);
+          }}
+          userId={selectedCoach.id}
+          userName={`${selectedCoach.firstName} ${selectedCoach.lastName}`}
+          isAdmin={isAdmin}
+        />
+      )}
     </>
   );
 }
