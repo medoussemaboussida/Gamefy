@@ -5,9 +5,11 @@ import { useSidebar } from "../context/SidebarContext";
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import NotificationDropdown from "../components/header/NotificationDropdown";
 import UserDropdown from "../components/header/UserDropdown";
+import WorkDaysScheduleModal from "../components/modals/WorkDaysScheduleModal";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const [isWorkDaysModalOpen, setIsWorkDaysModalOpen] = useState(false);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -88,15 +90,15 @@ const AppHeader: React.FC = () => {
               className="dark:hidden"
               src="./images/logo/light_logo.png"
               alt="Logo"
-               width={150}
-               height={50}
+              width={150}
+              height={50}
             />
             <img
               className="hidden dark:block"
               src="./images/logo/auth_logo.png"
               alt="Logo"
-               width={150}
-               height={50}
+              width={150}
+              height={50}
             />
           </Link>
 
@@ -156,11 +158,16 @@ const AppHeader: React.FC = () => {
           </div>
         </div>
         <div
-          className={`${
-            isApplicationMenuOpen ? "flex" : "hidden"
-          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          className={`${isApplicationMenuOpen ? "flex" : "hidden"
+            } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
+            <button
+              onClick={() => setIsWorkDaysModalOpen(true)}
+              className="flex items-center justify-center h-10 px-4 text-sm font-medium transition-colors border border-gray-200 rounded-lg dark:border-gray-800 text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+            >
+              Fix work days
+            </button>
             {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />
             {/* <!-- Dark Mode Toggler --> */}
@@ -171,6 +178,10 @@ const AppHeader: React.FC = () => {
           <UserDropdown />
         </div>
       </div>
+      <WorkDaysScheduleModal
+        isOpen={isWorkDaysModalOpen}
+        onClose={() => setIsWorkDaysModalOpen(false)}
+      />
     </header>
   );
 };
