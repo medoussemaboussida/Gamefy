@@ -6,10 +6,12 @@ import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import NotificationDropdown from "../components/header/NotificationDropdown";
 import UserDropdown from "../components/header/UserDropdown";
 import WorkDaysScheduleModal from "../components/modals/WorkDaysScheduleModal";
+import FixedPriceModal from "../components/modals/FixedPriceModal";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const [isWorkDaysModalOpen, setIsWorkDaysModalOpen] = useState(false);
+  const [isFixedPriceModalOpen, setIsFixedPriceModalOpen] = useState(false);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -168,6 +170,12 @@ const AppHeader: React.FC = () => {
             >
               Fix work days
             </button>
+            <button
+              onClick={() => setIsFixedPriceModalOpen(true)}
+              className="flex items-center justify-center h-10 px-4 text-sm font-medium transition-colors border border-gray-200 rounded-lg dark:border-gray-800 text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+            >
+              Fix prices
+            </button>
             {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />
             {/* <!-- Dark Mode Toggler --> */}
@@ -181,6 +189,10 @@ const AppHeader: React.FC = () => {
       <WorkDaysScheduleModal
         isOpen={isWorkDaysModalOpen}
         onClose={() => setIsWorkDaysModalOpen(false)}
+      />
+      <FixedPriceModal
+        isOpen={isFixedPriceModalOpen}
+        onClose={() => setIsFixedPriceModalOpen(false)}
       />
     </header>
   );

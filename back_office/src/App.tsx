@@ -22,6 +22,7 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import UserManagement from "./pages/UserManagement";
+import { Toaster } from "react-hot-toast";
 
 export default function App() {
   return (
@@ -67,6 +68,27 @@ export default function App() {
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <Toaster
+          position="top-center"
+          containerStyle={{
+            zIndex: 999999, // Very high to ensure it appears above your header (z-99999) and any modals/overlays
+          }}
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: "#333",
+              color: "#fff",
+              borderRadius: "8px",
+              padding: "12px 16px",
+            },
+            success: {
+              icon: "✅",
+            },
+            error: {
+              icon: "❌",
+            },
+          }}
+        />
       </Router>
     </GoogleOAuthProvider>
   );
