@@ -22,6 +22,7 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import UserManagement from "./pages/UserManagement";
+import EventManagement from "./pages/EventManagement";
 import { Toaster } from "react-hot-toast";
 import PCManagement from "./pages/PcManagement";
 import OfferManagement from "./pages/OfferManagement";
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/users" element={<UserManagement />} />
             <Route path="/pcs" element={<PCManagement />} />
             <Route path="/offers" element={<OfferManagement />} />
+            <Route path="/events" element={<EventManagement />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
