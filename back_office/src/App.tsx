@@ -23,6 +23,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import UserManagement from "./pages/UserManagement";
 import { Toaster } from "react-hot-toast";
+import PCManagement from "./pages/PcManagement";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index path="/home" element={<Home />} />
             <Route path="/users" element={<UserManagement />} />
+            <Route path="/pcs" element={<PCManagement />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
