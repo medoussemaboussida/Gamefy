@@ -18,6 +18,9 @@ import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import AddEventModal from "../components/modals/AddEventModal";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
 import { Modal } from "../components/ui/modal";
+import { Dropdown } from "../components/ui/dropdown/Dropdown";
+import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
+import { ChevronDownIcon } from "../icons";
 
 export default function EventManagement() {
     const [events, setEvents] = useState<EventDto[]>([]);
@@ -27,9 +30,19 @@ export default function EventManagement() {
     const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<EventDto | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+    const [isStatusOpen, setIsStatusOpen] = useState(false);
 
     const currentUserRole = getUserRole();
     const isAdmin = currentUserRole === "ADMIN";
+
+    const statusOptions = [
+        { value: "ALL", label: "All Statuses" },
+        { value: EventStatus.SCHEDULED, label: "Scheduled" },
+        { value: EventStatus.ONGOING, label: "Ongoing" },
+        { value: EventStatus.COMPLETED, label: "Completed" },
+        { value: EventStatus.CANCELLED, label: "Cancelled" },
+    ];
 
     const fetchEvents = async () => {
         setLoading(true);
@@ -46,6 +59,13 @@ export default function EventManagement() {
     useEffect(() => {
         fetchEvents();
     }, []);
+
+    const filteredEvents = events.filter((event) => {
+        return selectedStatus === "ALL" || event.eventStatus === selectedStatus;
+    });
+
+    const getStatusLabel = (value: string) =>
+        statusOptions.find((opt) => opt.value === value)?.label || value;
 
     const handleEdit = (event: EventDto) => {
         setSelectedEvent(event);
@@ -101,7 +121,7 @@ export default function EventManagement() {
             <PageBreadcrumb pageTitle="Event Management" />
             <div className="space-y-6">
                 <ComponentCard title="Events List">
-                    <div className="flex justify-end mb-4">
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
                         <Button
                             onClick={() => {
                                 setSelectedEvent(null);
@@ -113,6 +133,45 @@ export default function EventManagement() {
                         >
                             Add Event
                         </Button>
+
+                        {/* Status Filter Dropdown */}
+                        <div className="relative">
+                            <Button
+                                onClick={() => setIsStatusOpen(!isStatusOpen)}
+                                variant="primary"
+                                size="sm"
+                                className="w-40 dropdown-toggle"
+                                endIcon={
+                                    <ChevronDownIcon
+                                        className={`w-5 h-5 transition-transform duration-200 ${isStatusOpen ? "rotate-180" : ""
+                                            }`}
+                                    />
+                                }
+                            >
+                                {getStatusLabel(selectedStatus)}
+                            </Button>
+                            <Dropdown
+                                isOpen={isStatusOpen}
+                                onClose={() => setIsStatusOpen(false)}
+                                className="w-40 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-900 dark:border-gray-800"
+                            >
+                                {statusOptions.map((option) => (
+                                    <DropdownItem
+                                        key={option.value}
+                                        onClick={() => {
+                                            setSelectedStatus(option.value);
+                                            setIsStatusOpen(false);
+                                        }}
+                                        className={`flex items-center w-full px-4 py-2 text-sm text-left ${selectedStatus === option.value
+                                            ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
+                                            : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+                                            }`}
+                                    >
+                                        {option.label}
+                                    </DropdownItem>
+                                ))}
+                            </Dropdown>
+                        </div>
                     </div>
 
                     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -150,14 +209,14 @@ export default function EventManagement() {
                                                 Loading events...
                                             </TableCell>
                                         </TableRow>
-                                    ) : events.length === 0 ? (
+                                    ) : filteredEvents.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={7} className="px-5 py-10 text-center text-gray-500">
                                                 No events found
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        events.map((event) => (
+                                        filteredEvents.map((event) => (
                                             <TableRow key={event.id}>
                                                 <TableCell className="px-5 py-4">
                                                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
