@@ -24,6 +24,7 @@ import Home from "./pages/Dashboard/Home";
 import UserManagement from "./pages/UserManagement";
 import { Toaster } from "react-hot-toast";
 import PCManagement from "./pages/PcManagement";
+import OfferManagement from "./pages/OfferManagement";
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
             <Route index path="/home" element={<Home />} />
             <Route path="/users" element={<UserManagement />} />
             <Route path="/pcs" element={<PCManagement />} />
+            <Route path="/offers" element={<OfferManagement />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

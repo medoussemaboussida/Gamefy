@@ -18,6 +18,7 @@ import {
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
+import { Monitor, Gift, } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -38,9 +39,14 @@ const navItems: NavItem[] = [
     path: "/users",
   },
   {
-    icon: <CalenderIcon />,
+    icon: <Monitor />,
     name: "Pc Management",
     path: "/pcs",
+  },
+    {
+    icon: <Gift />,
+    name: "Offer Management",
+    path: "/offers",
   },
   {
     icon: <UserCircleIcon />,
