@@ -25,7 +25,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                     <TrashBinIcon className="w-6 h-6 text-error-500" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                    Delete User
+                    Delete this item
                 </h3>
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Are you sure you want to delete <strong>{userName}</strong>? This action cannot be undone and will notify the user via email.
