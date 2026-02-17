@@ -18,6 +18,14 @@ public class FileService {
     private final List<String> allowedExtensions = Arrays.asList("png", "jpg", "jpeg");
 
     public String saveProfilePhoto(MultipartFile file) throws IOException {
+        return saveFile(file, "uploads/profile_photos");
+    }
+
+    public String saveEventPhoto(MultipartFile file) throws IOException {
+        return saveFile(file, "uploads/event_photos");
+    }
+
+    private String saveFile(MultipartFile file, String directory) throws IOException {
         if (file.isEmpty()) {
             throw new RuntimeException("File is empty");
         }
@@ -33,7 +41,7 @@ public class FileService {
         }
 
         // Create directory if it doesn't exist
-        Path path = Paths.get(uploadDir);
+        Path path = Paths.get(directory);
         if (!Files.exists(path)) {
             Files.createDirectories(path);
         }
