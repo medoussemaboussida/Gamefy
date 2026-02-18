@@ -55,7 +55,7 @@ const Sidebar = () => {
   const navItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: role === "COACH" ? "/coach/dashboard" : "/player/dashboard" },
     { name: "Rooms", icon: Monitor, path: "/player/rooms" },
-    { name: "Events", icon: Calendar, path: "/player/events" },
+    { name: "Events", icon: Calendar, path: "/events" },
     { name: "Packs", icon: Gift, path: "/player/packs" },
   ];
 
@@ -103,13 +103,13 @@ const Sidebar = () => {
 
   const SidebarContent = (
     <div
-      className={`fixed left-0 top-0 h-screen bg-[#24003E] transition-all duration-500 ease-in-out z-50 flex flex-col items-center pt-8 pb-6 border-r border-white/5 ${isMobile
+      className={`fixed md:relative left-0 top-0 h-screen bg-[#24003E] transition-all duration-500 ease-in-out z-50 flex flex-col items-center pt-8 pb-6 border-r border-white/5 ${isMobile
         ? isMobileOpen
           ? "w-[280px] translate-x-0"
           : "w-[280px] -translate-x-full"
         : isHovered
-          ? "w-[240px]"
-          : "w-[88px]"
+          ? "w-[240px] translate-x-0"
+          : "w-[88px] translate-x-0"
         }`}
       onMouseEnter={() => !isMobile && setIsHovered(true)}
       onMouseLeave={() => !isMobile && setIsHovered(false)}

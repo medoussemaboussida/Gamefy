@@ -11,6 +11,7 @@ import CoachDashboard from "./pages/coach/CoachDashboard";
 import SignUpCoach from "./pages/auth/SignUpCoach";
 
 import ProfilePage from "./pages/profile";
+import EventsPage from "./pages/event";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         } />
 
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/events" element={<EventsPage />} />
 
         {/* Auth pages usually don't have global Header/Footer */}
         <Route path="/signin" element={<SignIn />} />

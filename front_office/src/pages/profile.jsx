@@ -105,7 +105,7 @@ const ProfilePage = () => {
         <div className="min-h-screen bg-[#24003E] flex overflow-hidden font-sans">
             <Sidebar />
 
-            <main className="flex-1 md:ml-[88px] px-10 md:px-12 pt-8 pb-12 transition-all duration-300 overflow-y-auto">
+            <main className="flex-1 px-10 md:px-12 pt-8 pb-12 transition-all duration-300 overflow-y-auto">
                 <div className="max-w-[1400px] mx-auto space-y-12">
 
                     {/* Dashboard Style Header */}

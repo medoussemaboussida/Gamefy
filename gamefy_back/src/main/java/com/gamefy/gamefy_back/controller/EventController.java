@@ -18,13 +18,13 @@ public class EventController {
     private final EventService service;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'PLAYER', 'COACH')")
     public ResponseEntity<List<EventDto>> getAllEvents() {
         return ResponseEntity.ok(service.getAllEvents());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'PLAYER', 'COACH')")
     public ResponseEntity<EventDto> getEventById(@PathVariable Integer id) {
         return ResponseEntity.ok(service.getEventById(id));
     }

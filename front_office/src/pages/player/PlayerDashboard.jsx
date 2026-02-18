@@ -60,7 +60,7 @@ const PlayerDashboard = () => {
     return (
         <div className="min-h-screen bg-[#24003E] flex overflow-hidden">
             <Sidebar />
-            <main className="flex-1 md:ml-[88px] px-10 md:px-12 pt-8 pb-12 transition-all duration-300 overflow-y-auto">
+            <main className="flex-1 px-10 md:px-12 pt-8 pb-12 transition-all duration-300 overflow-y-auto">
                 <div className="max-w-[1400px] mx-auto space-y-10 md:space-y-16 flex flex-col items-center">
                     {/* Header Section */}
                     <header className="flex flex-col md:flex-row items-center justify-between w-full gap-6 md:gap-0">
