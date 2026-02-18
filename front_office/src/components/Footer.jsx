@@ -10,7 +10,7 @@ const Footer = () => {
             style={{ backgroundImage: `url(${footer_bg})` }}
         >
             {/* Background Overlay to ensure readability */}
-            <div className="absolute inset-0 bg-[#030014]/60 -z-10"></div>
+            <div className="absolute inset-0 bg-[#24003E]/60 -z-10"></div>
 
             <div className="max-w-[1500px] mx-auto px-4 md:px-6 lg:px-10 relative z-10">
                 <div className="flex flex-col lg:flex-row justify-between items-start gap-12 md:gap-16 mb-16 md:mb-24">

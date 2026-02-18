@@ -5,7 +5,7 @@
   body {
     @apply antialiased overflow-x-hidden m-0 p-0;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    background: #030014;
+    background: #24003E;
     color: white;
     min-height: 100vh;
   }
@@ -27,7 +27,7 @@ input::-ms-clear {
 }
 
 ::-webkit-scrollbar-track {
-  background: #030014;
+  background: #24003E;
 }
 
 ::-webkit-scrollbar-thumb {
