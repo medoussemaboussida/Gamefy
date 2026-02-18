@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
-import { Search, Bell, Calendar, MapPin, ExternalLink, Loader2 } from "lucide-react";
+import { Search, Bell, Calendar, MapPin, ExternalLink, Loader2, ChevronDown, Filter } from "lucide-react";
 import { eventApi } from "../api/event";
 import toast from "react-hot-toast";
 
@@ -8,6 +8,16 @@ const EventsPage = () => {
     const [events, setEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedStatus, setSelectedStatus] = useState("ALL");
+    const [isStatusOpen, setIsStatusOpen] = useState(false);
+
+    const statusOptions = [
+        { value: "ALL", label: "All Statuses" },
+        { value: "SCHEDULED", label: "Scheduled" },
+        { value: "ONGOING", label: "Ongoing" },
+        { value: "COMPLETED", label: "Completed" },
+        { value: "CANCELLED", label: "Cancelled" },
+    ];
 
     const fetchEvents = async () => {
         try {
@@ -24,10 +34,12 @@ const EventsPage = () => {
         fetchEvents();
     }, []);
 
-    const filteredEvents = events.filter(event =>
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.place.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredEvents = events.filter(event => {
+        const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            event.place.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = selectedStatus === "ALL" || event.eventStatus === selectedStatus;
+        return matchesSearch && matchesStatus;
+    });
 
     const formatDate = (dateString) => {
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -81,6 +93,44 @@ const EventsPage = () => {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full md:w-[380px] h-[40px] bg-transparent border border-[#1CF3CA]/40 rounded-full pl-11 pr-4 text-white text-[14px] font-medium font-['Inter'] placeholder:text-white/40 focus:outline-none focus:border-[#1CF3CA] transition-all"
                                 />
+                            </div>
+
+                            {/* Status Filter Dropdown */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsStatusOpen(!isStatusOpen)}
+                                    className="bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8] px-6 h-[40px] rounded-[18px] text-white font-medium flex items-center gap-2 hover:opacity-90 transition-all text-[15px]"
+                                >
+                                    <Filter size={18} />
+                                    <span>{statusOptions.find(opt => opt.value === selectedStatus)?.label}</span>
+                                    <ChevronDown size={18} className={`transition-transform duration-300 ${isStatusOpen ? "rotate-180" : ""}`} />
+                                </button>
+
+                                {isStatusOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-10"
+                                            onClick={() => setIsStatusOpen(false)}
+                                        ></div>
+                                        <div className="absolute right-0 mt-3 w-56 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
+                                            {statusOptions.map((option) => (
+                                                <button
+                                                    key={option.value}
+                                                    onClick={() => {
+                                                        setSelectedStatus(option.value);
+                                                        setIsStatusOpen(false);
+                                                    }}
+                                                    className={`w-full flex items-center px-5 py-3 rounded-2xl text-[14px] font-medium transition-all ${selectedStatus === option.value
+                                                        ? "bg-[#1CF3CA] text-black"
+                                                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                                                        }`}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {/* Notification Icon */}
@@ -145,7 +195,7 @@ const EventsPage = () => {
                                                 {/* Content Section */}
                                                 <div className="p-8 flex flex-col flex-grow bg-gradient-to-b from-transparent to-black/30">
                                                     <div className="flex-grow space-y-4">
-                                                        <h3 className="text-2xl md:text-3xl font-black text-white italic truncate uppercase tracking-tight">
+                                                        <h3 className="text-xl md:text-xl font-black text-white italic truncate uppercase tracking-tight">
                                                             {event.title}
                                                         </h3>
 
