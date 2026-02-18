@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.model;
 
 import com.gamefy.gamefy_back.model.enums.Event_Status;
+import com.gamefy.gamefy_back.model.enums.Participant_Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

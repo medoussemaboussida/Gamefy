@@ -17,9 +17,13 @@ public class Participant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "participant_status", nullable = false)
@@ -29,7 +33,8 @@ public class Participant {
     public String toString() {
         return "Participant{" +
                 "id=" + id +
-                ", event=" + event +
+                ", eventId=" + (event != null ? event.getId() : null) +
+                ", userId=" + (user != null ? user.getId() : null) +
                 ", participantStatus=" + participantStatus +
                 '}';
     }
