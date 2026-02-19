@@ -10,6 +10,7 @@ const EventsPage = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("ALL");
     const [isStatusOpen, setIsStatusOpen] = useState(false);
+    const [userParticipations, setUserParticipations] = useState([]);
 
     const statusOptions = [
         { value: "ALL", label: "All Statuses" },
@@ -21,8 +22,13 @@ const EventsPage = () => {
 
     const fetchEvents = async () => {
         try {
-            const data = await eventApi.getAllEvents();
-            setEvents(data);
+            setIsLoading(true);
+            const [eventsData, participationsData] = await Promise.all([
+                eventApi.getAllEvents(),
+                eventApi.getMyParticipations()
+            ]);
+            setEvents(eventsData);
+            setUserParticipations(participationsData.map(p => p.eventId));
         } catch (error) {
             toast.error("Failed to load events");
         } finally {
@@ -53,6 +59,26 @@ const EventsPage = () => {
             case "COMPLETED": return "bg-gray-500/20 text-gray-400 border-gray-500/30";
             case "CANCELLED": return "bg-red-500/20 text-red-400 border-red-500/30";
             default: return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+        }
+    };
+
+    const handleParticipate = async (eventId) => {
+        try {
+            await eventApi.participateInEvent(eventId);
+            setUserParticipations([...userParticipations, eventId]);
+            toast.success("Successfully registered for the event");
+        } catch (error) {
+            toast.error(error.response?.data || "Failed to register");
+        }
+    };
+
+    const handleCancel = async (eventId) => {
+        try {
+            await eventApi.cancelParticipation(eventId);
+            setUserParticipations(userParticipations.filter(id => id !== eventId));
+            toast.success("Successfully cancelled participation");
+        } catch (error) {
+            toast.error(error.response?.data || "Failed to cancel");
         }
     };
 
@@ -215,24 +241,25 @@ const EventsPage = () => {
                                                         </p>
                                                     </div>
 
-                                                    {/* Register Button */}
-                                                    <div className="pt-8">
-                                                        {event.registerLink ? (
-                                                            <a
-                                                                href={event.registerLink}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#1CF3CA] hover:bg-[#19d4b0] text-black font-black uppercase tracking-widest rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(28,243,202,0.3)] hover:shadow-[0_0_30px_rgba(28,243,202,0.5)]"
+                                                    {/* Participation Logic */}
+                                                    <div className="pt-8 w-full">
+                                                        {new Date(event.endTime) < new Date() ? (
+                                                            <div className="w-full px-8 py-4 bg-white/5 text-white/40 font-black uppercase tracking-widest rounded-full text-center border border-white/5">
+                                                                This event has passed
+                                                            </div>
+                                                        ) : userParticipations.includes(event.id) ? (
+                                                            <button
+                                                                onClick={() => handleCancel(event.id)}
+                                                                className="w-full px-8 py-4 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-black uppercase tracking-widest rounded-full transition-all active:scale-95 border border-red-500/30"
                                                             >
-                                                                Register Now
-                                                                <ExternalLink size={18} />
-                                                            </a>
+                                                                Cancel Participation
+                                                            </button>
                                                         ) : (
                                                             <button
-                                                                disabled
-                                                                className="w-full px-8 py-4 bg-white/5 text-white/20 font-black uppercase tracking-widest rounded-full cursor-not-allowed border border-white/5"
+                                                                onClick={() => handleParticipate(event.id)}
+                                                                className="w-full px-8 py-4 bg-[#1CF3CA] hover:bg-[#19d4b0] text-black font-black uppercase tracking-widest rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(28,243,202,0.3)] hover:shadow-[0_0_30px_rgba(28,243,202,0.5)]"
                                                             >
-                                                                Coming Soon
+                                                                Participate Now
                                                             </button>
                                                         )}
                                                     </div>
