@@ -30,7 +30,14 @@ const EventsPage = () => {
             setEvents(eventsData);
             setUserParticipations(participationsData.map(p => p.eventId));
         } catch (error) {
-            toast.error("Failed to load events");
+            toast.error("Failed to load events", {
+                style: {
+                    border: '1px solid #DE3D3D',
+                    padding: '16px',
+                    color: '#DE3D3D',
+                    background: '#360200',
+                },
+            });
         } finally {
             setIsLoading(false);
         }
@@ -66,9 +73,24 @@ const EventsPage = () => {
         try {
             await eventApi.participateInEvent(eventId);
             setUserParticipations([...userParticipations, eventId]);
-            toast.success("Successfully registered for the event");
+            toast.success("Successfully registered for the event", {
+                style: {
+                    border: '1px solid #1CF3CA',
+                    padding: '16px',
+                    color: '#1CF3CA',
+                    background: '#24003E',
+                    boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+                },
+            });
         } catch (error) {
-            toast.error(error.response?.data || "Failed to register");
+            toast.error(error.response?.data || "Failed to register", {
+                style: {
+                    border: '1px solid #DE3D3D',
+                    padding: '16px',
+                    color: '#DE3D3D',
+                    background: '#360200',
+                },
+            });
         }
     };
 
@@ -76,15 +98,31 @@ const EventsPage = () => {
         try {
             await eventApi.cancelParticipation(eventId);
             setUserParticipations(userParticipations.filter(id => id !== eventId));
-            toast.success("Successfully cancelled participation");
+            toast.success("Successfully cancelled participation", {
+                style: {
+                    border: '1px solid #1CF3CA',
+                    padding: '16px',
+                    color: '#1CF3CA',
+                    background: '#24003E',
+                    boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+                },
+            });
         } catch (error) {
-            toast.error(error.response?.data || "Failed to cancel");
+            toast.error(error.message || "Failed to cancel", {
+                style: {
+                    border: '1px solid #DE3D3D',
+                    padding: '16px',
+                    color: '#DE3D3D',
+                    background: '#360200',
+                },
+            });
         }
     };
 
+
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-[#24003E] flex overflow-hidden">
+            <div className="h-screen bg-[#24003E] flex overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 md:ml-[88px] flex items-center justify-center">
                     <Loader2 size={48} className="text-[#1CF3CA] animate-spin" />
@@ -94,7 +132,7 @@ const EventsPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#24003E] flex overflow-hidden font-sans">
+        <div className="h-screen bg-[#24003E] flex overflow-hidden font-sans">
             <Sidebar />
 
             <main className="flex-1 px-10 md:px-12 pt-8 pb-12 transition-all duration-300 overflow-y-auto">

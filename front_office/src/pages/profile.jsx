@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Shield, Camera, Edit2, Loader2, ChevronRight, LogOut, Search, Bell } from "lucide-react";
+import { User, Mail, Shield, Camera, Edit2, Loader2, ChevronRight, LogOut, Search, Bell, Calendar, MapPin, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { profileApi } from "../api/profile";
 import { authApi } from "../api/auth";
+import { eventApi } from "../api/event";
 import { getUserId } from "../utils/jwt";
 import ProfileForm from "../modals/ProfileForm";
 
@@ -13,6 +14,7 @@ const ProfilePage = () => {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [participatedEvents, setParticipatedEvents] = useState([]);
     const fileInputRef = useRef(null);
 
     const fetchProfile = async () => {
@@ -25,8 +27,24 @@ const ProfilePage = () => {
         try {
             const data = await profileApi.getProfile(userId);
             setUser(data);
+
+            // Fetch participated events
+            const [participations, allEvents] = await Promise.all([
+                eventApi.getMyParticipations(),
+                eventApi.getAllEvents()
+            ]);
+            const participatedEventIds = participations.map(p => p.eventId);
+            const userEvents = allEvents.filter(e => participatedEventIds.includes(e.id));
+            setParticipatedEvents(userEvents);
         } catch (error) {
-            toast.error("Failed to load profile");
+            toast.error("Failed to load profile", {
+                style: {
+                    border: '1px solid #DE3D3D',
+                    padding: '16px',
+                    color: '#DE3D3D',
+                    background: '#360200',
+                },
+            });
         } finally {
             setIsLoading(false);
         }
@@ -46,7 +64,15 @@ const ProfilePage = () => {
             localStorage.removeItem("userRole");
             localStorage.removeItem("userId");
             navigate("/");
-            toast.success("Signed out successfully");
+            toast.success("Signed out successfully", {
+                style: {
+                    border: '1px solid #1CF3CA',
+                    padding: '16px',
+                    color: '#1CF3CA',
+                    background: '#24003E',
+                    boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+                },
+            });
         }
     };
 
@@ -60,7 +86,14 @@ const ProfilePage = () => {
 
         const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
         if (!allowedTypes.includes(file.type)) {
-            toast.error("Please upload a PNG or JPG image");
+            toast.error("Please upload a PNG or JPG image", {
+                style: {
+                    border: '1px solid #DE3D3D',
+                    padding: '16px',
+                    color: '#DE3D3D',
+                    background: '#360200',
+                },
+            });
             return;
         }
 
@@ -75,10 +108,57 @@ const ProfilePage = () => {
         try {
             const updatedUser = await profileApi.uploadPhoto(file);
             setUser(updatedUser);
-            toast.success("Photo updated successfully!", { id: loadingToast });
+            toast.success("Photo updated successfully!", {
+                id: loadingToast,
+                style: {
+                    border: '1px solid #1CF3CA',
+                    padding: '16px',
+                    color: '#1CF3CA',
+                    background: '#24003E',
+                    boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+                },
+            });
         } catch (error) {
-            toast.error(error.message || "Upload failed", { id: loadingToast });
+            toast.error(error.message || "Upload failed", {
+                id: loadingToast,
+                style: {
+                    border: '1px solid #DE3D3D',
+                    padding: '16px',
+                    color: '#DE3D3D',
+                    background: '#360200',
+                },
+            });
         }
+    };
+
+    const handleCancelParticipation = async (eventId) => {
+        try {
+            await eventApi.cancelParticipation(eventId);
+            setParticipatedEvents(participatedEvents.filter(e => e.id !== eventId));
+            toast.success("Participation cancelled", {
+                style: {
+                    border: '1px solid #1CF3CA',
+                    padding: '16px',
+                    color: '#1CF3CA',
+                    background: '#24003E',
+                    boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+                },
+            });
+        } catch (error) {
+            toast.error(error.message || "Failed to cancel participation", {
+                style: {
+                    border: '1px solid #DE3D3D',
+                    padding: '16px',
+                    color: '#DE3D3D',
+                    background: '#360200',
+                },
+            });
+        }
+    };
+
+    const formatDate = (dateString) => {
+        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
     if (isLoading) {
@@ -102,7 +182,7 @@ const ProfilePage = () => {
         : null;
 
     return (
-        <div className="min-h-screen bg-[#24003E] flex overflow-hidden font-sans">
+        <div className="h-screen bg-[#24003E] flex overflow-hidden font-sans">
             <Sidebar />
 
             <main className="flex-1 px-10 md:px-12 pt-8 pb-12 transition-all duration-300 overflow-y-auto">
@@ -235,6 +315,74 @@ const ProfilePage = () => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Participated Events Section */}
+                    <div className="space-y-6">
+                        <h2 className="text-white text-[18px] font-bold font-['Inter']">
+                            My Participated Events
+                        </h2>
+
+                        {participatedEvents.length === 0 ? (
+                            <div className="bg-[#582167] border border-white/5 rounded-[32px] p-12 flex flex-col items-center justify-center text-center space-y-3">
+                                <Calendar size={40} className="text-white/10" />
+                                <p className="text-white/40 font-medium">You haven't joined any events yet.</p>
+                            </div>
+                        ) : (
+                            <div className="flex overflow-x-auto gap-6 pb-4 snap-x no-scrollbar">
+                                {participatedEvents.map((event) => (
+                                    <div
+                                        key={event.id}
+                                        className="flex-shrink-0 w-[350px] snap-center"
+                                    >
+                                        <div className="relative group h-full">
+                                            <div className="absolute -inset-1 bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-[32px] blur opacity-15 group-hover:opacity-30 transition duration-700"></div>
+                                            <div className="relative bg-[#320141] border border-white/5 rounded-[32px] overflow-hidden h-full flex flex-col">
+                                                {/* Image */}
+                                                <div className="relative h-[160px] overflow-hidden">
+                                                    {event.photo ? (
+                                                        <img
+                                                            src={`http://localhost:8080/api/uploads/event_photos/${event.photo}`}
+                                                            alt={event.title}
+                                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-[#24003E] flex items-center justify-center">
+                                                            <Calendar size={40} className="text-white/10" />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="p-6 flex flex-col flex-grow space-y-3">
+                                                    <h3 className="text-lg font-black text-white uppercase tracking-tight truncate">
+                                                        {event.title}
+                                                    </h3>
+                                                    <div className="flex items-center gap-2 text-white/60 text-sm">
+                                                        <Calendar size={14} className="text-[#1CF3CA]" />
+                                                        <span>{formatDate(event.startTime)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-white/60 text-sm">
+                                                        <MapPin size={14} className="text-[#FF89EB]" />
+                                                        <span>{event.place}</span>
+                                                    </div>
+
+                                                    <div className="pt-3 mt-auto">
+                                                        <button
+                                                            onClick={() => handleCancelParticipation(event.id)}
+                                                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-500/15 hover:bg-red-500/25 text-red-400 font-bold uppercase tracking-widest text-xs rounded-full transition-all active:scale-95 border border-red-500/20"
+                                                        >
+                                                            <X size={16} />
+                                                            Cancel Participation
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>

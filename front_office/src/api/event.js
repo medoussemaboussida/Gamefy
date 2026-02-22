@@ -18,6 +18,8 @@ import { apiClient } from "./apiClient";
  * @property {number} id
  * @property {number} eventId
  * @property {number} userId
+ * @property {string} firstName
+ * @property {string} lastName
  * @property {string} participantStatus - PENDING | CONFIRMED | CANCELLED
  */
 
