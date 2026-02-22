@@ -34,6 +34,7 @@ public class CoachProfileService {
         profile.setCoach(coach);
         profile.setGame(dto.getGame());
         profile.setHourlyPrice(dto.getHourlyPrice());
+        profile.setBio(dto.getBio());
 
         CoachProfile savedProfile = coachProfileRepository.save(profile);
         return mapToDto(savedProfile);
@@ -54,6 +55,7 @@ public class CoachProfileService {
                 .lastName(profile.getCoach().getLastName())
                 .game(profile.getGame())
                 .hourlyPrice(profile.getHourlyPrice())
+                .bio(profile.getBio())
                 .build();
     }
 }

@@ -28,6 +28,9 @@ public class CoachProfile {
     @Column(name = "hourly_price", nullable = false)
     private Double hourlyPrice;
 
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
     @Override
     public String toString() {
         return "CoachProfile{" +

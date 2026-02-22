@@ -32,6 +32,7 @@ const CoachProfileModal: React.FC<CoachProfileModalProps> = ({ isOpen, onClose, 
     const [editData, setEditData] = useState({
         game: "",
         hourlyPrice: 0,
+        bio: "",
     });
 
     const fetchProfile = async () => {
@@ -43,6 +44,7 @@ const CoachProfileModal: React.FC<CoachProfileModalProps> = ({ isOpen, onClose, 
             setEditData({
                 game: data.game,
                 hourlyPrice: data.hourlyPrice,
+                bio: data.bio || "",
             });
         } catch (err: any) {
             console.error("Failed to fetch coach profile:", err);
@@ -139,6 +141,15 @@ const CoachProfileModal: React.FC<CoachProfileModalProps> = ({ isOpen, onClose, 
                                     placeholder="Enter hourly price"
                                 />
                             </div>
+                            <div>
+                                <Label>Biography</Label>
+                                <textarea
+                                    className="w-full h-32 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all resize-none text-sm"
+                                    value={editData.bio}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, bio: e.target.value }))}
+                                    placeholder="Enter coach biography..."
+                                />
+                            </div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-4">
@@ -161,6 +172,15 @@ const CoachProfileModal: React.FC<CoachProfileModalProps> = ({ isOpen, onClose, 
                                     <p className="text-lg font-bold text-gray-800 dark:text-white">{profile?.hourlyPrice} <span className="text-sm font-medium text-gray-500">TND / Hour</span></p>
                                 </div>
                             </div>
+
+                            {profile?.bio && (
+                                <div className="p-5 bg-amber-50/30 dark:bg-amber-500/5 rounded-2xl border border-amber-100 dark:border-amber-500/10">
+                                    <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2">Biography</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed italic">
+                                        "{profile.bio}"
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

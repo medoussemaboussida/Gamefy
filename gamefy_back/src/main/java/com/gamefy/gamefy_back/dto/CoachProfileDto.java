@@ -16,4 +16,5 @@ public class CoachProfileDto {
     private String lastName;
     private String game;
     private Double hourlyPrice;
+    private String bio;
 }
