@@ -68,3 +68,38 @@ export const eventApi = {
         });
     },
 };
+
+// --- Participant Types & API ---
+
+export enum ParticipantStatus {
+    PENDING = "PENDING",
+    CONFIRMED = "CONFIRMED",
+    CANCELLED = "CANCELLED",
+}
+
+export interface ParticipantDto {
+    id: number;
+    eventId: number;
+    userId: number;
+    firstName: string;
+    lastName: string;
+    participantStatus: ParticipantStatus;
+}
+
+export const participantApi = {
+    /**
+     * Get all participants for a specific event
+     */
+    getEventParticipants: async (eventId: number): Promise<ParticipantDto[]> => {
+        return apiClient.get(`/gamefy/participants/event/${eventId}`);
+    },
+
+    /**
+     * Update the status of a participant
+     */
+    updateParticipantStatus: async (participantId: number, status: ParticipantStatus): Promise<ParticipantDto> => {
+        return apiClient.put(`/gamefy/participants/${participantId}/status`, null, {
+            params: { status },
+        });
+    },
+};

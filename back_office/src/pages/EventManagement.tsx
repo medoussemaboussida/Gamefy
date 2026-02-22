@@ -10,11 +10,11 @@ import {
     TableRow,
 } from "../components/ui/table";
 import Badge from "../components/ui/badge/Badge";
-import { eventApi, EventDto, EventStatus } from "../api/event";
+import { eventApi, EventDto, EventStatus, participantApi, ParticipantDto, ParticipantStatus } from "../api/event";
 import { getUserRole } from "../utils/jwt";
 import toast from "react-hot-toast";
 import Button from "../components/ui/button/Button";
-import { Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Users } from "lucide-react";
 import AddEventModal from "../components/modals/AddEventModal";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
 import { Modal } from "../components/ui/modal";
@@ -32,6 +32,10 @@ export default function EventManagement() {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
     const [isStatusOpen, setIsStatusOpen] = useState(false);
+    const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
+    const [participants, setParticipants] = useState<ParticipantDto[]>([]);
+    const [participantsLoading, setParticipantsLoading] = useState(false);
+    const [participantsEventTitle, setParticipantsEventTitle] = useState("");
 
     const currentUserRole = getUserRole();
     const isAdmin = currentUserRole === "ADMIN";
@@ -97,6 +101,34 @@ export default function EventManagement() {
         setSelectedEvent(event);
         setIsPhotoModalOpen(true);
     };
+
+    const handleViewParticipants = async (event: EventDto) => {
+        if (!event.id) return;
+        setParticipantsEventTitle(event.title);
+        setIsParticipantsModalOpen(true);
+        setParticipantsLoading(true);
+        try {
+            const data = await participantApi.getEventParticipants(event.id);
+            setParticipants(data);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to fetch participants");
+        } finally {
+            setParticipantsLoading(false);
+        }
+    };
+
+    const handleStatusChange = async (participantId: number, newStatus: ParticipantStatus) => {
+        try {
+            const updated = await participantApi.updateParticipantStatus(participantId, newStatus);
+            setParticipants((prev) =>
+                prev.map((p) => (p.id === updated.id ? updated : p))
+            );
+            toast.success("Status updated");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to update status");
+        }
+    };
+
 
     const getStatusBadgeColor = (status: EventStatus): any => {
         switch (status) {
@@ -253,6 +285,13 @@ export default function EventManagement() {
                                                 <TableCell className="px-5 py-4">
                                                     <div className="flex items-center gap-2">
                                                         <button
+                                                            onClick={() => handleViewParticipants(event)}
+                                                            className="p-2 text-gray-500 hover:text-brand-500 transition-colors bg-gray-50 dark:bg-white/5 rounded-lg"
+                                                            title="View Participants"
+                                                        >
+                                                            <Users className="w-4 h-4" />
+                                                        </button>
+                                                        <button
                                                             onClick={() => handleViewPhoto(event)}
                                                             className="p-2 text-gray-500 hover:text-brand-500 transition-colors bg-gray-50 dark:bg-white/5 rounded-lg"
                                                             title="View Event Photo"
@@ -328,6 +367,72 @@ export default function EventManagement() {
                         <h4 className="text-xl font-bold text-white">{selectedEvent?.title}</h4>
                         <p className="text-white/70 text-sm mt-1">{selectedEvent?.place}</p>
                     </div>
+                </div>
+            </Modal>
+
+            {/* Participants Modal */}
+            <Modal
+                isOpen={isParticipantsModalOpen}
+                onClose={() => setIsParticipantsModalOpen(false)}
+                className="max-w-[600px] p-6"
+            >
+                <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">
+                    Participants
+                </h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    {participantsEventTitle}
+                </p>
+
+                <div className="max-h-[400px] overflow-y-auto space-y-3 pr-1">
+                    {participantsLoading ? (
+                        <p className="text-center text-gray-500 py-8">Loading participants...</p>
+                    ) : participants.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8">No participants yet.</p>
+                    ) : (
+                        participants.map((p) => (
+                            <div
+                                key={p.id}
+                                className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center text-brand-600 dark:text-brand-300 font-semibold text-sm">
+                                        {p.firstName?.charAt(0)}{p.lastName?.charAt(0)}
+                                    </div>
+                                    <span className="font-medium text-gray-800 dark:text-white text-sm">
+                                        {p.firstName} {p.lastName}
+                                    </span>
+                                </div>
+                                <select
+                                    value={p.participantStatus}
+                                    onChange={(e) => handleStatusChange(p.id, e.target.value as ParticipantStatus)}
+                                    className={`text-xs font-semibold rounded-lg px-3 py-1.5 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-300 transition-colors
+                                        ${p.participantStatus === ParticipantStatus.CONFIRMED
+                                            ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/30"
+                                            : p.participantStatus === ParticipantStatus.CANCELLED
+                                                ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30"
+                                                : "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/30"
+                                        }`}
+                                >
+                                    <option value={ParticipantStatus.PENDING}>Pending</option>
+                                    <option value={ParticipantStatus.CONFIRMED}>Confirmed</option>
+                                    <option value={ParticipantStatus.CANCELLED}>Cancelled</option>
+                                </select>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-white/10 flex justify-between items-center">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {participants.length} participant{participants.length !== 1 ? "s" : ""}
+                    </span>
+                    <Button
+                        onClick={() => setIsParticipantsModalOpen(false)}
+                        variant="outline"
+                        size="sm"
+                    >
+                        Close
+                    </Button>
                 </div>
             </Modal>
         </>
