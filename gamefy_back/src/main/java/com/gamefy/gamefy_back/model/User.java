@@ -79,6 +79,7 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "player")
     private List<Reservation> playerReservations = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Participant> participations = new ArrayList<>();
 

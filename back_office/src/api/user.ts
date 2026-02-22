@@ -24,6 +24,7 @@ export interface CoachProfileDto {
     lastName: string;
     game: string;
     hourlyPrice: number;
+    bio: string;
 }
 
 export const userApi = {
@@ -47,7 +48,7 @@ export const userApi = {
     getCoachProfile: async (userId: number): Promise<CoachProfileDto> => {
         return apiClient.get(`/gamefy/coaches/profile/${userId}`);
     },
-    adminUpdateCoachProfile: async (userId: number, dto: { game: string; hourlyPrice: number }): Promise<CoachProfileDto> => {
+    adminUpdateCoachProfile: async (userId: number, dto: { game: string; hourlyPrice: number; bio: string }): Promise<CoachProfileDto> => {
         return apiClient.put(`/gamefy/coaches/profile/${userId}`, dto);
     },
     adminDeleteCoachProfile: async (userId: number): Promise<void> => {

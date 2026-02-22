@@ -10,6 +10,7 @@ const CoachProfileForm = ({ profile, onClose, onSave }) => {
     const [formData, setFormData] = useState({
         game: profile?.game || "",
         hourlyPrice: profile?.hourlyPrice || "",
+        bio: profile?.bio || "",
     });
 
     const isEditing = !!profile;
@@ -23,7 +24,7 @@ const CoachProfileForm = ({ profile, onClose, onSave }) => {
         e.preventDefault();
 
         if (!formData.game || !formData.hourlyPrice) {
-            toast.error("Please fill in all fields");
+            toast.error("Please fill in game and price");
             return;
         }
 
@@ -39,7 +40,8 @@ const CoachProfileForm = ({ profile, onClose, onSave }) => {
         try {
             const dto = {
                 game: formData.game,
-                hourlyPrice: parseFloat(formData.hourlyPrice)
+                hourlyPrice: parseFloat(formData.hourlyPrice),
+                bio: formData.bio
             };
 
             const savedProfile = isEditing
@@ -169,6 +171,19 @@ const CoachProfileForm = ({ profile, onClose, onSave }) => {
                                 value={formData.hourlyPrice}
                                 onChange={handleChange}
                                 className="w-full h-12 bg-white/5 border border-[#1CF3CA]/30 rounded-full px-6 text-white text-sm focus:outline-none focus:border-[#1CF3CA] transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="font-['Inter'] text-[12px] text-[#1CF3CA] font-medium tracking-wider uppercase">
+                                Biography
+                            </label>
+                            <textarea
+                                name="bio"
+                                placeholder="Tell us about your coaching experience..."
+                                value={formData.bio}
+                                onChange={handleChange}
+                                className="w-full h-32 bg-white/5 border border-[#1CF3CA]/30 rounded-[24px] p-6 text-white text-sm focus:outline-none focus:border-[#1CF3CA] transition-all resize-none custom-scrollbar"
                             />
                         </div>
 

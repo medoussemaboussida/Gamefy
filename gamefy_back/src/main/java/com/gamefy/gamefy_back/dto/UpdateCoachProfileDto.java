@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class UpdateCoachProfileDto {
     private String game;
     private Double hourlyPrice;
+    private String bio;
 }

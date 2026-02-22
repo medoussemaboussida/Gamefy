@@ -113,23 +113,32 @@ const CoachDashboard = () => {
             </div>
 
             {/* Coach Profile Card */}
-            <div className={`bg-[#320141] border ${profile ? 'border-[#1CF3CA]/20' : 'border-dashed border-white/20'} rounded-[32px] p-8 relative h-[137px] flex flex-col justify-center group hover:border-[#1CF3CA]/40 transition-all overflow-hidden`}>
+            <div className={`bg-[#320141] border ${profile ? 'border-[#1CF3CA]/20' : 'border-dashed border-white/20'} rounded-[32px] p-8 relative min-h-[160px] flex flex-col justify-center group hover:border-[#1CF3CA]/40 transition-all overflow-hidden`}>
               {profile ? (
-                <div className="flex items-center justify-between w-full">
-                  <div className="space-y-2">
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-white/60 text-xs font-bold uppercase tracking-widest">
                       <Gamepad2 size={14} className="text-[#1CF3CA]" /> {profile.game}
                     </div>
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="p-3 bg-[#1CF3CA]/10 text-[#1CF3CA] rounded-2xl hover:bg-[#1CF3CA] hover:text-black transition-all shadow-lg shadow-[#1CF3CA]/5"
+                    >
+                      <Edit3 size={20} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
                     <div className="text-white text-[24px] font-black font-['Inter'] flex items-baseline gap-1">
                       {profile.hourlyPrice} <span className="text-[14px] text-white/40 font-medium">TND/hr</span>
                     </div>
+
+                    {profile.bio && (
+                      <p className="text-white/60 text-sm font-medium line-clamp-2 italic leading-relaxed">
+                        "{profile.bio}"
+                      </p>
+                    )}
                   </div>
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="p-3 bg-[#1CF3CA]/10 text-[#1CF3CA] rounded-2xl hover:bg-[#1CF3CA] hover:text-black transition-all shadow-lg shadow-[#1CF3CA]/5"
-                  >
-                    <Edit3 size={20} />
-                  </button>
                 </div>
               ) : (
                 <button
