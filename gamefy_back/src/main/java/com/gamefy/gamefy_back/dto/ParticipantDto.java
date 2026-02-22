@@ -14,5 +14,7 @@ public class ParticipantDto {
     private Integer id;
     private Integer eventId;
     private Integer userId;
+    private String firstName;
+    private String lastName;
     private Participant_Status participantStatus;
 }

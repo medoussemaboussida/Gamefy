@@ -28,6 +28,12 @@ public class ParticipantService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    public List<ParticipantDto> getParticipantsByEventId(Integer eventId) {
+        return participantRepository.findByEventId(eventId).stream()
+                .map(this::mapToDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     public ParticipantDto participate(Integer eventId, User user) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
@@ -54,11 +60,20 @@ public class ParticipantService {
         return dto;
     }
 
+    public ParticipantDto updateParticipantStatus(Integer participantId, Participant_Status status) {
+        Participant participant = participantRepository.findById(participantId)
+                .orElseThrow(() -> new RuntimeException("Participant not found with id: " + participantId));
+        participant.setParticipantStatus(status);
+        return mapToDto(participantRepository.save(participant));
+    }
+
     private ParticipantDto mapToDto(Participant participant) {
         return ParticipantDto.builder()
                 .id(participant.getId())
                 .eventId(participant.getEvent().getId())
                 .userId(participant.getUser().getId())
+                .firstName(participant.getUser().getFirstName())
+                .lastName(participant.getUser().getLastName())
                 .participantStatus(participant.getParticipantStatus())
                 .build();
     }

@@ -2,6 +2,7 @@ package com.gamefy.gamefy_back.controller;
 
 import com.gamefy.gamefy_back.dto.ParticipantDto;
 import com.gamefy.gamefy_back.model.User;
+import com.gamefy.gamefy_back.model.enums.Participant_Status;
 import com.gamefy.gamefy_back.service.ParticipantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,21 @@ public class ParticipantController {
     public ResponseEntity<java.util.List<ParticipantDto>> getMyParticipations(
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(participantService.getMyParticipations(currentUser));
+    }
+
+    @GetMapping("/event/{eventId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<java.util.List<ParticipantDto>> getEventParticipants(
+            @PathVariable Integer eventId) {
+        return ResponseEntity.ok(participantService.getParticipantsByEventId(eventId));
+    }
+
+    @PutMapping("/{participantId}/status")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<ParticipantDto> updateParticipantStatus(
+            @PathVariable Integer participantId,
+            @RequestParam Participant_Status status) {
+        return ResponseEntity.ok(participantService.updateParticipantStatus(participantId, status));
     }
 
     @PostMapping("/participate/{eventId}")

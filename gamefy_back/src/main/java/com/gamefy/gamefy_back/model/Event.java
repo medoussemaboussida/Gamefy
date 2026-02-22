@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gamefy.gamefy_back.model.enums.Event_Status;
 import com.gamefy.gamefy_back.model.enums.Participant_Status;
 import jakarta.persistence.*;
@@ -46,6 +47,7 @@ public class Event {
     @Column(name = "register_link")
     private String registerLink;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Participant> participants = new ArrayList<>();
 
