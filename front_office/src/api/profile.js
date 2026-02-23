@@ -1,10 +1,29 @@
 import { apiClient } from "./apiClient";
 
+/**
+ * @typedef {Object} UserProfileDto
+ * @property {number} id
+ * @property {string} firstName
+ * @property {string} lastName
+ * @property {string} email
+ * @property {string} role
+ * @property {string} status
+ * @property {string|null} profilePhoto
+ */
+
+/**
+ * @typedef {Object} UpdateProfileDto
+ * @property {string} [firstName]
+ * @property {string} [lastName]
+ * @property {string} [password]
+ * @property {string} [profilePhoto]
+ */
+
 export const profileApi = {
     /**
      * Get user profile by ID
      * @param {number} userId 
-     * @returns {Promise<Object>}
+     * @returns {Promise<UserProfileDto>}
      */
     getProfile: async (userId) => {
         return apiClient.get(`/gamefy/users/${userId}`);
@@ -12,8 +31,8 @@ export const profileApi = {
 
     /**
      * Update user profile
-     * @param {Object} dto 
-     * @returns {Promise<Object>}
+     * @param {UpdateProfileDto} dto 
+     * @returns {Promise<UserProfileDto>}
      */
     updateProfile: async (dto) => {
         return apiClient.put("/gamefy/users/profile", dto);
@@ -22,7 +41,7 @@ export const profileApi = {
     /**
      * Upload profile photo
      * @param {File} file 
-     * @returns {Promise<Object>}
+     * @returns {Promise<UserProfileDto>}
      */
     uploadPhoto: async (file) => {
         const formData = new FormData();
@@ -34,3 +53,4 @@ export const profileApi = {
         });
     }
 };
+
