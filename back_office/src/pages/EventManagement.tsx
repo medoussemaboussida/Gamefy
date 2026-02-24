@@ -383,7 +383,7 @@ export default function EventManagement() {
                     {participantsEventTitle}
                 </p>
 
-                <div className="max-h-[400px] overflow-y-auto space-y-3 pr-1">
+                <div className="max-h-[150px] overflow-y-auto space-y-3 pr-1 scrollbar">
                     {participantsLoading ? (
                         <p className="text-center text-gray-500 py-8">Loading participants...</p>
                     ) : participants.length === 0 ? (
