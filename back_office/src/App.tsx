@@ -26,6 +26,7 @@ import EventManagement from "./pages/EventManagement";
 import { Toaster } from "react-hot-toast";
 import PCManagement from "./pages/PcManagement";
 import OfferManagement from "./pages/OfferManagement";
+import PackManagement from "./pages/PackManagement";
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/pcs" element={<PCManagement />} />
             <Route path="/offers" element={<OfferManagement />} />
             <Route path="/events" element={<EventManagement />} />
+            <Route path="/packs" element={<PackManagement />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

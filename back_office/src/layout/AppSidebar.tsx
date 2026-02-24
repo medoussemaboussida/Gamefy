@@ -54,6 +54,11 @@ const navItems: NavItem[] = [
     path: "/events",
   },
   {
+    icon: <BoxCubeIcon />,
+    name: "Pack Management",
+    path: "/packs",
+  },
+  {
     icon: <UserCircleIcon />,
     name: "User Profile",
     path: "/profile",
