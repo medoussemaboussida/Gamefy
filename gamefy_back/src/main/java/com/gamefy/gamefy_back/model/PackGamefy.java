@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,9 +32,11 @@ public class PackGamefy {
     @OneToMany(mappedBy = "packGamefy", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GamefyPackBenefit> benefits = new ArrayList<>();
 
+    @JsonIgnore
     @OneToOne(mappedBy = "packGamefy")
     private User user;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "packGamefy")
     private Payment payment;
 
