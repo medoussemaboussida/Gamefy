@@ -27,11 +27,11 @@ public class PackCoaching {
     @Column(nullable = false)
     private Double price;
 
-    @OneToOne(mappedBy = "packCoaching")
-    private User user;
+    @OneToMany(mappedBy = "packCoaching")
+    private java.util.List<User> users = new java.util.ArrayList<>();
 
-    @OneToOne(mappedBy = "packCoaching")
-    private Payment payment;
+    @OneToMany(mappedBy = "packCoaching")
+    private java.util.List<Payment> payments = new java.util.ArrayList<>();
 
     @Override
     public String toString() {

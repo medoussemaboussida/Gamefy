@@ -56,7 +56,7 @@ const Sidebar = () => {
     { name: "Dashboard", icon: LayoutDashboard, path: role === "COACH" ? "/coach/dashboard" : "/player/dashboard" },
     { name: "Rooms", icon: Monitor, path: "/player/rooms" },
     { name: "Events", icon: Calendar, path: "/events" },
-    { name: "Packs", icon: Gift, path: "/player/packs" },
+    ...(role === "PLAYER" ? [{ name: "Packs", icon: Gift, path: "/player/packs" }] : []),
   ];
 
   const handleItemClick = (path) => {

@@ -12,6 +12,7 @@ import SignUpCoach from "./pages/auth/SignUpCoach";
 
 import ProfilePage from "./pages/profile";
 import EventsPage from "./pages/event";
+import PlayerPacks from "./pages/player/Packs";
 
 function App() {
   return (
@@ -38,7 +39,9 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/player/dashboard" element={<PlayerDashboard />} />
+        <Route path="/player/packs" element={<PlayerPacks />} />
         <Route path="/coach/dashboard" element={<CoachDashboard />} />
+
 
         {/* Add more routes as needed */}
       </Routes>

@@ -1,12 +1,132 @@
 package com.gamefy.gamefy_back.service;
 
+import com.gamefy.gamefy_back.dto.PaymentDtos;
+import com.gamefy.gamefy_back.model.PackGamefy;
+import com.gamefy.gamefy_back.model.Payment;
+import com.gamefy.gamefy_back.model.User;
+import com.gamefy.gamefy_back.repository.PackGamefyRepository;
 import com.gamefy.gamefy_back.repository.PaymentRepository;
+import com.gamefy.gamefy_back.repository.UserRepository;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
 
-    private PaymentRepository repository;
+    private final PaymentRepository paymentRepository;
+    private final PackGamefyRepository packGamefyRepository;
+    private final UserRepository userRepository;
+    private final StripeService stripeService;
 
+    @Value("${stripe.publishable.key}")
+    private String stripePublishableKey; // Now using the dedicated publishable key property
+
+    /**
+     * Create a PaymentIntent for a specific pack
+     */
+    public PaymentDtos.PaymentIntentResponse createPackPaymentIntent(Integer packId, Integer userId) throws StripeException {
+        PackGamefy pack = packGamefyRepository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack not found"));
+
+        // Amount in cents
+        Long amount = (long) (pack.getPrice() * 100);
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("packId", packId.toString());
+        metadata.put("userId", userId.toString());
+        metadata.put("type", "PACK_PURCHASE");
+
+        PaymentIntent intent = stripeService.createPaymentIntent(amount, "usd", metadata);
+
+        return new PaymentDtos.PaymentIntentResponse(
+                intent.getClientSecret(),
+                stripePublishableKey // In a real app, you'd have a separate property for the publishable key
+        );
+    }
+
+    /**
+     * Fulfill the order after successful payment
+     */
+    @Transactional
+    public void handlePackPaymentSucceeded(PaymentIntent intent) {
+        String packIdStr = intent.getMetadata().get("packId");
+        String userIdStr = intent.getMetadata().get("userId");
+
+        if (packIdStr == null || userIdStr == null) {
+            throw new RuntimeException("Missing metadata in PaymentIntent");
+        }
+
+        Integer packId = Integer.parseInt(packIdStr);
+        Integer userId = Integer.parseInt(userIdStr);
+
+        PackGamefy pack = packGamefyRepository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Update user with the new pack
+        user.setPackGamefy(pack);
+        userRepository.save(user);
+
+        // Create a payment record
+        Payment payment = new Payment();
+        // payment.setReservation(null); // It's a pack purchase
+        payment.setPackGamefy(pack);
+        payment.setTotalPrice(pack.getPrice());
+        payment.setUser(user);
+        paymentRepository.save(payment);
+    }
+
+    /**
+     * Directly fulfill a pack purchase — used after Stripe confirms payment on the client side.
+     * This bypasses the webhook and works reliably for local development.
+     */
+    @Transactional
+    public void fulfillPackPurchase(Integer packId, Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
+        // Prevent duplicate purchase of the CURRENT active pack
+        if (user.getPackGamefy() != null && user.getPackGamefy().getId().equals(packId)) {
+            throw new RuntimeException("You already hold this pack as your active pack");
+        }
+
+        PackGamefy pack = packGamefyRepository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack not found: " + packId));
+
+        // Update user with the new pack
+        user.setPackGamefy(pack);
+        userRepository.save(user);
+
+        // Create a payment record
+        Payment payment = new Payment();
+        payment.setPackGamefy(pack);
+        payment.setTotalPrice(pack.getPrice());
+        payment.setUser(user);
+        paymentRepository.save(payment);
+    }
+
+    /**
+     * Get the ID of the pack currently assigned to the user.
+     * Returns as a List to maintain compatibility with existing frontend expectations.
+     */
+    public List<Integer> getPurchasedPackIds(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        
+        if (user.getPackGamefy() != null) {
+            return List.of(user.getPackGamefy().getId());
+        }
+        return List.of();
+    }
 }
+
