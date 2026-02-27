@@ -49,12 +49,13 @@ public class User implements UserDetails {
     @Column(name = "profile_photo")
     private String profilePhoto;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pack_coaching_id", unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pack_coaching_id")
     private PackCoaching packCoaching;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pack_player_id", unique = true)
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pack_player_id")
     private PackGamefy packGamefy;
 
     @Column(name = "reset_pwd_token")

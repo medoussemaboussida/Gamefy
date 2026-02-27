@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,8 +17,8 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "reservation_id", nullable = false, unique = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reservation_id", nullable = true, unique = true)
     private Reservation reservation;
 
     @Column(name = "coach_cut")
@@ -26,13 +27,19 @@ public class Payment {
     @Column(name = "total_price", nullable = false)
     private Double totalPrice;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pack_gamefy_id", unique = true)
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pack_gamefy_id")
     private PackGamefy packGamefy;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pack_coaching_id", unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pack_coaching_id")
     private PackCoaching packCoaching;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Override
     public String toString() {
@@ -43,6 +50,7 @@ public class Payment {
                 ", totalPrice=" + totalPrice +
                 ", packGamefy=" + packGamefy +
                 ", packCoaching=" + packCoaching +
+                ", user=" + user +
                 '}';
     }
 }

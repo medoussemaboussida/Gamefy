@@ -33,12 +33,12 @@ public class PackGamefy {
     private List<GamefyPackBenefit> benefits = new ArrayList<>();
 
     @JsonIgnore
-    @OneToOne(mappedBy = "packGamefy")
-    private User user;
+    @OneToMany(mappedBy = "packGamefy")
+    private List<User> users = new ArrayList<>();
 
     @JsonIgnore
-    @OneToOne(mappedBy = "packGamefy")
-    private Payment payment;
+    @OneToMany(mappedBy = "packGamefy")
+    private List<Payment> payments = new ArrayList<>();
 
     @Override
     public String toString() {
