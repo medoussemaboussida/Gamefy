@@ -24,6 +24,11 @@ export interface CreatePackGamefyDto {
     }[];
 }
 
+export interface AssignPackDto {
+    userId: number;
+    packId: number;
+}
+
 export const packGamefyApi = {
     getAllPacks: async (): Promise<PackGamefyDto[]> => {
         return apiClient.get("/api/pack-gamefies");
@@ -43,5 +48,13 @@ export const packGamefyApi = {
 
     deletePack: async (id: number): Promise<void> => {
         return apiClient.delete(`/api/pack-gamefies/${id}`);
+    },
+
+    assignPackToPlayer: async (dto: AssignPackDto): Promise<string> => {
+        return apiClient.post("/api/pack-gamefies/assign-to-player", dto);
+    },
+
+    removePackFromPlayer: async (userId: number): Promise<string> => {
+        return apiClient.post(`/api/pack-gamefies/remove-from-player/${userId}`);
     }
 };

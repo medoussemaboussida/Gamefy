@@ -16,10 +16,11 @@ import toast from "react-hot-toast";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
-import { ChevronDownIcon, TrashBinIcon } from "../icons";
+import { ChevronDownIcon, TrashBinIcon, BoxIcon } from "../icons";
 import AddUserModal from "../components/modals/addUser";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
 import CoachProfileModal from "../components/modals/CoachProfileModal";
+import AssignPackModal from "../components/modals/AssignPackModal";
 
 interface User {
   id: number;
@@ -28,6 +29,7 @@ interface User {
   email: string;
   role: string;
   status: string;
+  packGamefyId?: number;
 }
 
 export default function UserManagement() {
@@ -47,6 +49,8 @@ export default function UserManagement() {
   );
   const [isCoachModalOpen, setIsCoachModalOpen] = useState(false);
   const [selectedCoach, setSelectedCoach] = useState<User | null>(null);
+  const [isAssignPackModalOpen, setIsAssignPackModalOpen] = useState(false);
+  const [userForPack, setUserForPack] = useState<User | null>(null);
 
   const currentUserRole = getUserRole();
   const currentUserId = getUserId();
@@ -110,14 +114,12 @@ export default function UserManagement() {
   };
 
   const handleStatusChange = async (userId: number, newStatus: string) => {
-    // 1. Optimistic Update
     const previousUsers = [...users];
     setUsers(
       users.map((u) => (u.id === userId ? { ...u, status: newStatus } : u)),
     );
     setStatusDropdownOpen(null);
 
-    // 2. Loading Notification
     const promise = (async () => {
       const enabled = newStatus === "ACTIVE";
       await userApi.updateUserStatus(userId, enabled);
@@ -127,7 +129,6 @@ export default function UserManagement() {
       loading: "Updating status and sending email notification...",
       success: "Status updated and email sent successfully!",
       error: (err) => {
-        // Revert optimistic update on error
         setUsers(previousUsers);
         return err.message || "Failed to update user status";
       },
@@ -135,10 +136,7 @@ export default function UserManagement() {
 
     try {
       await promise;
-      // Optional: fetchUsers() to ensure consistency with server
-      // fetchUsers();
     } catch (error) {
-      // Error handled by toast.promise
     }
   };
 
@@ -167,7 +165,6 @@ export default function UserManagement() {
       <div className="space-y-6">
         <ComponentCard title="Platform Users">
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            {/* Role Filter Dropdown */}
             <div className="relative">
               <Button
                 onClick={() => setIsRoleOpen(!isRoleOpen)}
@@ -206,7 +203,6 @@ export default function UserManagement() {
               </Dropdown>
             </div>
 
-            {/* Status Filter Dropdown */}
             <div className="relative">
               <Button
                 onClick={() => setIsStatusOpen(!isStatusOpen)}
@@ -289,7 +285,7 @@ export default function UserManagement() {
                         isHeader
                         className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                       >
-                        Coach Profile
+                        Profile & Packs
                       </TableCell>
                     )}
                     {isAdmin && (
@@ -306,7 +302,7 @@ export default function UserManagement() {
                   {loading ? (
                     <TableRow>
                       <TableCell
-                        colSpan={4}
+                        colSpan={6}
                         className="px-5 py-10 text-center text-gray-500"
                       >
                         Loading users...
@@ -315,7 +311,7 @@ export default function UserManagement() {
                   ) : filteredUsers.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={4}
+                        colSpan={6}
                         className="px-5 py-10 text-center text-gray-500"
                       >
                         No users match the selected filters
@@ -401,20 +397,36 @@ export default function UserManagement() {
                         </TableCell>
                         {(isAdmin || currentUserRole === "WEB_MASTER") && (
                           <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                            {user.role === "COACH" ? (
-                              <button
-                                onClick={() => {
-                                  setSelectedCoach(user);
-                                  setIsCoachModalOpen(true);
-                                }}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white transition-all group"
-                                title="View Coaching Profile"
-                              >
-                                <span>Profile</span>
-                              </button>
-                            ) : (
-                              <span className="text-gray-400 italic text-xs">N/A</span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {user.role === "COACH" && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedCoach(user);
+                                    setIsCoachModalOpen(true);
+                                  }}
+                                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white transition-all group"
+                                  title="View Coaching Profile"
+                                >
+                                  <span>Profile</span>
+                                </button>
+                              )}
+                              {user.role === "PLAYER" && (
+                                <button
+                                  onClick={() => {
+                                    setUserForPack(user);
+                                    setIsAssignPackModalOpen(true);
+                                  }}
+                                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white transition-all group"
+                                  title="Manage Gaming Packs"
+                                >
+                                  <BoxIcon width="16" height="16" />
+                                  <span>Packs</span>
+                                </button>
+                              )}
+                              {user.role !== "COACH" && user.role !== "PLAYER" && (
+                                <span className="text-gray-400 italic text-xs">N/A</span>
+                              )}
+                            </div>
                           </TableCell>
                         )}
                         {isAdmin && (
@@ -475,6 +487,20 @@ export default function UserManagement() {
           userId={selectedCoach.id}
           userName={`${selectedCoach.firstName} ${selectedCoach.lastName}`}
           isAdmin={isAdmin}
+        />
+      )}
+
+      {userForPack && (
+        <AssignPackModal
+          isOpen={isAssignPackModalOpen}
+          onClose={() => {
+            setIsAssignPackModalOpen(false);
+            setUserForPack(null);
+          }}
+          userId={userForPack.id}
+          userName={`${userForPack.firstName} ${userForPack.lastName}`}
+          currentPackId={userForPack.packGamefyId}
+          onSuccess={fetchUsers}
         />
       )}
     </>

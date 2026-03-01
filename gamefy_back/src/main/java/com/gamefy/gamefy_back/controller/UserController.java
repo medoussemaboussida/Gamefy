@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.controller;
 
 import com.gamefy.gamefy_back.dto.CreateUserDto;
+import com.gamefy.gamefy_back.dto.UserResponseDto;
 import com.gamefy.gamefy_back.dto.UpdateProfileDto;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.service.UserService;
@@ -32,18 +33,18 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         return ResponseEntity.ok(service.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Integer id) {
         return ResponseEntity.ok(service.getUserById(id));
     }
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<User> createUser(@RequestBody CreateUserDto request) {
+    public ResponseEntity<UserResponseDto> createUser(@RequestBody CreateUserDto request) {
         return ResponseEntity.ok(service.createUser(request));
     }
 
@@ -56,22 +57,22 @@ public class UserController {
 
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<User> updateUserStatus(
+    public ResponseEntity<UserResponseDto> updateUserStatus(
             @PathVariable Long id,
             @RequestParam Boolean enabled) {
-        User updatedUser = service.updateUserStatus(id, enabled);
+        UserResponseDto updatedUser = service.updateUserStatus(id, enabled);
         return ResponseEntity.ok(updatedUser);
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<User> updateProfile(
+    public ResponseEntity<UserResponseDto> updateProfile(
             @AuthenticationPrincipal User user,
             @RequestBody UpdateProfileDto request) {
         return ResponseEntity.ok(service.updateProfile(user.getId(), request));
     }
 
     @PostMapping("/profile/photo")
-    public ResponseEntity<User> uploadProfilePhoto(
+    public ResponseEntity<UserResponseDto> uploadProfilePhoto(
             @AuthenticationPrincipal User user,
             @RequestParam("file") MultipartFile file) throws IOException {
         String fileName = fileService.saveProfilePhoto(file);
@@ -79,7 +80,7 @@ public class UserController {
         // Update user profile photo path to use the new serving endpoint
         UpdateProfileDto dto = new UpdateProfileDto();
         dto.setProfilePhoto("/gamefy/users/profile/photo/" + fileName);
-        User updatedUser = service.updateProfile(user.getId(), dto);
+        UserResponseDto updatedUser = service.updateProfile(user.getId(), dto);
         
         return ResponseEntity.ok(updatedUser);
     }
