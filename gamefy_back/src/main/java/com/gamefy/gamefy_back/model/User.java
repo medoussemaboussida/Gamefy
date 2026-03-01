@@ -58,6 +58,11 @@ public class User implements UserDetails {
     @JoinColumn(name = "pack_player_id")
     private PackGamefy packGamefy;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("packGamefyId")
+    public Integer getPackGamefyId() {
+        return packGamefy != null ? packGamefy.getId() : null;
+    }
+
     @Column(name = "reset_pwd_token")
     private String resetPwdToken;
 

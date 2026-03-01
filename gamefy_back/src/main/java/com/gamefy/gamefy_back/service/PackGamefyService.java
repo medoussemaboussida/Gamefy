@@ -6,7 +6,9 @@ import com.gamefy.gamefy_back.model.GamefyPackBenefit;
 import com.gamefy.gamefy_back.model.PackGamefy;
 import com.gamefy.gamefy_back.model.enums.Benefit_type;
 import com.gamefy.gamefy_back.model.enums.Rate_Rule;
+import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.repository.PackGamefyRepository;
+import com.gamefy.gamefy_back.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 public class PackGamefyService {
 
     private final PackGamefyRepository repository;
+    private final UserRepository userRepository;
 
     public List<PackGamefyDto> getAllPacks() {
         return repository.findAll().stream()
@@ -103,5 +106,25 @@ public class PackGamefyService {
                 .description(pack.getDescription())
                 .benefits(benefitsDto)
                 .build();
+    }
+
+    @Transactional
+    public void assignPackToUser(Integer packId, Integer userId) {
+        PackGamefy pack = repository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack not found with id: " + packId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        user.setPackGamefy(pack);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void removePackFromUser(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        user.setPackGamefy(null);
+        userRepository.save(user);
     }
 }
