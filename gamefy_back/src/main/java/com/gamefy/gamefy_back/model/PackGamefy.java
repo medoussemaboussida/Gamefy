@@ -37,7 +37,7 @@ public class PackGamefy {
     private List<User> users = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "packGamefy")
+    @OneToMany(mappedBy = "packGamefy", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Payment> payments = new ArrayList<>();
 
     @Override

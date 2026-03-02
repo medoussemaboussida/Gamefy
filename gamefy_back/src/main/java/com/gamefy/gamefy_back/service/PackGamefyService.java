@@ -85,10 +85,19 @@ public class PackGamefyService {
 
     @Transactional
     public void deletePack(Integer id) {
-        if (!repository.existsById(id)) {
-            throw new RuntimeException("Pack not found with id: " + id);
+        PackGamefy pack = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pack not found with id: " + id));
+
+        // Unassign pack from all users
+        for (User user : pack.getUsers()) {
+            user.setPackGamefy(null);
+            userRepository.save(user);
         }
-        repository.deleteById(id);
+
+        // Clear the users list to prevent JPA from trying to maintain the relationship
+        pack.getUsers().clear();
+
+        repository.delete(pack);
     }
 
     private PackGamefyDto mapToDto(PackGamefy pack) {
