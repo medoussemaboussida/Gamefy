@@ -122,10 +122,10 @@ export default function SignInForm() {
                 )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Checkbox checked={isChecked} onChange={setIsChecked} />
+                    {/* <Checkbox checked={isChecked} onChange={setIsChecked} />
                     <span className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
                       Keep me logged in
-                    </span>
+                    </span> */}
                   </div>
                   <Link
                     to="/forgot-password"
@@ -142,7 +142,7 @@ export default function SignInForm() {
               </div>
             </form>
 
-            <div className="mt-5">
+            {/* <div className="mt-5">
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
                 Don&apos;t have an account? {""}
                 <Link
@@ -152,7 +152,7 @@ export default function SignInForm() {
                   Sign Up
                 </Link>
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

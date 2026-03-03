@@ -5,6 +5,7 @@ import logo from "../../assets/images/auth_logo.png";
 import wallpaper from "../../assets/images/Auth_second_wallpaper.png";
 import { authApi } from "../../api/auth";
 import toast from "react-hot-toast";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const SignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -76,7 +78,7 @@ const SignUp = () => {
 
     try {
       const { confirmPassword, ...signUpData } = formData;
-      await authApi.signUp(signUpData);
+      await authApi.signUp({ ...signUpData, recaptchaToken });
       toast.success("Account created successfully!", {
         id: loadingToast,
         style: {
@@ -229,11 +231,22 @@ const SignUp = () => {
             </div>
           </div>
 
+          {/* reCAPTCHA Widget */}
+          <div className="flex justify-center w-full max-w-[412px] mt-4 ">
+            <div className="rounded-[10px] overflow-hidden">
+            <ReCAPTCHA
+              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+              onChange={(token) => setRecaptchaToken(token)}
+              theme="light"
+            />
+            </div>
+          </div>
+
           {/* Sign Up Button */}
           <button
             type="submit"
-            disabled={isLoading}
-            className="w-full max-w-[412px] h-[47px] rounded-full bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] text-white font-medium text-lg font-['Inter'] hover:opacity-90 transition-opacity transform hover:shadow-lg active:scale-[0.98] mt-[33px] flex items-center justify-center gap-2"
+            disabled={isLoading || !recaptchaToken}
+            className="w-full max-w-[412px] h-[47px] rounded-full bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] text-white font-medium text-lg font-['Inter'] hover:opacity-90 transition-opacity transform hover:shadow-lg active:scale-[0.98] mt-[33px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? <Loader2 size={24} className="animate-spin" /> : "Sign Up"}
           </button>
