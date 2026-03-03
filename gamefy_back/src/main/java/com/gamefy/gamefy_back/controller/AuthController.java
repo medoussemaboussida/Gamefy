@@ -5,6 +5,7 @@ import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class AuthController {
     private final AuthService service;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupDto request) {
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupDto request) {
         try {
             User user = service.signup(
                 request.getFirstName(),
@@ -43,7 +44,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup/coach")
-    public ResponseEntity<?> signupCoach(@RequestBody SignupDto request) {
+    public ResponseEntity<?> signupCoach(@Valid @RequestBody SignupDto request) {
         try {
             User user = service.signupCoach(
                 request.getFirstName(),
