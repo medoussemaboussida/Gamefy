@@ -2,6 +2,7 @@ package com.gamefy.gamefy_back.controller;
 
 import com.gamefy.gamefy_back.dto.PcDto;
 import com.gamefy.gamefy_back.service.PCService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,13 +28,13 @@ public class PCController {
     }
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<PcDto> createPC(@RequestBody PcDto dto) {
+    public ResponseEntity<PcDto> createPC(@Valid @RequestBody PcDto dto) {
         return ResponseEntity.ok(service.createPC(dto));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<PcDto> updatePC(@PathVariable Integer id, @RequestBody PcDto dto) {
+    public ResponseEntity<PcDto> updatePC(@PathVariable Integer id, @Valid @RequestBody PcDto dto) {
         return ResponseEntity.ok(service.updatePC(id, dto));
     }
     @DeleteMapping("/{id}")
