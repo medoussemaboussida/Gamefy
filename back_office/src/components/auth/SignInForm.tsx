@@ -15,12 +15,14 @@ export default function SignInForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
   const navigate = useNavigate();
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     setError(null);
     setLoading(true);
+    setFieldErrors({});
     try {
       const response = await authApi.googleLogin({ idToken: credentialResponse.credential });
       localStorage.setItem("accessToken", response.accessToken);
@@ -32,9 +34,48 @@ export default function SignInForm() {
     }
   };
 
+  const validateField = (name: string, value: string) => {
+    let errorMsg = "";
+    if (name === "email") {
+      if (!value.trim()) {
+        errorMsg = "Email is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        errorMsg = "Invalid email format";
+      }
+    } else if (name === "password") {
+      if (!value.trim()) {
+        errorMsg = "Password is required";
+      }
+    }
+    setFieldErrors((prev) => ({ ...prev, [name]: errorMsg }));
+    return errorMsg;
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setEmail(val);
+    validateField("email", val);
+    setError(null);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setPassword(val);
+    validateField("password", val);
+    setError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const emailErr = validateField("email", email);
+    const passwordErr = validateField("password", password);
+
+    if (emailErr || passwordErr) {
+      return;
+    }
+
     setError(null);
+    setFieldErrors({});
     setLoading(true);
 
     try {
@@ -44,7 +85,15 @@ export default function SignInForm() {
       // Redirect to dashboard on success
       navigate("/home");
     } catch (err: any) {
-      setError(err.message || "Failed to sign in. Please check your credentials.");
+      const errorMessage = err.message || "Failed to sign in. Please check your credentials.";
+      setError(errorMessage);
+
+      // Map server errors to fields
+      if (errorMessage.toLowerCase().includes("user") || errorMessage.toLowerCase().includes("email")) {
+        setFieldErrors(prev => ({ ...prev, email: errorMessage }));
+      } else if (errorMessage.toLowerCase().includes("password") || errorMessage.toLowerCase().includes("credentials")) {
+        setFieldErrors(prev => ({ ...prev, password: errorMessage }));
+      }
     } finally {
       setLoading(false);
     }
@@ -89,8 +138,9 @@ export default function SignInForm() {
                   <Input
                     placeholder="info@gmail.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+                    onChange={handleEmailChange}
+                    error={!!fieldErrors.email}
+                    hint={fieldErrors.email}
                   />
                 </div>
                 <div>
@@ -102,8 +152,9 @@ export default function SignInForm() {
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
+                      onChange={handlePasswordChange}
+                      error={!!fieldErrors.password}
+                      hint={fieldErrors.password}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
