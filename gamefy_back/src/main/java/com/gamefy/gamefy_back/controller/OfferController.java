@@ -2,6 +2,7 @@ package com.gamefy.gamefy_back.controller;
 
 import com.gamefy.gamefy_back.dto.OfferDto;
 import com.gamefy.gamefy_back.service.OfferService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,13 +30,13 @@ public class OfferController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<OfferDto> createOffer(@RequestBody OfferDto dto) {
+    public ResponseEntity<OfferDto> createOffer(@Valid @RequestBody OfferDto dto) {
         return ResponseEntity.ok(service.createOffer(dto));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<OfferDto> updateOffer(@PathVariable Integer id, @RequestBody OfferDto dto) {
+    public ResponseEntity<OfferDto> updateOffer(@PathVariable Integer id, @Valid @RequestBody OfferDto dto) {
         return ResponseEntity.ok(service.updateOffer(id, dto));
     }
 

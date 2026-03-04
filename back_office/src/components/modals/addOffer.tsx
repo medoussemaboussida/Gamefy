@@ -21,6 +21,7 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, onSuccess, off
     reduction: 0,
     status: "ACTIVE",
   });
+  const [fieldErrors, setFieldErrors] = useState<{ offerName?: string; reduction?: string }>({});
 
   const isEdit = !!offerData;
 
@@ -45,12 +46,32 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, onSuccess, off
     { value: "INACTIVE", label: "Inactive" },
   ];
 
+  const validateField = (name: string, value: any) => {
+    let errorMsg = "";
+    if (name === "offerName") {
+      if (!value.trim()) {
+        errorMsg = "Offer name is required";
+      }
+    } else if (name === "reduction") {
+      const numValue = Number(value);
+      if (value === "" || isNaN(numValue)) {
+        errorMsg = "Reduction is required and must be a number";
+      } else if (numValue < 0 || numValue > 100) {
+        errorMsg = "Reduction must be between 0 and 100";
+      }
+    }
+    setFieldErrors((prev) => ({ ...prev, [name]: errorMsg }));
+    return errorMsg;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    const finalValue = name === "reduction" ? (value === "" ? "" : Number(value)) : value;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "reduction" ? Number(value) : value,
+      [name]: finalValue,
     }));
+    validateField(name, value);
   };
 
   const handleSelectChange = (value: string) => {
@@ -60,16 +81,16 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, onSuccess, off
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.offerName.trim()) {
-      toast.error("Offer name is required");
-      return;
-    }
-    if (formData.reduction < 0 || formData.reduction > 100) {
-      toast.error("Reduction must be between 0 and 100");
+    const nameErr = validateField("offerName", formData.offerName);
+    const reductionErr = validateField("reduction", formData.reduction);
+
+    if (nameErr || reductionErr) {
+      toast.error("Please fix the errors in the form");
       return;
     }
 
     setLoading(true);
+    setFieldErrors({});
     try {
       if (isEdit && offerData?.id) {
         await offerApi.updateOffer(offerData.id, formData);
@@ -81,7 +102,17 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, onSuccess, off
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.message || `Failed to ${isEdit ? "update" : "create"} offer`);
+      console.error("Failed to save offer:", error);
+      const errorMessage = error.message || `Failed to ${isEdit ? "update" : "create"} offer`;
+
+      // Map server-side validation error messages to fields
+      if (errorMessage.toLowerCase().includes("offer name")) {
+        setFieldErrors(prev => ({ ...prev, offerName: errorMessage }));
+      } else if (errorMessage.toLowerCase().includes("reduction")) {
+        setFieldErrors(prev => ({ ...prev, reduction: errorMessage }));
+      }
+
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -107,7 +138,8 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, onSuccess, off
               placeholder="Summer Discount 2025"
               value={formData.offerName}
               onChange={handleChange}
-              required
+              error={!!fieldErrors.offerName}
+              hint={fieldErrors.offerName}
             />
           </div>
 
@@ -119,9 +151,8 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, onSuccess, off
               placeholder="25"
               value={formData.reduction}
               onChange={handleChange}
-              min="0"
-              max="100"
-              required
+              error={!!fieldErrors.reduction}
+              hint={fieldErrors.reduction}
             />
           </div>
 
