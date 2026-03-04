@@ -2,6 +2,7 @@ package com.gamefy.gamefy_back.controller;
 
 import com.gamefy.gamefy_back.dto.EventDto;
 import com.gamefy.gamefy_back.service.EventService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,13 +32,13 @@ public class EventController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<EventDto> createEvent(@RequestBody EventDto dto) {
+    public ResponseEntity<EventDto> createEvent(@Valid @RequestBody EventDto dto) {
         return ResponseEntity.ok(service.createEvent(dto));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<EventDto> updateEvent(@PathVariable Integer id, @RequestBody EventDto dto) {
+    public ResponseEntity<EventDto> updateEvent(@PathVariable Integer id, @Valid @RequestBody EventDto dto) {
         return ResponseEntity.ok(service.updateEvent(id, dto));
     }
 
