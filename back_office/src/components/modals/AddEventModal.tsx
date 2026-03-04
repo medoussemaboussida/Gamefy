@@ -26,6 +26,7 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
     // Helper to format ISO string to datetime-local format
     const formatToLocalDatetime = (isoString: string) => {
@@ -58,7 +59,25 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
             });
         }
         setSelectedFile(null);
+        setFieldErrors({});
     }, [eventToEdit, isOpen]);
+
+    const validateField = (name: string, value: any) => {
+        let errorMsg = "";
+        if (name === "title" || name === "description") {
+            if (!value || !value.trim()) {
+                errorMsg = `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+            } else if (value.trim().length < 5) {
+                errorMsg = "Minimum 5 characters required";
+            }
+        } else if (name === "place" || name === "startTime" || name === "endTime") {
+            if (!value || !value.trim()) {
+                errorMsg = `${name.charAt(0).toUpperCase() + name.slice(1).replace(/([A-Z])/g, ' $1')} is required`;
+            }
+        }
+        setFieldErrors((prev) => ({ ...prev, [name]: errorMsg }));
+        return errorMsg;
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -68,7 +87,20 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const titleErr = validateField("title", formData.title);
+        const descErr = validateField("description", formData.description);
+        const placeErr = validateField("place", formData.place);
+        const startErr = validateField("startTime", formData.startTime);
+        const endErr = validateField("endTime", formData.endTime);
+
+        if (titleErr || descErr || placeErr || startErr || endErr) {
+            toast.error("Please fix the form");
+            return;
+        }
+
         setLoading(true);
+        setFieldErrors({});
 
         try {
             // Convert local datetime to UTC ISO string
@@ -96,7 +128,23 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
             onSuccess();
             onClose();
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to save event");
+            console.error("Failed to save event:", error);
+            const errorMessage = error.response?.data?.message || error.message || "Failed to save event";
+
+            // Map common server errors to fields
+            if (errorMessage.toLowerCase().includes("title")) {
+                setFieldErrors(prev => ({ ...prev, title: errorMessage }));
+            } else if (errorMessage.toLowerCase().includes("description")) {
+                setFieldErrors(prev => ({ ...prev, description: errorMessage }));
+            } else if (errorMessage.toLowerCase().includes("place")) {
+                setFieldErrors(prev => ({ ...prev, place: errorMessage }));
+            } else if (errorMessage.toLowerCase().includes("start time")) {
+                setFieldErrors(prev => ({ ...prev, startTime: errorMessage }));
+            } else if (errorMessage.toLowerCase().includes("end time")) {
+                setFieldErrors(prev => ({ ...prev, endTime: errorMessage }));
+            }
+
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -121,8 +169,12 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
                             <Input
                                 placeholder="e.g. Valorant Tournament"
                                 value={formData.title}
-                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                required
+                                onChange={(e) => {
+                                    setFormData({ ...formData, title: e.target.value });
+                                    validateField("title", e.target.value);
+                                }}
+                                error={!!fieldErrors.title}
+                                hint={fieldErrors.title}
                             />
                         </div>
                         <div>
@@ -130,8 +182,12 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
                             <Input
                                 placeholder="e.g. Gaming Room A"
                                 value={formData.place}
-                                onChange={(e) => setFormData({ ...formData, place: e.target.value })}
-                                required
+                                onChange={(e) => {
+                                    setFormData({ ...formData, place: e.target.value });
+                                    validateField("place", e.target.value);
+                                }}
+                                error={!!fieldErrors.place}
+                                hint={fieldErrors.place}
                             />
                         </div>
                     </div>
@@ -139,11 +195,17 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
                     <div>
                         <Label>Description</Label>
                         <textarea
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-transparent dark:text-white focus:border-brand-500 outline-none transition-all min-h-[100px]"
+                            className={`w-full px-4 py-3 rounded-xl border ${fieldErrors.description ? "border-error-500" : "border-gray-200 dark:border-white/10"} bg-transparent dark:text-white focus:border-brand-500 outline-none transition-all min-h-[100px]`}
                             placeholder="Describe the event..."
                             value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            onChange={(e) => {
+                                setFormData({ ...formData, description: e.target.value });
+                                validateField("description", e.target.value);
+                            }}
                         />
+                        {fieldErrors.description && (
+                            <p className="mt-1 text-xs text-error-500">{fieldErrors.description}</p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -152,8 +214,12 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
                             <Input
                                 type="datetime-local"
                                 value={formData.startTime}
-                                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                                required
+                                onChange={(e) => {
+                                    setFormData({ ...formData, startTime: e.target.value });
+                                    validateField("startTime", e.target.value);
+                                }}
+                                error={!!fieldErrors.startTime}
+                                hint={fieldErrors.startTime}
                             />
                         </div>
                         <div>
@@ -161,8 +227,12 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
                             <Input
                                 type="datetime-local"
                                 value={formData.endTime}
-                                onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                                required
+                                onChange={(e) => {
+                                    setFormData({ ...formData, endTime: e.target.value });
+                                    validateField("endTime", e.target.value);
+                                }}
+                                error={!!fieldErrors.endTime}
+                                hint={fieldErrors.endTime}
                             />
                         </div>
                     </div>
