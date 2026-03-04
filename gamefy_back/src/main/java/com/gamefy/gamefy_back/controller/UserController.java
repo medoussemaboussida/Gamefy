@@ -6,6 +6,7 @@ import com.gamefy.gamefy_back.dto.UpdateProfileDto;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.service.UserService;
 import com.gamefy.gamefy_back.service.FileService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,7 +45,7 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<UserResponseDto> createUser(@RequestBody CreateUserDto request) {
+    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody CreateUserDto request) {
         return ResponseEntity.ok(service.createUser(request));
     }
 

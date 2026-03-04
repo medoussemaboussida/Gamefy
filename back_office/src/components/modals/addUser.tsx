@@ -21,15 +21,36 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess 
         email: "",
         role: "WEB_MASTER", // Default role
     });
+    const [fieldErrors, setFieldErrors] = useState<{ firstName?: string; lastName?: string; email?: string }>({});
 
     const roleOptions = [
         { value: "ADMIN", label: "Admin" },
         { value: "WEB_MASTER", label: "Web Master" },
     ];
 
+    const validateField = (name: string, value: string) => {
+        let errorMsg = "";
+        if (name === "firstName" || name === "lastName") {
+            if (!value.trim()) {
+                errorMsg = `${name === "firstName" ? "First" : "Last"} name is required`;
+            } else if (value.trim().length < 3) {
+                errorMsg = "Minimum 3 characters required";
+            }
+        } else if (name === "email") {
+            if (!value.trim()) {
+                errorMsg = "Email is required";
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                errorMsg = "Invalid email format";
+            }
+        }
+        setFieldErrors((prev) => ({ ...prev, [name]: errorMsg }));
+        return errorMsg;
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+        validateField(name, value);
     };
 
     const handleRoleChange = (value: string) => {
@@ -38,7 +59,18 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const fNameErr = validateField("firstName", formData.firstName);
+        const lNameErr = validateField("lastName", formData.lastName);
+        const emailErr = validateField("email", formData.email);
+
+        if (fNameErr || lNameErr || emailErr) {
+            toast.error("Please fix the errors in the form");
+            return;
+        }
+
         setLoading(true);
+        setFieldErrors({});
         try {
             await userApi.createUser({
                 ...formData,
@@ -56,7 +88,18 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess 
             });
         } catch (error: any) {
             console.error("Failed to create user:", error);
-            toast.error(error.message || "Failed to create user. Please try again.");
+            const errorMessage = error.message || "Failed to create user. Please try again.";
+
+            // Map common server errors to fields
+            if (errorMessage.toLowerCase().includes("email")) {
+                setFieldErrors(prev => ({ ...prev, email: errorMessage }));
+            } else if (errorMessage.toLowerCase().includes("first name")) {
+                setFieldErrors(prev => ({ ...prev, firstName: errorMessage }));
+            } else if (errorMessage.toLowerCase().includes("last name")) {
+                setFieldErrors(prev => ({ ...prev, lastName: errorMessage }));
+            }
+
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -83,7 +126,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess 
                                 placeholder="Enter first name"
                                 value={formData.firstName}
                                 onChange={handleChange}
-                                required
+                                error={!!fieldErrors.firstName}
+                                hint={fieldErrors.firstName}
                             />
                         </div>
                         <div>
@@ -93,7 +137,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess 
                                 placeholder="Enter last name"
                                 value={formData.lastName}
                                 onChange={handleChange}
-                                required
+                                error={!!fieldErrors.lastName}
+                                hint={fieldErrors.lastName}
                             />
                         </div>
                     </div>
@@ -106,7 +151,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess 
                             placeholder="example@gamefy.com"
                             value={formData.email}
                             onChange={handleChange}
-                            required
+                            error={!!fieldErrors.email}
+                            hint={fieldErrors.email}
                         />
                     </div>
 
