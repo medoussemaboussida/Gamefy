@@ -31,30 +31,30 @@ export interface AssignPackDto {
 
 export const packGamefyApi = {
     getAllPacks: async (): Promise<PackGamefyDto[]> => {
-        return apiClient.get("/api/pack-gamefies");
+        return apiClient.get("/gamefy/pack-gamefies");
     },
 
     getPackById: async (id: number): Promise<PackGamefyDto> => {
-        return apiClient.get(`/api/pack-gamefies/${id}`);
+        return apiClient.get(`/gamefy/pack-gamefies/${id}`);
     },
 
     createPack: async (dto: CreatePackGamefyDto): Promise<PackGamefyDto> => {
-        return apiClient.post("/api/pack-gamefies", dto);
+        return apiClient.post("/gamefy/pack-gamefies", dto);
     },
 
     updatePack: async (id: number, dto: CreatePackGamefyDto): Promise<PackGamefyDto> => {
-        return apiClient.put(`/api/pack-gamefies/${id}`, dto);
+        return apiClient.put(`/gamefy/pack-gamefies/${id}`, dto);
     },
 
     deletePack: async (id: number): Promise<void> => {
-        return apiClient.delete(`/api/pack-gamefies/${id}`);
+        return apiClient.delete(`/gamefy/pack-gamefies/${id}`);
     },
 
     assignPackToPlayer: async (dto: AssignPackDto): Promise<string> => {
-        return apiClient.post("/api/pack-gamefies/assign-to-player", dto);
+        return apiClient.post("/gamefy/pack-gamefies/assign-to-player", dto);
     },
 
     removePackFromPlayer: async (userId: number): Promise<string> => {
-        return apiClient.post(`/api/pack-gamefies/remove-from-player/${userId}`);
+        return apiClient.post(`/gamefy/pack-gamefies/remove-from-player/${userId}`);
     }
 };

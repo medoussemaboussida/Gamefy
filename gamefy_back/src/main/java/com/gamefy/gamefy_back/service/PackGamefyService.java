@@ -4,12 +4,15 @@ import com.gamefy.gamefy_back.dto.CreatePackGamefyDto;
 import com.gamefy.gamefy_back.dto.PackGamefyDto;
 import com.gamefy.gamefy_back.model.GamefyPackBenefit;
 import com.gamefy.gamefy_back.model.PackGamefy;
+import com.gamefy.gamefy_back.model.Payment;
 import com.gamefy.gamefy_back.model.enums.Benefit_type;
 import com.gamefy.gamefy_back.model.enums.Rate_Rule;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.repository.PackGamefyRepository;
+import com.gamefy.gamefy_back.repository.PaymentRepository;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +21,12 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PackGamefyService {
 
     private final PackGamefyRepository repository;
     private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
 
     public List<PackGamefyDto> getAllPacks() {
         return repository.findAll().stream()
@@ -110,6 +115,7 @@ public class PackGamefyService {
 
     @Transactional
     public void assignPackToUser(Integer packId, Integer userId) {
+        log.info("Service: Assigning packId {} to userId {}", packId, userId);
         PackGamefy pack = repository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Pack not found with id: " + packId));
         User user = userRepository.findById(userId)
@@ -117,12 +123,27 @@ public class PackGamefyService {
 
         user.setPackGamefy(pack);
         userRepository.save(user);
+
+        // Add to payment history
+        Payment payment = new Payment();
+        payment.setUser(user);
+        payment.setPackGamefy(pack);
+        payment.setTotalPrice(pack.getPrice());
+        paymentRepository.save(payment);
     }
 
     @Transactional
     public void removePackFromUser(Integer userId) {
+        log.info("Service: Removing pack from userId {}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        PackGamefy currentPack = user.getPackGamefy();
+        if (currentPack != null) {
+            // Remove from payment history
+            paymentRepository.findByUserAndPackGamefy(user, currentPack)
+                    .ifPresent(paymentRepository::delete);
+        }
 
         user.setPackGamefy(null);
         userRepository.save(user);
