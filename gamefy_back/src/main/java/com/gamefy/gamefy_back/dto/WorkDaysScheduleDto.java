@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.dto;
 
 import com.gamefy.gamefy_back.model.enums.DayOfWeek;
+import com.gamefy.gamefy_back.model.enums.WorkDayStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,4 +20,5 @@ public class WorkDaysScheduleDto {
     private String year;
     private LocalTime startTime;
     private LocalTime endTime;
+    private WorkDayStatus status;
 }
