@@ -41,19 +41,41 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
     const fetchSchedules = async () => {
         setLoading(true);
         try {
-            // In a real scenario, we might want to fetch by month/year
-            // For now, following the CRUD API created
             const allSchedules = await workDaysScheduleApi.getAllSchedules();
-            console.log("Fetched schedules:", allSchedules);
-            // Logic to populate state based on fetched data goes here
-            // Filter or map logic here if needed based on backend design
-            // Assuming for now we are just editing a general recurring schedule or the first one found for simplicity
-            // since the entity has month/year.
+            const filteredByMonth = allSchedules.filter(s => s.month === selectedMonth);
+
+            if (filteredByMonth.length > 0) {
+                const newSchedules = DAYS.map(dayName => {
+                    const existing = filteredByMonth.find(s => s.day === dayName);
+                    if (existing) {
+                        return {
+                            day: dayName,
+                            startTime: formatTimeFromISO(existing.startTime),
+                            endTime: formatTimeFromISO(existing.endTime),
+                            isOpen: existing.status === "OPEN"
+                        };
+                    }
+                    return {
+                        day: dayName,
+                        startTime: "12:00 PM",
+                        endTime: "02:00 AM",
+                        isOpen: true
+                    };
+                });
+                setSchedules(newSchedules);
+            }
         } catch (error) {
             console.error("Failed to fetch schedules", error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const formatTimeFromISO = (isoTime: string): string => {
+        const [hours, minutes] = isoTime.split(':').map(Number);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        return `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
     };
 
     useEffect(() => {
@@ -94,13 +116,14 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
 
             const currentYear = new Date().getFullYear().toString();
 
-            const promises = schedules.filter(s => s.isOpen).map(s => {
+            const promises = schedules.map(s => {
                 const dto: WorkDaysScheduleDto = {
                     day: s.day,
                     month: selectedMonth,
                     year: currentYear,
                     startTime: formatTimeToLocalISO(s.startTime),
                     endTime: formatTimeToLocalISO(s.endTime),
+                    status: s.isOpen ? "OPEN" : "CLOSED"
                 };
                 return workDaysScheduleApi.createSchedule(dto);
             });

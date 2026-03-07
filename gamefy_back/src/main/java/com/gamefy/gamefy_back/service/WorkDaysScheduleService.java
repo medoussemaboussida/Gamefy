@@ -36,6 +36,7 @@ public class WorkDaysScheduleService {
                 .map(existing -> {
                     existing.setStartTime(dto.getStartTime());
                     existing.setEndTime(dto.getEndTime());
+                    existing.setStatus(dto.getStatus());
                     return mapToDto(repository.save(existing));
                 })
                 .orElseGet(() -> {
@@ -53,6 +54,7 @@ public class WorkDaysScheduleService {
         existing.setYear(dto.getYear());
         existing.setStartTime(dto.getStartTime());
         existing.setEndTime(dto.getEndTime());
+        existing.setStatus(dto.getStatus());
         
         return mapToDto(repository.save(existing));
     }
@@ -69,6 +71,7 @@ public class WorkDaysScheduleService {
                 .year(schedule.getYear())
                 .startTime(schedule.getStartTime())
                 .endTime(schedule.getEndTime())
+                .status(schedule.getStatus())
                 .build();
     }
 
@@ -80,6 +83,7 @@ public class WorkDaysScheduleService {
         schedule.setYear(dto.getYear());
         schedule.setStartTime(dto.getStartTime());
         schedule.setEndTime(dto.getEndTime());
+        schedule.setStatus(dto.getStatus());
         return schedule;
     }
 }

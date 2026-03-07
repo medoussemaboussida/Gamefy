@@ -7,6 +7,7 @@ export interface WorkDaysScheduleDto {
     year: string;
     startTime: string; // "HH:mm:ss"
     endTime: string;   // "HH:mm:ss"
+    status: "OPEN" | "CLOSED";
 }
 
 export const workDaysScheduleApi = {
