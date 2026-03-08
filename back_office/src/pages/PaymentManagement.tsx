@@ -11,10 +11,13 @@ import {
 } from "../components/ui/table";
 import { paymentApi, AllPaymentResponseDto } from "../api/payment";
 import toast from "react-hot-toast";
+import Pagination from "../components/ui/pagination/Pagination";
 
 export default function PaymentManagement() {
     const [payments, setPayments] = useState<AllPaymentResponseDto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 3;
 
     const fetchPayments = async () => {
         try {
@@ -30,6 +33,12 @@ export default function PaymentManagement() {
     useEffect(() => {
         fetchPayments();
     }, []);
+
+    const totalItems = payments.length;
+    const currentPayments = payments.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+    );
 
     return (
         <>
@@ -67,14 +76,14 @@ export default function PaymentManagement() {
                                             Loading transactions...
                                         </TableCell>
                                     </TableRow>
-                                ) : payments.length === 0 ? (
+                                ) : currentPayments.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={4} className="px-5 py-10 text-center text-gray-500">
                                             No transactions found
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    payments.map((payment) => (
+                                    currentPayments.map((payment) => (
                                         <TableRow key={payment.id}>
                                             <TableCell className="px-5 py-4 text-theme-sm text-gray-500">
                                                 #{payment.id}
@@ -100,6 +109,12 @@ export default function PaymentManagement() {
                             </TableBody>
                         </Table>
                     </div>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalItems={totalItems}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={(page) => setCurrentPage(page)}
+                    />
                 </ComponentCard>
             </div>
         </>

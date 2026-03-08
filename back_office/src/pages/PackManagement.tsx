@@ -20,6 +20,7 @@ import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
 import { TrashBinIcon, PencilIcon, ChevronDownIcon, EyeIcon } from "../icons";
 import PackModal from "../components/modals/PackModal";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
+import Pagination from "../components/ui/pagination/Pagination";
 
 export default function PackManagement() {
     const [packs, setPacks] = useState<PackGamefyDto[]>([]);
@@ -31,6 +32,8 @@ export default function PackManagement() {
     const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
     const [selectedPack, setSelectedPack] = useState<PackGamefyDto | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 3;
 
     const [isSortFieldOpen, setIsSortFieldOpen] = useState(false);
     const [isSortOrderOpen, setIsSortOrderOpen] = useState(false);
@@ -53,6 +56,10 @@ export default function PackManagement() {
         fetchPacks();
     }, []);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [sortField, sortOrder]);
+
     const sortedPacks = [...packs].sort((a, b) => {
         let comparison = 0;
         if (sortField === "name") {
@@ -62,6 +69,12 @@ export default function PackManagement() {
         }
         return sortOrder === "asc" ? comparison : -comparison;
     });
+
+    const totalItems = sortedPacks.length;
+    const currentPacks = sortedPacks.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+    );
 
     const handleConfirmDelete = async () => {
         if (!selectedPack) return;
@@ -196,14 +209,14 @@ export default function PackManagement() {
                                                 Loading packs...
                                             </TableCell>
                                         </TableRow>
-                                    ) : sortedPacks.length === 0 ? (
+                                    ) : currentPacks.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={4} className="px-5 py-10 text-center text-gray-500">
+                                            <TableCell colSpan={5} className="px-5 py-10 text-center text-gray-500">
                                                 No packs found.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        sortedPacks.map((pack) => (
+                                        currentPacks.map((pack) => (
                                             <TableRow key={pack.id}>
                                                 <TableCell className="px-5 py-4 text-start font-medium text-gray-800 dark:text-white/90">
                                                     {pack.name}
@@ -260,6 +273,12 @@ export default function PackManagement() {
                             </Table>
                         </div>
                     </div>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalItems={totalItems}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={(page) => setCurrentPage(page)}
+                    />
                 </ComponentCard>
             </div>
 

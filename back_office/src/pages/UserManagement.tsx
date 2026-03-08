@@ -21,6 +21,7 @@ import AddUserModal from "../components/modals/addUser";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
 import CoachProfileModal from "../components/modals/CoachProfileModal";
 import AssignPackModal from "../components/modals/AssignPackModal";
+import Pagination from "../components/ui/pagination/Pagination";
 
 interface User {
   id: number;
@@ -37,6 +38,8 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
 
   const [isRoleOpen, setIsRoleOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
@@ -85,12 +88,22 @@ export default function UserManagement() {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedRole, selectedStatus]);
+
   const filteredUsers = users.filter((user) => {
     const roleMatch = selectedRole === "ALL" || user.role === selectedRole;
     const statusMatch =
       selectedStatus === "ALL" || user.status === selectedStatus;
     return roleMatch && statusMatch;
   });
+
+  const totalItems = filteredUsers.length;
+  const currentUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   const getRoleLabel = (value: string) =>
     roleOptions.find((opt) => opt.value === value)?.label || value;
@@ -301,24 +314,18 @@ export default function UserManagement() {
                 <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                   {loading ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="px-5 py-10 text-center text-gray-500"
-                      >
+                      <TableCell colSpan={7} className="px-5 py-10 text-center text-gray-500">
                         Loading users...
                       </TableCell>
                     </TableRow>
-                  ) : filteredUsers.length === 0 ? (
+                  ) : currentUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="px-5 py-10 text-center text-gray-500"
-                      >
-                        No users match the selected filters
+                      <TableCell colSpan={7} className="px-5 py-10 text-center text-gray-500">
+                        No users found
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredUsers.map((user) => (
+                    currentUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="px-5 py-4 sm:px-6 text-start">
                           <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
@@ -452,6 +459,12 @@ export default function UserManagement() {
                 </TableBody>
               </Table>
             </div>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={(page) => setCurrentPage(page)}
+            />
           </div>
         </ComponentCard>
       </div>
