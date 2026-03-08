@@ -56,7 +56,9 @@ const EventsPage = () => {
 
     const formatDate = (dateString) => {
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        return new Date(dateString).toLocaleDateString(undefined, options);
+        // Backend returns LocalDateTime without timezone - append 'Z' so JS treats it as UTC
+        const utcString = dateString.endsWith("Z") || dateString.includes("+") ? dateString : dateString + "Z";
+        return new Date(utcString).toLocaleDateString(undefined, options);
     };
 
     const getStatusStyle = (status) => {
@@ -281,7 +283,7 @@ const EventsPage = () => {
 
                                                     {/* Participation Logic */}
                                                     <div className="pt-8 w-full">
-                                                        {new Date(event.endTime) < new Date() ? (
+                                                        {new Date(event.endTime.endsWith("Z") ? event.endTime : event.endTime + "Z") < new Date() ? (
                                                             <div className="w-full px-8 py-4 bg-white/5 text-white/40 font-black uppercase tracking-widest rounded-full text-center border border-white/5">
                                                                 This event has passed
                                                             </div>

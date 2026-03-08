@@ -141,7 +141,10 @@ export default function EventManagement() {
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString();
+        // Backend returns LocalDateTime without timezone (e.g. "2026-03-08T19:00:00")
+        // Append 'Z' so JavaScript treats it as UTC and converts to local time on display
+        const utcString = dateString.endsWith("Z") || dateString.includes("+") ? dateString : dateString + "Z";
+        return new Date(utcString).toLocaleString();
     };
 
     return (

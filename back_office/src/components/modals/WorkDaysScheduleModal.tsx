@@ -71,10 +71,16 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
         }
     };
 
+    // Convert UTC time from backend → local display time (12h format)
     const formatTimeFromISO = (isoTime: string): string => {
         const [hours, minutes] = isoTime.split(':').map(Number);
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const displayHours = hours % 12 || 12;
+        // Convert UTC to local: add timezone offset
+        const offsetMinutes = new Date().getTimezoneOffset(); // e.g. -60 for UTC+1
+        let localHours = hours - Math.floor(offsetMinutes / 60);
+        if (localHours < 0) localHours += 24;
+        if (localHours >= 24) localHours -= 24;
+        const ampm = localHours >= 12 ? 'PM' : 'AM';
+        const displayHours = localHours % 12 || 12;
         return `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
     };
 
@@ -96,13 +102,18 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
         setSchedules(newSchedules);
     };
 
+    // Convert local display time (12h format) → UTC for backend
     const formatTimeToLocalISO = (time12h: string): string => {
         const [time, modifier] = time12h.split(' ');
         let [hours, minutes] = time.split(':').map(Number);
         if (modifier === 'PM' && hours < 12) hours += 12;
         if (modifier === 'AM' && hours === 12) hours = 0;
-
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+        // Convert local to UTC: subtract timezone offset
+        const offsetMinutes = new Date().getTimezoneOffset(); // e.g. -60 for UTC+1
+        let utcHours = hours + Math.floor(offsetMinutes / 60);
+        if (utcHours < 0) utcHours += 24;
+        if (utcHours >= 24) utcHours -= 24;
+        return `${utcHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
     };
 
     const handleSave = async () => {
