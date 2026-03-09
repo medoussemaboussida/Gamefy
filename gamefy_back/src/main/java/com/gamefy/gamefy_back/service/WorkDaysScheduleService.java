@@ -86,4 +86,10 @@ public class WorkDaysScheduleService {
         schedule.setStatus(dto.getStatus());
         return schedule;
     }
+
+    public List<WorkDaysScheduleDto> getSchedulesByMonthAndYear(String month, String year) {
+        return repository.findByMonthAndYear(month, year).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
 }

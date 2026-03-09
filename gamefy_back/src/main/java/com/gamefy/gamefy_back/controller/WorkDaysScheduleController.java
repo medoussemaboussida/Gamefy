@@ -42,4 +42,16 @@ public class WorkDaysScheduleController {
         service.deleteSchedule(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Public endpoint — accessible by any authenticated user (players, coaches, etc.)
+     * to fetch the work schedule for a given month/year.
+     */
+    @GetMapping("/public")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<List<WorkDaysScheduleDto>> getSchedulesByMonthAndYear(
+            @RequestParam String month,
+            @RequestParam String year) {
+        return ResponseEntity.ok(service.getSchedulesByMonthAndYear(month, year));
+    }
 }
