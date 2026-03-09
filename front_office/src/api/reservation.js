@@ -17,7 +17,6 @@ import { apiClient } from "./apiClient";
  * @property {string} reservationType
  * @property {string} startTime
  * @property {string} endTime
- * @property {string} paymentType
  * @property {number[]} pcIds
  */
 

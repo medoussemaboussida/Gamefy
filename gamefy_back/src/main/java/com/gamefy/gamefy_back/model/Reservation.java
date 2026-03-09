@@ -47,7 +47,7 @@ public class Reservation {
     private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_type", nullable = false)
+    @Column(name = "payment_type")
     private Payment_Type paymentType;
 
     @Enumerated(EnumType.STRING)

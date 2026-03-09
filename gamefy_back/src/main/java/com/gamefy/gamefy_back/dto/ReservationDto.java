@@ -1,6 +1,5 @@
 package com.gamefy.gamefy_back.dto;
 
-import com.gamefy.gamefy_back.model.enums.Payment_Type;
 import com.gamefy.gamefy_back.model.enums.Reservation_Status;
 import com.gamefy.gamefy_back.model.enums.Reservation_Type;
 import lombok.AllArgsConstructor;
@@ -20,7 +19,6 @@ public class ReservationDto {
     private Reservation_Type reservationType;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Payment_Type paymentType;
     private Reservation_Status status;
     private List<Integer> pcNumbers;
     private String playerName;

@@ -204,7 +204,6 @@ export default function ReservationPage() {
                 reservationType,
                 startTime: getUTC(Number(startTime)),
                 endTime: getUTC(Number(endTime)),
-                paymentType: "CASH_PAYMENT",
                 pcIds: selectedPcIds,
             });
             setSuccess(true);
@@ -379,8 +378,8 @@ export default function ReservationPage() {
                                                     key={slot.value}
                                                     onClick={() => { setStartTime(slot.value); setEndTime(""); }}
                                                     className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 border ${Number(startTime) === slot.value
-                                                            ? "bg-[#1CF3CA] text-black border-[#1CF3CA] shadow-[0_0_20px_rgba(28,243,202,0.3)]"
-                                                            : "bg-white/5 text-white/60 border-transparent hover:border-[#1CF3CA]/30 hover:text-white"
+                                                        ? "bg-[#1CF3CA] text-black border-[#1CF3CA] shadow-[0_0_20px_rgba(28,243,202,0.3)]"
+                                                        : "bg-white/5 text-white/60 border-transparent hover:border-[#1CF3CA]/30 hover:text-white"
                                                         }`}
                                                 >
                                                     {slot.label}
@@ -398,8 +397,8 @@ export default function ReservationPage() {
                                                         key={slot.value}
                                                         onClick={() => setEndTime(slot.value)}
                                                         className={`px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 border ${Number(endTime) === slot.value
-                                                                ? "bg-[#FF89EB] text-black border-[#FF89EB] shadow-[0_0_20px_rgba(255,137,235,0.3)]"
-                                                                : "bg-white/5 text-white/60 border-transparent hover:border-[#FF89EB]/30 hover:text-white"
+                                                            ? "bg-[#FF89EB] text-black border-[#FF89EB] shadow-[0_0_20px_rgba(255,137,235,0.3)]"
+                                                            : "bg-white/5 text-white/60 border-transparent hover:border-[#FF89EB]/30 hover:text-white"
                                                             }`}
                                                     >
                                                         {slot.label}

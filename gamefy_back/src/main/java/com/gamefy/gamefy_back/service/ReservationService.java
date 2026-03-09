@@ -72,9 +72,8 @@ public class ReservationService {
         reservation.setPlayer(player);
         reservation.setStartTime(dto.getStartTime());
         reservation.setEndTime(dto.getEndTime());
-        reservation.setPaymentType(dto.getPaymentType() != null ? dto.getPaymentType() : Payment_Type.CASH_PAYMENT);
         reservation.setReservationType(dto.getReservationType());
-        reservation.setStatus(Reservation_Status.CONFIRMED);
+        reservation.setStatus(Reservation_Status.PENDING);
 
         Reservation saved = reservationRepository.save(reservation);
 
@@ -94,7 +93,6 @@ public class ReservationService {
                 .reservationType(saved.getReservationType())
                 .startTime(saved.getStartTime())
                 .endTime(saved.getEndTime())
-                .paymentType(saved.getPaymentType())
                 .pcIds(dto.getPcIds())
                 .build();
     }
@@ -155,7 +153,6 @@ public class ReservationService {
                 .reservationType(reservation.getReservationType())
                 .startTime(reservation.getStartTime())
                 .endTime(reservation.getEndTime())
-                .paymentType(reservation.getPaymentType())
                 .status(reservation.getStatus())
                 .priceTime(reservation.getPriceTime())
                 .playerName(reservation.getPlayer().getFirstName() + " " + reservation.getPlayer().getLastName())
