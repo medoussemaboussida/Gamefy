@@ -24,7 +24,9 @@ interface DaySchedule {
 }
 
 const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, onClose }) => {
+    const currentYear = new Date().getFullYear().toString();
     const [selectedMonth, setSelectedMonth] = useState<string>("OCTOBER");
+    const [selectedYear] = useState<string>(currentYear);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -42,28 +44,29 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
         setLoading(true);
         try {
             const allSchedules = await workDaysScheduleApi.getAllSchedules();
-            const filteredByMonth = allSchedules.filter(s => s.month === selectedMonth);
+            // Filter by BOTH month AND year to avoid cross-month contamination
+            const filteredByMonth = allSchedules.filter(
+                s => s.month === selectedMonth && s.year === selectedYear
+            );
 
-            if (filteredByMonth.length > 0) {
-                const newSchedules = DAYS.map(dayName => {
-                    const existing = filteredByMonth.find(s => s.day === dayName);
-                    if (existing) {
-                        return {
-                            day: dayName,
-                            startTime: formatTimeFromISO(existing.startTime),
-                            endTime: formatTimeFromISO(existing.endTime),
-                            isOpen: existing.status === "OPEN"
-                        };
-                    }
+            const newSchedules = DAYS.map(dayName => {
+                const existing = filteredByMonth.find(s => s.day === dayName);
+                if (existing) {
                     return {
                         day: dayName,
-                        startTime: "12:00 PM",
-                        endTime: "02:00 AM",
-                        isOpen: true
+                        startTime: formatTimeFromISO(existing.startTime),
+                        endTime: formatTimeFromISO(existing.endTime),
+                        isOpen: existing.status === "OPEN"
                     };
-                });
-                setSchedules(newSchedules);
-            }
+                }
+                return {
+                    day: dayName,
+                    startTime: "12:00 PM",
+                    endTime: "02:00 AM",
+                    isOpen: true
+                };
+            });
+            setSchedules(newSchedules);
         } catch (error) {
             console.error("Failed to fetch schedules", error);
         } finally {
@@ -88,7 +91,8 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
         if (isOpen) {
             fetchSchedules();
         }
-    }, [isOpen]);
+        // Reload whenever the modal opens OR the selected month changes
+    }, [isOpen, selectedMonth]);
 
     const handleTimeChange = (dayIndex: number, field: "startTime" | "endTime", value: string) => {
         const newSchedules = [...schedules];
@@ -125,13 +129,11 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
             // Based on the entity created: Integer id, String month, String year, LocalDateTime startTime, LocalDateTime endTime.
             // It looks like each record is a specific time slot.
 
-            const currentYear = new Date().getFullYear().toString();
-
             const promises = schedules.map(s => {
                 const dto: WorkDaysScheduleDto = {
                     day: s.day,
                     month: selectedMonth,
-                    year: currentYear,
+                    year: selectedYear,
                     startTime: formatTimeToLocalISO(s.startTime),
                     endTime: formatTimeToLocalISO(s.endTime),
                     status: s.isOpen ? "OPEN" : "CLOSED"
