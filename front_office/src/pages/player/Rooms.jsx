@@ -63,20 +63,19 @@ const Rooms = () => {
             <main className="flex-1 p-8 overflow-y-auto">
                 <div className="max-w-6xl mx-auto">
                     {/* Header Section */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-14">
                         <div>
-                            <h1 className="text-4xl font-black uppercase italic tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
+                            <h1 className="text-4xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
                                 My Reservations
                             </h1>
-                            <p className="text-white/50 mt-1 font-medium italic uppercase tracking-widest text-xs">Manage your upcoming gaming sessions</p>
+                            <p className="text-white/50 mt-1 font-medium italic tracking-widest text-xs">Manage your upcoming gaming sessions</p>
                         </div>
 
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => navigate("/player/reservation")}
-                                className="flex items-center gap-2 px-6 py-3 bg-[#1CF3CA] text-black font-black uppercase italic tracking-tighter rounded-full hover:bg-[#19d4b0] transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(28,243,202,0.3)]"
+                                className="flex items-center gap-2 px-6 py-3 bg-[#1CF3CA] text-black font-black font-['Inter'] tracking-tighter rounded-full hover:bg-[#19d4b0] transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(28,243,202,0.3)]"
                             >
-                                <Plus size={18} />
                                 Book Now
                             </button>
 
@@ -95,7 +94,7 @@ const Rooms = () => {
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
-                                    className="appearance-none bg-[#320141] border border-white/5 pl-6 pr-12 py-3 rounded-full text-sm font-black uppercase tracking-widest focus:outline-none focus:border-[#1CF3CA]/50 transition-all cursor-pointer shadow-xl"
+                                    className="appearance-none bg-[#320141] border border-white/5 pl-6 pr-12 py-3 rounded-full text-sm font-black font-['Inter'] tracking-widest focus:outline-none focus:border-[#1CF3CA]/50 transition-all cursor-pointer shadow-xl"
                                 >
                                     <option value="newest">Sort by newest</option>
                                     <option value="oldest">Sort by oldest</option>
@@ -117,10 +116,10 @@ const Rooms = () => {
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-white/5 bg-white/[0.02]">
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#1CF3CA]/60">Details</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#1CF3CA]/60">Schedule</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#1CF3CA]/60">Hardware</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#1CF3CA]/60 text-right">Status</th>
+                                            <th className="px-8 py-5 text-[10px] font-black font-['Inter'] tracking-[0.2em] text-[#1CF3CA]/60">Details</th>
+                                            <th className="px-8 py-5 text-[10px] font-black font-['Inter'] tracking-[0.2em] text-[#1CF3CA]/60">Schedule</th>
+                                            <th className="px-8 py-5 text-[10px] font-black font-['Inter'] tracking-[0.2em] text-[#1CF3CA]/60">Hardware</th>
+                                            <th className="px-8 py-5 text-[10px] font-black font-['Inter'] tracking-[0.2em] text-[#1CF3CA]/60 text-right">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/[0.02]">
@@ -132,12 +131,12 @@ const Rooms = () => {
                                                             <Monitor size={24} className="text-white" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-black italic uppercase tracking-tighter text-lg leading-tight">
-                                                                Reservation By <span className="text-[#1CF3CA]">{res.playerName}</span>
+                                                            <p className="font-black font-['Inter'] tracking-tighter text-lg leading-tight">
+                                                            <span className="text-[#1CF3CA]">{res.reservationType}</span>
                                                             </p>
-                                                            <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mt-1">
+                                                            {/* <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mt-1">
                                                                 ID: #{String(res.id).padStart(5, '0')}
-                                                            </p>
+                                                            </p> */}
                                                         </div>
                                                     </div>
                                                 </td>
