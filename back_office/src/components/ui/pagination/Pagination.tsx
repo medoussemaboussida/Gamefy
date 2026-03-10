@@ -15,11 +15,7 @@ const Pagination: React.FC<PaginationProps> = ({
     onPageChange,
 }) => {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
-
     if (totalPages <= 1) return null;
-
-    const startItem = (currentPage - 1) * itemsPerPage + 1;
-    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
     const pages = [];
     for (let i = 1; i <= totalPages; i++) {
@@ -27,12 +23,7 @@ const Pagination: React.FC<PaginationProps> = ({
     }
 
     return (
-        <div className="flex flex-col items-center justify-between gap-4 px-5 py-4 border-t border-gray-100 sm:flex-row dark:border-white/[0.05]">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-                Showing <span className="font-medium text-gray-800 dark:text-white/90">{startItem}</span> to{" "}
-                <span className="font-medium text-gray-800 dark:text-white/90">{endItem}</span> of{" "}
-                <span className="font-medium text-gray-800 dark:text-white/90">{totalItems}</span> entries
-            </p>
+        <div className="flex flex-col items-center justify-center gap-4 px-5 py-4 border-t border-gray-100 sm:flex-row dark:border-white/[0.05]">
 
             <div className="flex items-center gap-2">
                 <button
@@ -48,8 +39,8 @@ const Pagination: React.FC<PaginationProps> = ({
                         key={page}
                         onClick={() => onPageChange(page)}
                         className={`flex items-center justify-center w-9 h-9 rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                                ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20 px-4"
-                                : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.05]"
+                            ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20 px-4"
+                            : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/[0.05]"
                             }`}
                     >
                         {page}
