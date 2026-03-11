@@ -1,14 +1,13 @@
 package com.gamefy.gamefy_back.model;
 
 import com.gamefy.gamefy_back.model.enums.CoachingSessionStatus;
+import com.gamefy.gamefy_back.model.enums.DayOfWeek;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "coaching_session")
@@ -21,11 +20,21 @@ public class CoachingSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DayOfWeek day;
+
+    @Column(nullable = false)
+    private String month;
+
+    @Column(nullable = false)
+    private String year;
+
     @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    private LocalTime startTime;
 
     @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    private LocalTime endTime;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -35,18 +44,16 @@ public class CoachingSession {
     @JoinColumn(name = "coach_id", nullable = false)
     private User coach;
 
-    @OneToMany(mappedBy = "coachingSession")
-    private List<CoachingSlot> coachingSlots = new ArrayList<>();
-
     @Override
     public String toString() {
         return "CoachingSession{" +
                 "id=" + id +
+                ", day=" + day +
+                ", month='" + month + '\'' +
+                ", year='" + year + '\'' +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
                 ", status=" + status +
-                ", coach=" + coach +
                 '}';
     }
 }
-

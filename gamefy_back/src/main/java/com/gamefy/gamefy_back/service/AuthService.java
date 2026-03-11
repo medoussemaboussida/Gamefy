@@ -31,11 +31,15 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
+    private final RecaptchaService recaptchaService;
 
     @Value("${google.client.id}")
     private String googleClientId;
 
-    public User signup(String firstName, String lastName, String email, String password) {
+    public User signup(String firstName, String lastName, String email, String password, String recaptchaToken) {
+        if (!recaptchaService.verifyToken(recaptchaToken)) {
+            throw new RuntimeException("Invalid reCAPTCHA token");
+        }
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email already exists");
         }
@@ -51,7 +55,10 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public User signupCoach(String firstName, String lastName, String email, String password) {
+    public User signupCoach(String firstName, String lastName, String email, String password, String recaptchaToken) {
+        if (!recaptchaService.verifyToken(recaptchaToken)) {
+            throw new RuntimeException("Invalid reCAPTCHA token");
+        }
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email already exists");
         }

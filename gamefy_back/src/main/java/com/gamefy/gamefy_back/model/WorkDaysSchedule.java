@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.model;
 
 import com.gamefy.gamefy_back.model.enums.DayOfWeek;
+import com.gamefy.gamefy_back.model.enums.WorkDayStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,6 +35,10 @@ public class WorkDaysSchedule {
 
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private WorkDayStatus status;
 
     @Override
     public String toString() {

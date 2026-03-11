@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
-import { Search, Bell, MoreHorizontal, ChevronDown, Gamepad2, Banknote, Edit3, PlusCircle } from "lucide-react";
+import { Search, Bell, MoreHorizontal, ChevronDown, Gamepad2, Banknote, Edit3, PlusCircle, CalendarDays } from "lucide-react";
 import { coachProfileApi } from "../../api/coach_profile";
 import CoachProfileForm from "../../modals/CoachProfileForm";
+import CoachScheduleModal from "../../modals/CoachScheduleModal";
 import toast from "react-hot-toast";
 
 const CoachDashboard = () => {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -66,6 +68,13 @@ const CoachDashboard = () => {
             </h2>
 
             <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
+              <button
+                onClick={() => setIsScheduleModalOpen(true)}
+                className="p-2.5 bg-[#1CF3CA]/10 text-[#1CF3CA] rounded-full hover:bg-[#1CF3CA] hover:text-black transition-all flex-shrink-0"
+                title="My Availability Schedule"
+              >
+                <CalendarDays size={20} />
+              </button>
               <div className="relative group flex-1 md:flex-none">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                   <Search size={18} className="text-[#1CF3CA]" />
@@ -207,6 +216,11 @@ const CoachDashboard = () => {
           onSave={(newProfile) => setProfile(newProfile)}
         />
       )}
+
+      <CoachScheduleModal
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+      />
     </div>
   );
 };

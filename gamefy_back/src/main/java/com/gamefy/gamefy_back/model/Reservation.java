@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gamefy.gamefy_back.model.enums.Payment_Type;
 import com.gamefy.gamefy_back.model.enums.Reservation_Status;
 import com.gamefy.gamefy_back.model.enums.Reservation_Type;
@@ -23,10 +24,12 @@ public class Reservation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coach_id")
     private User coach;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "player_id", nullable = false)
     private User player;
@@ -44,7 +47,7 @@ public class Reservation {
     private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_type", nullable = false)
+    @Column(name = "payment_type")
     private Payment_Type paymentType;
 
     @Enumerated(EnumType.STRING)
@@ -58,16 +61,20 @@ public class Reservation {
     @Column(name = "price_time")
     private Double priceTime;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "offer_id")
     private Offer offer;
 
-    @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Payment payment;
+    @JsonIgnore
+    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Payment> payments = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "reservation")
     private List<PcAvailability> pcAvailabilities = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "reservation")
     private List<CoachingSlot> coachingSlots = new ArrayList<>();
 
@@ -86,7 +93,7 @@ public class Reservation {
                 ", status=" + status +
                 ", priceTime=" + priceTime +
                 ", offer=" + offer +
-                ", payment=" + payment +
+                ", payments=" + payments +
                 ", pcAvailabilities=" + pcAvailabilities +
                 ", coachingSlots=" + coachingSlots +
                 '}';

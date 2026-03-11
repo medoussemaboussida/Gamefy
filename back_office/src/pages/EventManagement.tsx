@@ -21,6 +21,7 @@ import { Modal } from "../components/ui/modal";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
 import { ChevronDownIcon } from "../icons";
+import Pagination from "../components/ui/pagination/Pagination";
 
 export default function EventManagement() {
     const [events, setEvents] = useState<EventDto[]>([]);
@@ -32,6 +33,8 @@ export default function EventManagement() {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
     const [isStatusOpen, setIsStatusOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 3;
     const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
     const [participants, setParticipants] = useState<ParticipantDto[]>([]);
     const [participantsLoading, setParticipantsLoading] = useState(false);
@@ -64,9 +67,19 @@ export default function EventManagement() {
         fetchEvents();
     }, []);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedStatus]);
+
     const filteredEvents = events.filter((event) => {
         return selectedStatus === "ALL" || event.eventStatus === selectedStatus;
     });
+
+    const totalItems = filteredEvents.length;
+    const currentEvents = filteredEvents.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+    );
 
     const getStatusLabel = (value: string) =>
         statusOptions.find((opt) => opt.value === value)?.label || value;
@@ -141,7 +154,10 @@ export default function EventManagement() {
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString();
+        // Backend returns LocalDateTime without timezone (e.g. "2026-03-08T19:00:00")
+        // Append 'Z' so JavaScript treats it as UTC and converts to local time on display
+        const utcString = dateString.endsWith("Z") || dateString.includes("+") ? dateString : dateString + "Z";
+        return new Date(utcString).toLocaleString();
     };
 
     return (
@@ -241,14 +257,17 @@ export default function EventManagement() {
                                                 Loading events...
                                             </TableCell>
                                         </TableRow>
-                                    ) : filteredEvents.length === 0 ? (
+                                    ) : currentEvents.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="px-5 py-10 text-center text-gray-500">
-                                                No events found
+                                            <TableCell
+                                                colSpan={isAdmin ? 7 : 6}
+                                                className="px-5 py-10 text-center text-gray-500"
+                                            >
+                                                No events match the selected filters
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredEvents.map((event) => (
+                                        currentEvents.map((event) => (
                                             <TableRow key={event.id}>
                                                 <TableCell className="px-5 py-4">
                                                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
@@ -323,6 +342,12 @@ export default function EventManagement() {
                             </Table>
                         </div>
                     </div>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalItems={totalItems}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={(page) => setCurrentPage(page)}
+                    />
                 </ComponentCard>
             </div>
 
@@ -383,7 +408,7 @@ export default function EventManagement() {
                     {participantsEventTitle}
                 </p>
 
-                <div className="max-h-[400px] overflow-y-auto space-y-3 pr-1">
+                <div className="max-h-[150px] overflow-y-auto space-y-3 pr-1 scrollbar">
                     {participantsLoading ? (
                         <p className="text-center text-gray-500 py-8">Loading participants...</p>
                     ) : participants.length === 0 ? (

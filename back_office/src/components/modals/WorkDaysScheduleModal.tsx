@@ -24,7 +24,9 @@ interface DaySchedule {
 }
 
 const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, onClose }) => {
+    const currentYear = new Date().getFullYear().toString();
     const [selectedMonth, setSelectedMonth] = useState<string>("OCTOBER");
+    const [selectedYear] = useState<string>(currentYear);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -41,14 +43,30 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
     const fetchSchedules = async () => {
         setLoading(true);
         try {
-            // In a real scenario, we might want to fetch by month/year
-            // For now, following the CRUD API created
             const allSchedules = await workDaysScheduleApi.getAllSchedules();
-            console.log("Fetched schedules:", allSchedules);
-            // Logic to populate state based on fetched data goes here
-            // Filter or map logic here if needed based on backend design
-            // Assuming for now we are just editing a general recurring schedule or the first one found for simplicity
-            // since the entity has month/year.
+            // Filter by BOTH month AND year to avoid cross-month contamination
+            const filteredByMonth = allSchedules.filter(
+                s => s.month === selectedMonth && s.year === selectedYear
+            );
+
+            const newSchedules = DAYS.map(dayName => {
+                const existing = filteredByMonth.find(s => s.day === dayName);
+                if (existing) {
+                    return {
+                        day: dayName,
+                        startTime: formatTimeFromISO(existing.startTime),
+                        endTime: formatTimeFromISO(existing.endTime),
+                        isOpen: existing.status === "OPEN"
+                    };
+                }
+                return {
+                    day: dayName,
+                    startTime: "12:00 PM",
+                    endTime: "02:00 AM",
+                    isOpen: true
+                };
+            });
+            setSchedules(newSchedules);
         } catch (error) {
             console.error("Failed to fetch schedules", error);
         } finally {
@@ -56,11 +74,25 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
         }
     };
 
+    // Convert UTC time from backend → local display time (12h format)
+    const formatTimeFromISO = (isoTime: string): string => {
+        const [hours, minutes] = isoTime.split(':').map(Number);
+        // Convert UTC to local: add timezone offset
+        const offsetMinutes = new Date().getTimezoneOffset(); // e.g. -60 for UTC+1
+        let localHours = hours - Math.floor(offsetMinutes / 60);
+        if (localHours < 0) localHours += 24;
+        if (localHours >= 24) localHours -= 24;
+        const ampm = localHours >= 12 ? 'PM' : 'AM';
+        const displayHours = localHours % 12 || 12;
+        return `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    };
+
     useEffect(() => {
         if (isOpen) {
             fetchSchedules();
         }
-    }, [isOpen]);
+        // Reload whenever the modal opens OR the selected month changes
+    }, [isOpen, selectedMonth]);
 
     const handleTimeChange = (dayIndex: number, field: "startTime" | "endTime", value: string) => {
         const newSchedules = [...schedules];
@@ -74,13 +106,18 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
         setSchedules(newSchedules);
     };
 
+    // Convert local display time (12h format) → UTC for backend
     const formatTimeToLocalISO = (time12h: string): string => {
         const [time, modifier] = time12h.split(' ');
         let [hours, minutes] = time.split(':').map(Number);
         if (modifier === 'PM' && hours < 12) hours += 12;
         if (modifier === 'AM' && hours === 12) hours = 0;
-
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+        // Convert local to UTC: subtract timezone offset
+        const offsetMinutes = new Date().getTimezoneOffset(); // e.g. -60 for UTC+1
+        let utcHours = hours + Math.floor(offsetMinutes / 60);
+        if (utcHours < 0) utcHours += 24;
+        if (utcHours >= 24) utcHours -= 24;
+        return `${utcHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
     };
 
     const handleSave = async () => {
@@ -92,15 +129,14 @@ const WorkDaysScheduleModal: React.FC<WorkDaysScheduleModalProps> = ({ isOpen, o
             // Based on the entity created: Integer id, String month, String year, LocalDateTime startTime, LocalDateTime endTime.
             // It looks like each record is a specific time slot.
 
-            const currentYear = new Date().getFullYear().toString();
-
-            const promises = schedules.filter(s => s.isOpen).map(s => {
+            const promises = schedules.map(s => {
                 const dto: WorkDaysScheduleDto = {
                     day: s.day,
                     month: selectedMonth,
-                    year: currentYear,
+                    year: selectedYear,
                     startTime: formatTimeToLocalISO(s.startTime),
                     endTime: formatTimeToLocalISO(s.endTime),
+                    status: s.isOpen ? "OPEN" : "CLOSED"
                 };
                 return workDaysScheduleApi.createSchedule(dto);
             });

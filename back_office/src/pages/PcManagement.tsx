@@ -19,6 +19,7 @@ import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
 import { ChevronDownIcon, TrashBinIcon, PencilIcon } from "../icons";
 import PCModal from "../components/modals/addPc";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
+import Pagination from "../components/ui/pagination/Pagination";
 
 interface PC {
   id: number;
@@ -34,6 +35,8 @@ export default function PCManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
 
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
   const [isTypeFilterOpen, setIsTypeFilterOpen] = useState(false);
@@ -80,11 +83,21 @@ export default function PCManagement() {
     fetchPCs();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStatus, selectedType]);
+
   const filteredPCs = pcs.filter((pc) => {
     const statusMatch = selectedStatus === "ALL" || pc.status === selectedStatus;
     const typeMatch = selectedType === "ALL" || pc.pcType === selectedType;
     return statusMatch && typeMatch;
   });
+
+  const totalItems = filteredPCs.length;
+  const currentPCs = filteredPCs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   const getStatusLabel = (value: string) =>
     statusOptions.find((opt) => opt.value === value)?.label || value;
@@ -203,11 +216,10 @@ export default function PCManagement() {
                       setSelectedStatus(option.value);
                       setIsStatusFilterOpen(false);
                     }}
-                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${
-                      selectedStatus === option.value
+                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${selectedStatus === option.value
                         ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
                         : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
-                    }`}
+                      }`}
                   >
                     {option.label}
                   </DropdownItem>
@@ -242,11 +254,10 @@ export default function PCManagement() {
                       setSelectedType(option.value);
                       setIsTypeFilterOpen(false);
                     }}
-                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${
-                      selectedType === option.value
+                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${selectedType === option.value
                         ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
                         : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
-                    }`}
+                      }`}
                   >
                     {option.label}
                   </DropdownItem>
@@ -298,7 +309,7 @@ export default function PCManagement() {
                       Loading PCs...
                     </TableCell>
                   </TableRow>
-                ) : filteredPCs.length === 0 ? (
+                ) : currentPCs.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={isWebMasterOrAdmin ? 6 : 5}
@@ -308,7 +319,7 @@ export default function PCManagement() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPCs.map((pc) => (
+                  currentPCs.map((pc) => (
                     <TableRow key={pc.id}>
                       <TableCell className="px-5 py-4 sm:px-6 text-start">
                         <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
@@ -405,6 +416,12 @@ export default function PCManagement() {
               </TableBody>
             </Table>
           </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
         </ComponentCard>
       </div>
 

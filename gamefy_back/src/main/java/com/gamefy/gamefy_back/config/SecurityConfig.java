@@ -45,7 +45,7 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/gamefy/auth/**", "/uploads/**", "/gamefy/payments/webhook").permitAll() // Allow public access to auth, uploads and Stripe webhooks
+                .requestMatchers("/gamefy/auth/**", "/uploads/**", "/gamefy/payments/webhook", "/gamefy/work-days-schedules/public").permitAll()
                 .anyRequest().authenticated() // Require authentication for all other endpoints
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -17,8 +17,9 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reservation_id", nullable = true, unique = true)
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
     @Column(name = "coach_cut")
@@ -32,6 +33,7 @@ public class Payment {
     @JoinColumn(name = "pack_gamefy_id")
     private PackGamefy packGamefy;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pack_coaching_id")
     private PackCoaching packCoaching;

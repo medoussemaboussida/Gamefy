@@ -18,7 +18,7 @@ import {
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
-import { Monitor, Gift, } from "lucide-react";
+import { Monitor, Gift, CreditCard } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -57,6 +57,11 @@ const navItems: NavItem[] = [
     icon: <BoxCubeIcon />,
     name: "Pack Management",
     path: "/packs",
+  },
+  {
+    icon: <CreditCard />,
+    name: "Payment History",
+    path: "/payments",
   },
   {
     icon: <UserCircleIcon />,

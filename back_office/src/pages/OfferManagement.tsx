@@ -19,6 +19,7 @@ import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
 import OfferModal from "../components/modals/addOffer"; // adjust path if needed
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
+import Pagination from "../components/ui/pagination/Pagination";
 
 interface Offer {
   id: number;
@@ -31,6 +32,8 @@ export default function OfferManagement() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
 
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
@@ -65,9 +68,19 @@ export default function OfferManagement() {
     fetchOffers();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStatus]);
+
   const filteredOffers = offers.filter((offer) => {
     return selectedStatus === "ALL" || offer.status === selectedStatus;
   });
+
+  const totalItems = filteredOffers.length;
+  const currentOffers = filteredOffers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   const getStatusLabel = (value: string) =>
     statusOptions.find((opt) => opt.value === value)?.label || value;
@@ -168,11 +181,10 @@ export default function OfferManagement() {
                       setSelectedStatus(option.value);
                       setIsStatusFilterOpen(false);
                     }}
-                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${
-                      selectedStatus === option.value
+                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${selectedStatus === option.value
                         ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
                         : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
-                    }`}
+                      }`}
                   >
                     {option.label}
                   </DropdownItem>
@@ -216,14 +228,17 @@ export default function OfferManagement() {
                       Loading offers...
                     </TableCell>
                   </TableRow>
-                ) : filteredOffers.length === 0 ? (
+                ) : currentOffers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 4 : 3} className="px-5 py-10 text-center text-gray-500">
-                      {offers.length === 0 ? "No offers have been created yet" : "No offers match the selected filter"}
+                    <TableCell
+                      colSpan={canManage ? 5 : 4}
+                      className="px-5 py-10 text-center text-gray-500"
+                    >
+                      No offers match the selected filters
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredOffers.map((offer) => (
+                  currentOffers.map((offer) => (
                     <TableRow key={offer.id}>
                       <TableCell className="px-5 py-4 sm:px-6 text-start">
                         <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
@@ -303,6 +318,12 @@ export default function OfferManagement() {
               </TableBody>
             </Table>
           </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
         </ComponentCard>
       </div>
 

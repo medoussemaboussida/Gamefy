@@ -13,11 +13,29 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const validateField = (name, value) => {
+    let error = "";
+    if (name === "email") {
+      if (!value.trim()) {
+        error = "Email is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        error = "Invalid email format";
+      }
+    } else if (name === "password") {
+      if (!value.trim()) {
+        error = "Password is required";
+      }
+    }
+    setFieldErrors((prev) => ({ ...prev, [name]: error }));
+    return error;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,26 +43,19 @@ const SignIn = () => {
       ...prev,
       [name]: value,
     }));
+    validateField(name, value);
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validation
-    if (!formData.email.trim() || !formData.password.trim()) {
-      toast.error("Please fill in all fields", {
-        style: {
-          border: '1px solid #DE3D3D',
-          padding: '16px',
-          color: '#DE3D3D',
-          background: '#360200',
-          boxShadow: '0 0 15px rgba(222, 61, 61, 0.4)',
-        },
-        iconTheme: {
-          primary: '#DE3D3D',
-          secondary: '#360200',
-        },
-      });
+    const emailError = validateField("email", formData.email);
+    const passwordError = validateField("password", formData.password);
+
+    if (emailError || passwordError) {
+      toast.error("Please fix the errors in the form");
       return;
     }
 
@@ -87,7 +98,16 @@ const SignIn = () => {
       }
 
     } catch (err) {
-      toast.error(err.message || "Failed to sign in", {
+      const errorMessage = err.message || "Failed to sign in";
+
+      // Map server errors to fields if possible
+      if (errorMessage.toLowerCase().includes("user") || errorMessage.toLowerCase().includes("email")) {
+        setFieldErrors(prev => ({ ...prev, email: errorMessage }));
+      } else if (errorMessage.toLowerCase().includes("password") || errorMessage.toLowerCase().includes("credentials")) {
+        setFieldErrors(prev => ({ ...prev, password: errorMessage }));
+      }
+
+      toast.error(errorMessage, {
         id: loadingToast,
         style: {
           border: '1px solid #DE3D3D',
@@ -195,8 +215,11 @@ const SignIn = () => {
               value={formData.email}
               onChange={handleChange}
               placeholder="Example@gmail.com"
-              className="w-full h-[47px] bg-transparent border border-[#1CF3CA] rounded-full px-6 text-white text-[14px] font-medium font-['Inter'] focus:outline-none focus:ring-1 focus:ring-[#1CF3CA] transition-all"
+              className={`w-full h-[47px] bg-transparent border ${fieldErrors.email ? 'border-red-500' : 'border-[#1CF3CA]'} rounded-full px-6 text-white text-[14px] font-medium font-['Inter'] focus:outline-none focus:ring-1 focus:ring-[#1CF3CA] transition-all`}
             />
+            {fieldErrors.email && (
+              <span className="text-red-500 text-xs ml-4 mt-1">{fieldErrors.email}</span>
+            )}
           </div>
 
           {/* Password Field */}
@@ -211,7 +234,7 @@ const SignIn = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full h-[47px] bg-transparent border border-[#1CF3CA] rounded-full px-6 text-white text-[14px] font-medium font-['Inter'] focus:outline-none focus:ring-1 focus:ring-[#1CF3CA] transition-all pr-12"
+                className={`w-full h-[47px] bg-transparent border ${fieldErrors.password ? 'border-red-500' : 'border-[#1CF3CA]'} rounded-full px-6 text-white text-[14px] font-medium font-['Inter'] focus:outline-none focus:ring-1 focus:ring-[#1CF3CA] transition-all pr-12`}
               />
               <button
                 type="button"
@@ -221,6 +244,9 @@ const SignIn = () => {
                 {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
               </button>
             </div>
+            {fieldErrors.password && (
+              <span className="text-red-500 text-xs ml-4 mt-1">{fieldErrors.password}</span>
+            )}
             <div className="flex justify-end w-full">
               <Link
                 to="/forgot-password"

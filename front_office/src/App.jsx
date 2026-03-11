@@ -9,10 +9,12 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import PlayerDashboard from "./pages/player/PlayerDashboard";
 import CoachDashboard from "./pages/coach/CoachDashboard";
 import SignUpCoach from "./pages/auth/SignUpCoach";
+import Rooms from "./pages/player/Rooms";
 
 import ProfilePage from "./pages/profile";
 import EventsPage from "./pages/event";
 import PlayerPacks from "./pages/player/Packs";
+import ReservationPage from "./pages/player/ReservationPage";
 
 function App() {
   return (
@@ -39,7 +41,9 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/player/dashboard" element={<PlayerDashboard />} />
+        <Route path="/player/rooms" element={<Rooms />} />
         <Route path="/player/packs" element={<PlayerPacks />} />
+        <Route path="/player/reservation" element={<ReservationPage />} />
         <Route path="/coach/dashboard" element={<CoachDashboard />} />
 
 

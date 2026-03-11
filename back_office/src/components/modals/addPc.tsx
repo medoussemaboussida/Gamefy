@@ -23,6 +23,7 @@ const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData })
     pcType: "GAMING",
     pcLocation: "SOUKRA",
   });
+  const [fieldErrors, setFieldErrors] = useState<{ pcNumber?: string }>({});
 
   const isEdit = !!pcData;
 
@@ -44,24 +45,39 @@ const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData })
         pcLocation: "SOUKRA",
       });
     }
+    setFieldErrors({});
   }, [pcData]);
 
+  const validateField = (name: string, value: any) => {
+    let errorMsg = "";
+    if (name === "pcNumber") {
+      const numValue = Number(value);
+      if (value === "" || isNaN(numValue)) {
+        errorMsg = "PC number is required and must be a number";
+      } else if (numValue <= 0) {
+        errorMsg = "PC number must be greater than 0";
+      }
+    }
+    setFieldErrors((prev) => ({ ...prev, [name]: errorMsg }));
+    return errorMsg;
+  };
+
   const statusOptions = [
-    { value: "AVAILABLE",      label: "Available"      },
+    { value: "AVAILABLE", label: "Available" },
     { value: "OUT_OF_SERVICE", label: "Out of Service" },
-    { value: "MAINTENANCE",    label: "Maintenance"    },
+    { value: "MAINTENANCE", label: "Maintenance" },
   ];
 
   const gamesOptions = [
-    { value: "FC26",              label: "FC 26"              },
-    { value: "VALORANT",          label: "Valorant"           },
-    { value: "CS_GO",             label: "CS:GO"              },
+    { value: "FC26", label: "FC 26" },
+    { value: "VALORANT", label: "Valorant" },
+    { value: "CS_GO", label: "CS:GO" },
     { value: "LEAGUE_OF_LEGENDS", label: "League of Legends" },
   ];
 
   const typeOptions = [
     { value: "GAMING", label: "Gaming" },
-    { value: "VIP",    label: "VIP"    },
+    { value: "VIP", label: "VIP" },
   ];
 
   const locationOptions = [
@@ -70,10 +86,12 @@ const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    const finalValue = name === "pcNumber" ? (value === "" ? "" : Number(value)) : value;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "pcNumber" ? Number(value) : value,
+      [name]: finalValue,
     }));
+    validateField(name, value);
   };
 
   const handleSelect = (field: string) => (value: string) => {
@@ -82,12 +100,15 @@ const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.pcNumber <= 0) {
-      toast.error("PC number must be greater than 0");
+
+    const pcNumError = validateField("pcNumber", formData.pcNumber);
+    if (pcNumError) {
+      toast.error("Please fix the errors in the form");
       return;
     }
 
     setLoading(true);
+    setFieldErrors({});
     try {
       if (isEdit && pcData?.id) {
         await pcApi.updatePC(pcData.id, formData);
@@ -99,7 +120,14 @@ const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData })
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.message || `Failed to ${isEdit ? "update" : "create"} PC`);
+      console.error("Failed to save PC:", error);
+      const errorMessage = error.message || `Failed to ${isEdit ? "update" : "create"} PC`;
+
+      if (errorMessage.toLowerCase().includes("pc number")) {
+        setFieldErrors(prev => ({ ...prev, pcNumber: errorMessage }));
+      }
+
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -126,8 +154,8 @@ const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData })
               placeholder="1, 2, 3..."
               value={formData.pcNumber}
               onChange={handleChange}
-              min="1"
-              required
+              error={!!fieldErrors.pcNumber}
+              hint={fieldErrors.pcNumber}
             />
           </div>
 

@@ -8,12 +8,15 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/gamefy/payments")
@@ -88,8 +91,17 @@ public class PaymentController {
      */
     @GetMapping("/my-purchased-packs")
     @PreAuthorize("hasAuthority('PLAYER')")
-    public ResponseEntity<java.util.List<Integer>> getMyPurchasedPacks(
+    public ResponseEntity<List<Integer>> getMyPurchasedPacks(
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(paymentService.getPurchasedPackIds(currentUser.getId()));
+    }
+
+    /**
+     * Get all payments for back-office
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<List<PaymentDtos.AllPaymentResponse>> getAllPayments() {
+        return ResponseEntity.ok(paymentService.getAllPayments());
     }
 }
