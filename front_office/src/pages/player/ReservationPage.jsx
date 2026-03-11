@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getWorkSchedule, getAvailablePCs, createReservation } from "../../api/reservation";
 import TimeSelectionModal from "../../modals/TimeSelectionModal";
+import streamingImg from "../../assets/images/streaming.png";
+import gamingRoomImg from "../../assets/images/gaming_room.jpg";
 
 const MONTHS = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
 const DAY_NAMES = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
@@ -268,9 +270,9 @@ export default function ReservationPage() {
                     {step === 1 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             {[
-                                { type: "PC_ROOM", label: "PC Room", icon: "🖥️", desc: "Standard gaming PCs with top-tier specs", color: "from-[#2BDFC8] to-blue-500" },
-                                { type: "VIP_ROOM", label: "VIP Room", icon: "👑", desc: "Premium VIP setup with exclusive perks", color: "from-[#FF89EB] to-[#DD00B8]" },
-                            ].map(({ type, label, icon, desc, color }) => (
+                                { type: "PC_ROOM", label: "PC Room", img: gamingRoomImg, desc: "Standard gaming PCs with top-tier specs", color: "from-[#2BDFC8] to-blue-500" },
+                                { type: "VIP_ROOM", label: "VIP Room", img: streamingImg, desc: "Premium VIP setup with exclusive perks", color: "from-[#FF89EB] to-[#DD00B8]" },
+                            ].map(({ type, label, img, desc, color }) => (
                                 <button
                                     key={type}
                                     onClick={() => { setReservationType(type); setStep(2); }}
@@ -281,7 +283,9 @@ export default function ReservationPage() {
                                 >
                                     <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
                                     <div className="relative z-10">
-                                        <span className="text-5xl block mb-4">{icon}</span>
+                                        <div className="w-full h-40 mb-6 rounded-xl overflow-hidden border border-white/10 group-hover:border-[#1CF3CA]/30 transition-all">
+                                            <img src={img} alt={label} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-2 uppercase italic tracking-tight">{label}</h3>
                                         <p className="text-white/40 text-sm">{desc}</p>
                                     </div>
