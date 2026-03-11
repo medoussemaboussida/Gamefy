@@ -23,7 +23,7 @@ export const packGamefyApi = {
      */
     getAllPacks: async () => {
         try {
-            const response = await apiClient.get("/api/pack-gamefies");
+            const response = await apiClient.get("/gamefy/pack-gamefies");
             return response;
         } catch (error) {
             throw error;
@@ -37,7 +37,7 @@ export const packGamefyApi = {
      */
     getPackById: async (id) => {
         try {
-            const response = await apiClient.get(`/api/pack-gamefies/${id}`);
+            const response = await apiClient.get(`/gamefy/pack-gamefies/${id}`);
             return response;
         } catch (error) {
             throw error;

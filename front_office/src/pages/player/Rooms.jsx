@@ -56,127 +56,189 @@ const Rooms = () => {
         return date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
     };
 
+    const roomIcon = (type) => (
+        <div className={`w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br ${type === 'VIP_ROOM' ? 'from-[#FF89EB] to-[#DD00B8]' : 'from-[#2BDFC8] to-blue-500'} shadow-lg shadow-black/20`}>
+            <Monitor size={20} className="text-white" />
+        </div>
+    );
+
     return (
         <div className="flex min-h-screen bg-[#24003E] text-white">
             <Sidebar />
 
-            <main className="flex-1 p-8 overflow-y-auto">
-                <div className="max-w-6xl mx-auto">
-                    {/* Header Section */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-14">
-                        <div>
-                            <h1 className="text-4xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
-                                My Reservations
-                            </h1>
-                            <p className="text-white/50 mt-1 font-medium italic tracking-widest text-xs">Manage your upcoming gaming sessions</p>
-                        </div>
+            <main className="flex-1 overflow-y-auto">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
 
-                        <div className="flex items-center gap-3">
+                    {/* ─── Header ─── */}
+                    <div className="mb-8 md:mb-10">
+                        {/* Title row */}
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                        <div className="pl-16 md:pl-0">
+                                <h1 className="text-3xl md:text-3xl font-black uppercase italic tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
+                                    My Reservations
+                                </h1>
+                                <p className="text-white/40 mt-1 text-xs font-medium tracking-widest uppercase">
+                                    Manage your upcoming gaming sessions
+                                </p>
+                            </div>
+
+                            {/* Book Now — always visible, top-right on md+ */}
                             <button
                                 onClick={() => navigate("/player/reservation")}
-                                className="flex items-center gap-2 px-6 py-3 bg-[#1CF3CA] text-black font-black font-['Inter'] tracking-tighter rounded-full hover:bg-[#19d4b0] transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(28,243,202,0.3)]"
+                                className="self-start md:self-auto flex items-center gap-2 px-5 py-3 bg-[#1CF3CA] text-black font-black uppercase text-sm tracking-tight rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_20px_rgba(28,243,202,0.3)]"
                             >
+                                <Plus size={16} />
                                 Book Now
                             </button>
+                        </div>
 
-                            <div className="relative group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#1CF3CA] transition-colors" size={20} />
+                        {/* Search & Sort row */}
+                        <div className="flex flex-col md:flex-row gap-3">
+                            {/* Search */}
+                            <div className="relative flex-1 group">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#1CF3CA] transition-colors" size={18} />
                                 <input
                                     type="text"
-                                    placeholder="Search reservations..."
+                                    placeholder="Search by type or PC number..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="bg-[#320141] border border-white/5 pl-12 pr-6 py-3 rounded-full text-sm focus:outline-none focus:border-[#1CF3CA]/50 focus:ring-1 focus:ring-[#1CF3CA]/30 transition-all w-64 shadow-xl"
+                                    className="w-full bg-[#320141] border border-white/5 pl-11 pr-4 py-3 rounded-full text-sm focus:outline-none focus:border-[#1CF3CA]/50 focus:ring-1 focus:ring-[#1CF3CA]/30 transition-all shadow-xl"
                                 />
                             </div>
 
-                            <div className="relative group">
+                            {/* Sort */}
+                            <div className="relative shrink-0">
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
-                                    className="appearance-none bg-[#320141] border border-white/5 pl-6 pr-12 py-3 rounded-full text-sm font-black font-['Inter'] tracking-widest focus:outline-none focus:border-[#1CF3CA]/50 transition-all cursor-pointer shadow-xl"
+                                    className="appearance-none w-full md:w-auto bg-[#320141] border border-white/5 pl-5 pr-10 py-3 rounded-full text-sm font-black tracking-wide focus:outline-none focus:border-[#1CF3CA]/50 transition-all cursor-pointer shadow-xl"
                                 >
                                     <option value="newest">Sort by newest</option>
                                     <option value="oldest">Sort by oldest</option>
                                 </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1CF3CA]" size={16} />
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1CF3CA] pointer-events-none" size={15} />
                             </div>
                         </div>
                     </div>
 
-                    {/* Table Content */}
-                    <div className="bg-[#320141]/40 border border-white/5 rounded-[32px] overflow-hidden shadow-2xl backdrop-blur-xl">
+                    {/* ─── Content ─── */}
+                    <div className="bg-[#320141]/40 border border-white/5 rounded-[28px] sm:rounded-[32px] overflow-hidden shadow-2xl backdrop-blur-xl">
+
+                        {/* Loading */}
                         {loading ? (
-                            <div className="p-20 text-center">
-                                <div className="w-12 h-12 border-4 border-[#1CF3CA]/20 border-t-[#1CF3CA] rounded-full animate-spin mx-auto mb-4"></div>
+                            <div className="py-20 text-center">
+                                <div className="w-10 h-10 border-4 border-[#1CF3CA]/20 border-t-[#1CF3CA] rounded-full animate-spin mx-auto mb-4" />
                                 <p className="text-white/40 font-black uppercase tracking-widest text-xs">Synchronizing with server...</p>
                             </div>
-                        ) : filteredReservations.length > 0 ? (
-                            <div className="overflow-x-auto">
+
+                        ) : filteredReservations.length > 0 ? (<>
+
+                            {/* ── Desktop table (md+) ── */}
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-white/5 bg-white/[0.02]">
-                                            <th className="px-8 py-5 text-[10px] font-black font-['Inter'] tracking-[0.2em] text-[#1CF3CA]/60">Details</th>
-                                            <th className="px-8 py-5 text-[10px] font-black font-['Inter'] tracking-[0.2em] text-[#1CF3CA]/60">Schedule</th>
-                                            <th className="px-8 py-5 text-[10px] font-black font-['Inter'] tracking-[0.2em] text-[#1CF3CA]/60">Hardware</th>
-                                            <th className="px-8 py-5 text-[10px] font-black font-['Inter'] tracking-[0.2em] text-[#1CF3CA]/60 text-right">Status</th>
+                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Details</th>
+                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Schedule</th>
+                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Hardware</th>
+                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase text-right">Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-white/[0.02]">
+                                    <tbody className="divide-y divide-white/[0.03]">
                                         {filteredReservations.map((res) => (
-                                            <tr key={res.id} className="group hover:bg-white/[0.01] transition-colors">
-                                                <td className="px-8 py-6">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br ${res.reservationType === 'VIP_ROOM' ? 'from-[#FF89EB] to-[#DD00B8]' : 'from-[#2BDFC8] to-blue-500'} shadow-lg shadow-black/20`}>
-                                                            <Monitor size={24} className="text-white" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-black font-['Inter'] tracking-tighter text-lg leading-tight">
-                                                            <span className="text-[#1CF3CA]">{res.reservationType}</span>
-                                                            </p>
-                                                            {/* <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mt-1">
-                                                                ID: #{String(res.id).padStart(5, '0')}
-                                                            </p> */}
-                                                        </div>
+                                            <tr key={res.id} className="hover:bg-white/[0.015] transition-colors">
+                                                <td className="px-6 lg:px-8 py-5">
+                                                    <div className="flex items-center gap-3">
+                                                        {roomIcon(res.reservationType)}
+                                                        <span className="font-black italic uppercase text-base tracking-tight text-[#1CF3CA]">
+                                                            {res.reservationType.replace('_', ' ')}
+                                                        </span>
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-6">
+                                                <td className="px-6 lg:px-8 py-5">
                                                     <div className="flex items-center gap-2 text-white/70 mb-1">
-                                                        <Tag size={14} className="text-[#FF89EB]" />
-                                                        <span className="text-sm font-bold uppercase tracking-tight">{formatDate(res.startTime)}</span>
+                                                        <Tag size={13} className="text-[#FF89EB] shrink-0" />
+                                                        <span className="text-sm font-bold">{formatDate(res.startTime)}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2 text-white/40">
-                                                        <Clock size={14} className="text-[#1CF3CA]" />
-                                                        <span className="text-xs font-black">From {formatTime(res.startTime)} To {formatTime(res.endTime)}</span>
+                                                        <Clock size={13} className="text-[#1CF3CA] shrink-0" />
+                                                        <span className="text-xs font-black">{formatTime(res.startTime)} → {formatTime(res.endTime)}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-6">
+                                                <td className="px-6 lg:px-8 py-5">
                                                     <div className="flex flex-wrap gap-1.5">
                                                         {res.pcNumbers.map(num => (
-                                                            <span key={num} className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black text-white/60">
+                                                            <span key={num} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black text-white/60">
                                                                 PC #{num}
                                                             </span>
                                                         ))}
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-6 text-right">
-                                                    <div className={`inline-flex items-center px-6 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
+                                                <td className="px-6 lg:px-8 py-5 text-right">
+                                                    <span className={`inline-flex items-center px-5 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
                                                         {res.status}
-                                                    </div>
+                                                    </span>
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
-                        ) : (
-                            <div className="p-20 text-center">
-                                <Monitor className="mx-auto mb-6 text-white/10" size={64} />
-                                <h3 className="text-xl font-black uppercase italic tracking-tight mb-2">No Sessions Found</h3>
-                                <p className="text-white/30 text-sm max-w-xs mx-auto mb-8 font-medium">You haven't reserved any gaming slots yet. Start your journey today!</p>
+
+                            {/* ── Mobile cards (< md) ── */}
+                            <div className="md:hidden divide-y divide-white/[0.04]">
+                                {filteredReservations.map((res) => (
+                                    <div key={res.id} className="p-4 sm:p-5 space-y-3">
+                                        {/* Top row: icon + type + status badge */}
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                {roomIcon(res.reservationType)}
+                                                <span className="font-black italic uppercase text-sm tracking-tight text-[#1CF3CA] truncate">
+                                                    {res.reservationType.replace('_', ' ')}
+                                                </span>
+                                            </div>
+                                            <span className={`shrink-0 inline-flex items-center px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
+                                                {res.status}
+                                            </span>
+                                        </div>
+
+                                        {/* Date & time */}
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                            <div className="flex items-center gap-1.5 text-white/70">
+                                                <Tag size={12} className="text-[#FF89EB]" />
+                                                <span className="text-xs font-bold">{formatDate(res.startTime)}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-white/40">
+                                                <Clock size={12} className="text-[#1CF3CA]" />
+                                                <span className="text-xs font-black">{formatTime(res.startTime)} → {formatTime(res.endTime)}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* PCs */}
+                                        {res.pcNumbers.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {res.pcNumbers.map(num => (
+                                                    <span key={num} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black text-white/60">
+                                                        PC #{num}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                        </>) : (
+                            /* Empty state */
+                            <div className="py-16 sm:py-24 text-center px-6">
+                                <Monitor className="mx-auto mb-5 text-white/10" size={56} />
+                                <h3 className="text-lg sm:text-xl font-black uppercase italic tracking-tight mb-2">No Sessions Found</h3>
+                                <p className="text-white/30 text-sm max-w-xs mx-auto mb-8 font-medium">
+                                    You haven't reserved any gaming slots yet. Start your journey today!
+                                </p>
                                 <button
                                     onClick={() => navigate("/player/reservation")}
-                                    className="px-8 py-4 bg-[#1CF3CA] text-black font-black uppercase italic tracking-tighter rounded-full hover:bg-[#19d4b0] transition-all shadow-xl"
+                                    className="px-8 py-4 bg-[#1CF3CA] text-black font-black uppercase italic tracking-tighter rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-xl"
                                 >
                                     Create First Reservation
                                 </button>
