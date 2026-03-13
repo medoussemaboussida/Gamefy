@@ -74,7 +74,7 @@ const Rooms = () => {
                         {/* Title row */}
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
                         <div className="pl-16 md:pl-0">
-                                <h1 className="text-3xl md:text-3xl font-black uppercase italic tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
+                                <h1 className="text-3xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
                                     My Reservations
                                 </h1>
                                 <p className="text-white/40 mt-1 text-xs font-medium tracking-widest uppercase">
@@ -85,7 +85,7 @@ const Rooms = () => {
                             {/* Book Now — always visible, top-right on md+ */}
                             <button
                                 onClick={() => navigate("/player/reservation")}
-                                className="self-start md:self-auto flex items-center gap-2 px-5 py-3 bg-[#1CF3CA] text-black font-black uppercase text-sm tracking-tight rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_20px_rgba(28,243,202,0.3)]"
+                                className="self-start md:self-auto flex items-center gap-2 px-5 py-3 bg-[#1CF3CA] text-black font-bold font-['Inter'] text-sm tracking-tight rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_20px_rgba(28,243,202,0.3)]"
                             >
                                 <Plus size={16} />
                                 Book Now
@@ -111,7 +111,7 @@ const Rooms = () => {
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
-                                    className="appearance-none w-full md:w-auto bg-[#320141] border border-white/5 pl-5 pr-10 py-3 rounded-full text-sm font-black tracking-wide focus:outline-none focus:border-[#1CF3CA]/50 transition-all cursor-pointer shadow-xl"
+                                    className="appearance-none w-full md:w-auto bg-[#320141] border border-white/5 pl-5 pr-10 py-3 rounded-full text-sm font-black font-bold tracking-wide focus:outline-none focus:border-[#1CF3CA]/50 transition-all cursor-pointer shadow-xl"
                                 >
                                     <option value="newest">Sort by newest</option>
                                     <option value="oldest">Sort by oldest</option>
@@ -232,13 +232,13 @@ const Rooms = () => {
                             /* Empty state */
                             <div className="py-16 sm:py-24 text-center px-6">
                                 <Monitor className="mx-auto mb-5 text-white/10" size={56} />
-                                <h3 className="text-lg sm:text-xl font-black uppercase italic tracking-tight mb-2">No Sessions Found</h3>
+                                <h3 className="text-lg sm:text-xl font-black font-['Inter'] tracking-tight mb-2">No Sessions Found</h3>
                                 <p className="text-white/30 text-sm max-w-xs mx-auto mb-8 font-medium">
                                     You haven't reserved any gaming slots yet. Start your journey today!
                                 </p>
                                 <button
                                     onClick={() => navigate("/player/reservation")}
-                                    className="px-8 py-4 bg-[#1CF3CA] text-black font-black uppercase italic tracking-tighter rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-xl"
+                                    className="px-8 py-4 bg-[#1CF3CA] text-black font-black font-bold font-['Inter'] tracking-tighter rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-xl"
                                 >
                                     Create First Reservation
                                 </button>

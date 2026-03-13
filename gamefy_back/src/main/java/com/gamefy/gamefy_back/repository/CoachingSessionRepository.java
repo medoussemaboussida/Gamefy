@@ -13,4 +13,5 @@ import java.util.Optional;
 public interface CoachingSessionRepository extends JpaRepository<CoachingSession, Integer> {
     Optional<CoachingSession> findByCoachAndDayAndMonthAndYear(User coach, DayOfWeek day, String month, String year);
     List<CoachingSession> findByCoach(User coach);
+    List<CoachingSession> findByCoachId(Integer coachId);
 }

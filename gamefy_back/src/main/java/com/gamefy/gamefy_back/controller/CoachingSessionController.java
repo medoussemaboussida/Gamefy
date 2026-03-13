@@ -23,13 +23,13 @@ public class CoachingSessionController {
     }
 
     @GetMapping("/coach/{coachId}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'COACH', 'PLAYER')")
     public ResponseEntity<List<CoachingSessionDto>> getSchedulesByCoach(@PathVariable Integer coachId) {
         return ResponseEntity.ok(service.getSchedulesByCoach(coachId));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'COACH', 'PLAYER')")
     public ResponseEntity<CoachingSessionDto> getScheduleById(@PathVariable Integer id) {
         return ResponseEntity.ok(service.getScheduleById(id));
     }
