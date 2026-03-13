@@ -79,7 +79,7 @@ const Packs = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-[#0F011E] text-white font-['Inter']">
+        <div className="flex min-h-screen bg-[#24003E] text-white font-['Inter']">
             <Sidebar />
 
             <div className="flex-1 flex flex-col p-4 md:p-8 overflow-hidden">
