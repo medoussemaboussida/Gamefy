@@ -24,4 +24,6 @@ public class ReservationDto {
     private String playerName;
     private Double priceTime;
     private List<Integer> pcIds;
+    private Integer coachId;
+    private String game;
 }

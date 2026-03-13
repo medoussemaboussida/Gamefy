@@ -34,11 +34,22 @@ public class ReservationController {
     public ResponseEntity<List<Map<String, Object>>> getAvailablePCs(
             @RequestParam String start,
             @RequestParam String end,
-            @RequestParam String type) {
+            @RequestParam String type,
+            @RequestParam(required = false) String game) {
         LocalDateTime startTime = LocalDateTime.parse(start);
         LocalDateTime endTime = LocalDateTime.parse(end);
         Reservation_Type reservationType = Reservation_Type.valueOf(type);
-        return ResponseEntity.ok(service.getAvailablePCs(startTime, endTime, reservationType));
+        return ResponseEntity.ok(service.getAvailablePCs(startTime, endTime, reservationType, game));
+    }
+
+    @GetMapping("/games")
+    public ResponseEntity<List<String>> getAvailableGames() {
+        return ResponseEntity.ok(service.getAvailableGames());
+    }
+
+    @GetMapping("/coaches")
+    public ResponseEntity<List<Map<String, Object>>> getCoachesByGame(@RequestParam String game) {
+        return ResponseEntity.ok(service.getCoachesByGame(game));
     }
 
     @GetMapping("/my")

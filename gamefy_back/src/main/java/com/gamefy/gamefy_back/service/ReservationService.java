@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,6 +22,9 @@ public class ReservationService {
     private final PCRepository pcRepository;
     private final PcAvailabilityRepository pcAvailabilityRepository;
     private final UserRepository userRepository;
+    private final CoachingSlotRepository coachingSlotRepository;
+    private final CoachingSessionRepository coachingSessionRepository;
+    private final CoachProfileRepository coachProfileRepository;
 
     /**
      * Create a reservation with multiple PCs.
@@ -64,7 +69,26 @@ public class ReservationService {
                 throw new RuntimeException("PC #" + pc.getPcNumber() + " is already reserved for this time slot");
             }
 
+            // If coaching, ensure PC has the requested game
+            if (dto.getReservationType() == Reservation_Type.COACHING_ROOM && dto.getGame() != null) {
+                if (!pc.getGames().name().equalsIgnoreCase(dto.getGame())) {
+                    throw new RuntimeException("PC #" + pc.getPcNumber() + " does not have the game: " + dto.getGame());
+                }
+            }
+
             selectedPCs.add(pc);
+        }
+
+        // If coaching, validate coach
+        final User coach;
+        if (dto.getReservationType() == Reservation_Type.COACHING_ROOM) {
+            if (dto.getCoachId() == null) {
+                throw new RuntimeException("Coach ID is required for coaching reservation");
+            }
+            coach = userRepository.findById(dto.getCoachId())
+                    .orElseThrow(() -> new RuntimeException("Coach not found"));
+        } else {
+            coach = null;
         }
 
         // Create the reservation
@@ -74,6 +98,10 @@ public class ReservationService {
         reservation.setEndTime(dto.getEndTime());
         reservation.setReservationType(dto.getReservationType());
         reservation.setStatus(Reservation_Status.PENDING);
+        reservation.setPriceTime(dto.getPriceTime());
+        if (coach != null) {
+            reservation.setCoach(coach);
+        }
 
         Reservation saved = reservationRepository.save(reservation);
 
@@ -87,6 +115,57 @@ public class ReservationService {
             pcAvailabilityRepository.save(availability);
         }
 
+        // If coaching, create CoachingSlot records
+        if (dto.getReservationType() == Reservation_Type.COACHING_ROOM && coach != null) {
+            // We need to find the coach's session that covers this time range to link the slot
+            // For simplicity in this logic, we assume the frontend sends a time range that falls within a coach's session
+            // The user wants it "added also to coaching_slot table, like we do in the pc_availibility"
+            
+            // First, find the coach's sessions for that day
+            DayOfWeek dayOfWeek = DayOfWeek.valueOf(reservation.getStartTime().getDayOfWeek().name());
+            String month = reservation.getStartTime().getMonth().name();
+            String year = String.valueOf(reservation.getStartTime().getYear());
+            
+            List<CoachingSession> coachSessions = coachingSessionRepository.findByCoachId(coach.getId());
+            CoachingSession session = coachSessions.stream()
+                .filter(s -> s.getStatus() == CoachingSessionStatus.AVAILABLE)
+                .filter(s -> s.getDay() == dayOfWeek && s.getMonth().trim().equalsIgnoreCase(month.trim()) && s.getYear().equals(year))
+                .filter(s -> {
+                    LocalTime reqStart = reservation.getStartTime().toLocalTime();
+                    LocalTime reqEnd = reservation.getEndTime().toLocalTime();
+                    LocalTime sStart = s.getStartTime();
+                    LocalTime sEnd = s.getEndTime();
+                    
+                    // Handle session wrap-around (e.g. 23:00 - 01:00)
+                    boolean isWrapAround = sStart.isAfter(sEnd);
+                    
+                    boolean startOk = isWrapAround 
+                        ? (!reqStart.isBefore(sStart) || !reqStart.isAfter(sEnd))
+                        : (!reqStart.isBefore(sStart) && !reqStart.isAfter(sEnd));
+                        
+                    boolean endOk = isWrapAround
+                        ? (!reqEnd.isBefore(sStart) || !reqEnd.isAfter(sEnd))
+                        : (!reqEnd.isBefore(sStart) && !reqEnd.isAfter(sEnd));
+                        
+                    return startOk && endOk;
+                })
+                .findFirst()
+                .orElseThrow(() -> {
+                    System.out.println("COACHING VALIDATION FAILED:");
+                    System.out.println("Coach: " + coach.getFirstName() + " (ID: " + coach.getId() + ")");
+                    System.out.println("Requested: Day=" + dayOfWeek + ", Month=" + month + ", Year=" + year);
+                    System.out.println("Requested Range: " + reservation.getStartTime().toLocalTime() + " - " + reservation.getEndTime().toLocalTime());
+                    return new RuntimeException("Coach is not available for this session time range");
+                });
+
+            CoachingSlot slot = new CoachingSlot();
+            slot.setCoachingSession(session);
+            slot.setReservation(saved);
+            slot.setStartTime(reservation.getStartTime());
+            slot.setEndTime(reservation.getEndTime());
+            coachingSlotRepository.save(slot);
+        }
+
         // Return the DTO with the generated ID
         return ReservationDto.builder()
                 .id(saved.getId())
@@ -94,6 +173,9 @@ public class ReservationService {
                 .startTime(saved.getStartTime())
                 .endTime(saved.getEndTime())
                 .pcIds(dto.getPcIds())
+                .coachId(dto.getCoachId())
+                .game(dto.getGame())
+                .priceTime(saved.getPriceTime())
                 .build();
     }
 
@@ -104,7 +186,8 @@ public class ReservationService {
     public List<Map<String, Object>> getAvailablePCs(
             java.time.LocalDateTime startTime,
             java.time.LocalDateTime endTime,
-            Reservation_Type reservationType) {
+            Reservation_Type reservationType,
+            String game) {
 
         PC_Type requiredPcType = mapReservationTypeToPcType(reservationType);
 
@@ -112,6 +195,13 @@ public class ReservationService {
         List<PC> allPCs = pcRepository.findAll().stream()
                 .filter(pc -> pc.getPcType() == requiredPcType && pc.getStatus() == PC_Status.AVAILABLE)
                 .collect(Collectors.toList());
+
+        // If game is provided (coaching flow), filter PCs by game
+        if (reservationType == Reservation_Type.COACHING_ROOM && game != null) {
+            allPCs = allPCs.stream()
+                    .filter(pc -> pc.getGames().name().equalsIgnoreCase(game))
+                    .collect(Collectors.toList());
+        }
 
         // Get booked PC IDs for the time range
         Set<Integer> bookedPcIds = getBookedPcIds(startTime, endTime);
@@ -159,6 +249,7 @@ public class ReservationService {
                 .pcNumbers(reservation.getPcAvailabilities().stream()
                         .map(pa -> pa.getPc().getPcNumber())
                         .collect(Collectors.toList()))
+                .coachId(reservation.getCoach() != null ? reservation.getCoach().getId() : null)
                 .build();
     }
 
@@ -166,7 +257,28 @@ public class ReservationService {
         return switch (reservationType) {
             case PC_ROOM -> PC_Type.GAMING;
             case VIP_ROOM -> PC_Type.VIP;
+            case COACHING_ROOM -> PC_Type.GAMING; // Assuming coaching happens on gaming PCs, adjust if needed
             default -> throw new RuntimeException("Unsupported reservation type: " + reservationType);
         };
+    }
+
+    public List<String> getAvailableGames() {
+        return Arrays.stream(PC_Games.values())
+                .map(Enum::name)
+                .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> getCoachesByGame(String game) {
+        return coachProfileRepository.findByGameIgnoreCase(game).stream()
+                .map(cp -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("id", cp.getCoach().getId());
+                    map.put("name", cp.getCoach().getFirstName() + " " + cp.getCoach().getLastName());
+                    map.put("hourlyPrice", cp.getHourlyPrice());
+                    map.put("bio", cp.getBio());
+                    map.put("game", cp.getGame());
+                    return map;
+                })
+                .collect(Collectors.toList());
     }
 }
