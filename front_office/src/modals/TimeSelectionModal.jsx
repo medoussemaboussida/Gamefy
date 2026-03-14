@@ -118,7 +118,7 @@ export default function TimeSelectionModal({
                             <div className="w-2 h-2 rounded-full bg-[#1CF3CA]" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-[#1CF3CA]/80">Start Time</span>
                         </div>
-                        <div className="grid grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
                             {timeSlots.map((slot) => (
                                 <button
                                     key={slot.value}
@@ -142,7 +142,7 @@ export default function TimeSelectionModal({
                                 End Time {!startTime && <span className="text-white/20 normal-case font-medium">(pick start first)</span>}
                             </span>
                         </div>
-                        <div className={`grid grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar ${!startTime ? "opacity-40 pointer-events-none" : ""}`}>
+                        <div className={`grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar ${!startTime ? "opacity-40 pointer-events-none" : ""}`}>
                             {(startTime ? endSlots : timeSlots).map((slot) => (
                                 <button
                                     key={slot.value}

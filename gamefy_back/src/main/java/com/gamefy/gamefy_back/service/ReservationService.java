@@ -180,6 +180,29 @@ public class ReservationService {
     }
 
     /**
+     * Confirm a reservation's payment (cash or card).
+     * Sets paymentType and changes status to CONFIRMED.
+     */
+    public ReservationDto confirmReservationPayment(Integer reservationId, Payment_Type paymentType, Integer userId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        if (!reservation.getPlayer().getId().equals(userId)) {
+            throw new RuntimeException("This reservation does not belong to you");
+        }
+
+        if (reservation.getStatus() != Reservation_Status.PENDING) {
+            throw new RuntimeException("Only PENDING reservations can be confirmed");
+        }
+
+        reservation.setPaymentType(paymentType);
+        reservation.setStatus(Reservation_Status.CONFIRMED);
+        Reservation saved = reservationRepository.save(reservation);
+
+        return mapToDto(saved);
+    }
+
+    /**
      * Get all PCs of a given type with their availability status for a time range.
      * Returns a list of maps with PC info and whether they are available.
      */

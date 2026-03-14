@@ -5,9 +5,9 @@ import {
     useElements,
 } from "@stripe/react-stripe-js";
 import toast from "react-hot-toast";
-import { packGamefyApi } from "../../api/packGamefy";
+import { confirmReservationCardPayment } from "../../api/reservation";
 
-const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
+const ReservationCheckoutForm = ({ onPaymentSuccess, amount, reservationId }) => {
     const stripe = useStripe();
     const elements = useElements();
 
@@ -17,23 +17,15 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!stripe || !elements) {
-            // Stripe.js has not yet loaded.
-            // Make sure to disable form submission until Stripe.js has loaded.
-            return;
-        }
+        if (!stripe || !elements) return;
 
         setIsLoading(true);
 
         const { error } = await stripe.confirmPayment({
             elements,
             confirmParams: {
-                // Return URL for post-payment redirection
-                // In a real app, you'd handle this URL in your routing
-                return_url: window.location.origin + "/player/packs?payment_success=true",
+                return_url: window.location.origin + "/player/rooms?payment_success=true",
             },
-            // If you want to handle the success manually without redirection (for single page apps),
-            // you can set redirect: 'if_required'
             redirect: "if_required",
         });
 
@@ -46,18 +38,18 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
                 toast.error("An unexpected error occurred.");
             }
         } else {
-            // Payment succeeded! Now confirm to backend to update DB.
+            // Payment succeeded — confirm to backend
             try {
-                await packGamefyApi.confirmPackPayment(packId);
+                await confirmReservationCardPayment(reservationId);
             } catch (err) {
                 const detail = err?.message || String(err) || "Unknown error";
-                console.error("Failed to confirm payment with backend:", detail);
-                toast.error(`Activation failed: ${detail}`, { duration: 8000 });
+                console.error("Failed to confirm reservation payment with backend:", detail);
+                toast.error(`Confirmation failed: ${detail}`, { duration: 8000 });
                 setIsLoading(false);
                 return;
             }
 
-            toast.success(`Success! You have purchased the ${packName}.`, {
+            toast.success("Payment successful! Your reservation is confirmed.", {
                 duration: 6000,
                 style: {
                     background: "#24003E",
@@ -72,16 +64,16 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
     };
 
     return (
-        <form id="payment-form" onSubmit={handleSubmit} className="space-y-6">
+        <form id="reservation-payment-form" onSubmit={handleSubmit} className="space-y-6">
             <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-400 mb-2">Pack</label>
-                <div className="text-xl font-bold text-[#1CF3CA]">{packName}</div>
-                <div className="text-2xl font-bold text-white mt-1">{amount} DT</div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Reservation</label>
+                <div className="text-xl font-bold text-[#1CF3CA]">Gaming Session</div>
+                <div className="text-2xl font-bold text-white mt-1">{amount?.toFixed(2)} DT</div>
             </div>
 
             <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
                 <PaymentElement
-                    id="payment-element"
+                    id="reservation-payment-element"
                     options={{
                         layout: "tabs",
                     }}
@@ -90,7 +82,7 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
 
             <button
                 disabled={isLoading || !stripe || !elements}
-                id="submit"
+                id="reservation-submit"
                 className="w-full py-4 rounded-2xl bg-[#1CF3CA] text-black font-bold text-lg hover:bg-[#1CF3CA]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(28,243,202,0.3)]"
             >
                 <span id="button-text">
@@ -98,9 +90,8 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
                 </span>
             </button>
 
-            {/* Show any error or success messages */}
             {message && (
-                <div id="payment-message" className="text-red-500 text-sm text-center mt-4">
+                <div id="reservation-payment-message" className="text-red-500 text-sm text-center mt-4">
                     {message}
                 </div>
             )}
@@ -108,4 +99,4 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
     );
 };
 
-export default CheckoutForm;
+export default ReservationCheckoutForm;
