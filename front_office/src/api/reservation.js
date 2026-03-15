@@ -107,6 +107,33 @@ export const getFixedPriceByPcType = (pcType) => {
 };
 
 /**
+ * Create a Stripe PaymentIntent for a reservation (card payment).
+ * @param {number} reservationId
+ * @returns {Promise<{clientSecret: string, publishableKey: string}>}
+ */
+export const createReservationPaymentIntent = (reservationId) => {
+    return apiClient.post("/gamefy/payments/create-reservation-intent", { reservationId });
+};
+
+/**
+ * Confirm a reservation card payment after Stripe succeeds.
+ * @param {number} reservationId
+ * @returns {Promise<string>}
+ */
+export const confirmReservationCardPayment = (reservationId) => {
+    return apiClient.post("/gamefy/payments/confirm-reservation-payment", { reservationId });
+};
+
+/**
+ * Confirm a reservation with cash payment.
+ * @param {number} reservationId
+ * @returns {Promise<string>}
+ */
+export const confirmReservationCashPayment = (reservationId) => {
+    return apiClient.post("/gamefy/payments/confirm-reservation-cash", { reservationId });
+};
+
+/**
  * Get personalized reservations for the current player.
  * @returns {Promise<ReservationDto[]>}
  */

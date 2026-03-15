@@ -168,14 +168,36 @@ export default function ReservationPage() {
             return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
         };
 
+        const toAMPM = (mins) => {
+            let h = Math.floor(((mins % 1440) + 1440) % 1440 / 60);
+            let m = ((mins % 1440) + 1440) % 1440 % 60;
+            const period = h >= 12 ? "PM" : "AM";
+            const h12 = h % 12 || 12;
+            return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+        };
+
         const openMins = parseTime(schedule.startTime) - offset;
         const closeMins = parseTime(schedule.endTime) - offset;
-        return { open: toHHMM(openMins), close: toHHMM(closeMins) };
+        return { 
+            open: toHHMM(openMins), 
+            close: toHHMM(closeMins),
+            openFormatted: toAMPM(openMins),
+            closeFormatted: toAMPM(closeMins)
+        };
     };
 
     const generateTimeSlots = () => {
         const { open, close } = getScheduleTimes();
         if (!open || !close) return [];
+        
+        const toAMPM = (mins) => {
+            let h = Math.floor(((mins % 1440) + 1440) % 1440 / 60);
+            let m = ((mins % 1440) + 1440) % 1440 % 60;
+            const period = h >= 12 ? "PM" : "AM";
+            const h12 = h % 12 || 12;
+            return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+        };
+
         const slots = [];
         const [oh, om] = open.split(":").map(Number);
         const [ch, cm] = close.split(":").map(Number);
@@ -186,10 +208,7 @@ export default function ReservationPage() {
 
         let current = start;
         while (current <= end) {
-            const h = Math.floor((current % 1440) / 60);
-            const m = current % 60;
-            const label = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-            slots.push({ label, value: current });
+            slots.push({ label: toAMPM(current), value: current });
             current += 30;
         }
         return slots;
@@ -825,8 +844,8 @@ export default function ReservationPage() {
                 currentMonth={currentMonth}
                 currentYear={currentYear}
                 timeSlots={timeSlots}
-                scheduleOpen={scheduleOpen}
-                scheduleClose={scheduleClose}
+                scheduleOpen={getScheduleTimes().openFormatted}
+                scheduleClose={getScheduleTimes().closeFormatted}
                 startTime={startTime}
                 endTime={endTime}
                 onSelectStart={setStartTime}

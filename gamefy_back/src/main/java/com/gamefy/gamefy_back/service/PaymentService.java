@@ -3,9 +3,12 @@ package com.gamefy.gamefy_back.service;
 import com.gamefy.gamefy_back.dto.PaymentDtos;
 import com.gamefy.gamefy_back.model.PackGamefy;
 import com.gamefy.gamefy_back.model.Payment;
+import com.gamefy.gamefy_back.model.Reservation;
 import com.gamefy.gamefy_back.model.User;
+import com.gamefy.gamefy_back.model.enums.Payment_Type;
 import com.gamefy.gamefy_back.repository.PackGamefyRepository;
 import com.gamefy.gamefy_back.repository.PaymentRepository;
+import com.gamefy.gamefy_back.repository.ReservationRepository;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
@@ -25,10 +28,12 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final PackGamefyRepository packGamefyRepository;
     private final UserRepository userRepository;
+    private final ReservationRepository reservationRepository;
+    private final ReservationService reservationService;
     private final StripeService stripeService;
 
     @Value("${stripe.publishable.key}")
-    private String stripePublishableKey; // Now using the dedicated publishable key property
+    private String stripePublishableKey;
 
     /**
      * Create a PaymentIntent for a specific pack
@@ -37,7 +42,6 @@ public class PaymentService {
         PackGamefy pack = packGamefyRepository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Pack not found"));
 
-        // Amount in cents
         Long amount = (long) (pack.getPrice() * 100);
 
         Map<String, String> metadata = new HashMap<>();
@@ -49,8 +53,84 @@ public class PaymentService {
 
         return new PaymentDtos.PaymentIntentResponse(
                 intent.getClientSecret(),
-                stripePublishableKey // In a real app, you'd have a separate property for the publishable key
+                stripePublishableKey
         );
+    }
+
+    /**
+     * Create a PaymentIntent for a reservation (card payment)
+     */
+    public PaymentDtos.PaymentIntentResponse createReservationPaymentIntent(Integer reservationId, Integer userId) throws StripeException {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        if (!reservation.getPlayer().getId().equals(userId)) {
+            throw new RuntimeException("This reservation does not belong to you");
+        }
+
+        if (reservation.getPriceTime() == null || reservation.getPriceTime() <= 0) {
+            throw new RuntimeException("Reservation has no price set");
+        }
+
+        Long amount = (long) (reservation.getPriceTime() * 100);
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("reservationId", reservationId.toString());
+        metadata.put("userId", userId.toString());
+        metadata.put("type", "RESERVATION_PAYMENT");
+
+        PaymentIntent intent = stripeService.createPaymentIntent(amount, "usd", metadata);
+
+        return new PaymentDtos.PaymentIntentResponse(
+                intent.getClientSecret(),
+                stripePublishableKey
+        );
+    }
+
+    /**
+     * Fulfill a reservation payment after Stripe confirms (card payment).
+     * Creates Payment record and confirms the reservation.
+     */
+    @Transactional
+    public void fulfillReservationPayment(Integer reservationId, Integer userId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Create a payment record
+        Payment payment = new Payment();
+        payment.setReservation(reservation);
+        payment.setTotalPrice(reservation.getPriceTime());
+        payment.setUser(user);
+        paymentRepository.save(payment);
+
+        // Confirm the reservation
+        reservationService.confirmReservationPayment(reservationId, Payment_Type.CARD_PAYMENT, userId);
+    }
+
+    /**
+     * Fulfill a cash reservation payment.
+     * Creates Payment record and confirms the reservation.
+     */
+    @Transactional
+    public void fulfillReservationCashPayment(Integer reservationId, Integer userId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Create a payment record
+        Payment payment = new Payment();
+        payment.setReservation(reservation);
+        payment.setTotalPrice(reservation.getPriceTime());
+        payment.setUser(user);
+        paymentRepository.save(payment);
+
+        // Confirm the reservation
+        reservationService.confirmReservationPayment(reservationId, Payment_Type.CASH_PAYMENT, userId);
     }
 
     /**
@@ -73,29 +153,21 @@ public class PaymentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Update user with the new pack
         user.setPackGamefy(pack);
         userRepository.save(user);
 
-        // Create a payment record
         Payment payment = new Payment();
-        // payment.setReservation(null); // It's a pack purchase
         payment.setPackGamefy(pack);
         payment.setTotalPrice(pack.getPrice());
         payment.setUser(user);
         paymentRepository.save(payment);
     }
 
-    /**
-     * Directly fulfill a pack purchase — used after Stripe confirms payment on the client side.
-     * This bypasses the webhook and works reliably for local development.
-     */
     @Transactional
     public void fulfillPackPurchase(Integer packId, Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
 
-        // Prevent duplicate purchase of the CURRENT active pack
         if (user.getPackGamefy() != null && user.getPackGamefy().getId().equals(packId)) {
             throw new RuntimeException("You already hold this pack as your active pack");
         }
@@ -103,11 +175,9 @@ public class PaymentService {
         PackGamefy pack = packGamefyRepository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Pack not found: " + packId));
 
-        // Update user with the new pack
         user.setPackGamefy(pack);
         userRepository.save(user);
 
-        // Create a payment record
         Payment payment = new Payment();
         payment.setPackGamefy(pack);
         payment.setTotalPrice(pack.getPrice());
@@ -115,10 +185,6 @@ public class PaymentService {
         paymentRepository.save(payment);
     }
 
-    /**
-     * Get the ID of the pack currently assigned to the user.
-     * Returns as a List to maintain compatibility with existing frontend expectations.
-     */
     public List<Integer> getPurchasedPackIds(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
@@ -129,9 +195,6 @@ public class PaymentService {
         return List.of();
     }
 
-    /**
-     * Get all payments for back-office overview
-     */
     public List<PaymentDtos.AllPaymentResponse> getAllPayments() {
         return paymentRepository.findAll().stream()
                 .map(payment -> {
@@ -159,4 +222,3 @@ public class PaymentService {
                 .toList();
     }
 }
-

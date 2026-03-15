@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ChevronDown, Plus, Monitor, Clock, Tag } from "lucide-react";
-import { getMyReservations } from "../../api/reservation";
+import { Search, ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X } from "lucide-react";
+import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
+import ReservationPaymentModal from "../../components/payment/ReservationPaymentModal";
+import toast from "react-hot-toast";
 
 const Rooms = () => {
     const navigate = useNavigate();
@@ -10,6 +12,16 @@ const Rooms = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("newest");
+
+    // Payment confirmation state
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [selectedReservation, setSelectedReservation] = useState(null);
+    const [cashConfirming, setCashConfirming] = useState(false);
+    const [cardLoading, setCardLoading] = useState(false);
+
+    // Stripe payment modal state
+    const [stripeModalOpen, setStripeModalOpen] = useState(false);
+    const [clientSecret, setClientSecret] = useState(null);
 
     useEffect(() => {
         fetchReservations();
@@ -24,6 +36,52 @@ const Rooms = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleConfirmClick = (reservation) => {
+        setSelectedReservation(reservation);
+        setConfirmModalOpen(true);
+    };
+
+    const handleCashPayment = async () => {
+        if (!selectedReservation) return;
+        setCashConfirming(true);
+        try {
+            await confirmReservationCashPayment(selectedReservation.id);
+            toast.success("Reservation confirmed with cash payment!", {
+                duration: 5000,
+                style: { background: "#24003E", color: "#1CF3CA", border: "1px solid #1CF3CA" },
+            });
+            setConfirmModalOpen(false);
+            setSelectedReservation(null);
+            await fetchReservations();
+        } catch (error) {
+            toast.error(error?.message || "Failed to confirm cash payment");
+        } finally {
+            setCashConfirming(false);
+        }
+    };
+
+    const handleCardPayment = async () => {
+        if (!selectedReservation) return;
+        setCardLoading(true);
+        try {
+            const data = await createReservationPaymentIntent(selectedReservation.id);
+            setClientSecret(data.clientSecret);
+            setConfirmModalOpen(false);
+            setStripeModalOpen(true);
+        } catch (error) {
+            toast.error(error?.message || "Failed to initiate card payment");
+        } finally {
+            setCardLoading(false);
+        }
+    };
+
+    const handleStripePaymentSuccess = async () => {
+        setStripeModalOpen(false);
+        setClientSecret(null);
+        setSelectedReservation(null);
+        await fetchReservations();
     };
 
     const statusColors = {
@@ -141,7 +199,9 @@ const Rooms = () => {
                                             <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Details</th>
                                             <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Schedule</th>
                                             <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Hardware</th>
+                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Price</th>
                                             <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase text-right">Status</th>
+                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase text-right">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/[0.03]">
@@ -174,10 +234,25 @@ const Rooms = () => {
                                                         ))}
                                                     </div>
                                                 </td>
+                                                <td className="px-6 lg:px-8 py-5">
+                                                    <span className="text-sm font-black text-[#1CF3CA]">
+                                                        {res.priceTime ? `${res.priceTime.toFixed(2)} DT` : "—"}
+                                                    </span>
+                                                </td>
                                                 <td className="px-6 lg:px-8 py-5 text-right">
                                                     <span className={`inline-flex items-center px-5 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
                                                         {res.status}
                                                     </span>
+                                                </td>
+                                                <td className="px-6 lg:px-8 py-5 text-right">
+                                                    {res.status === "PENDING" && (
+                                                        <button
+                                                            onClick={() => handleConfirmClick(res)}
+                                                            className="px-4 py-2 bg-[#1CF3CA] text-black text-xs font-black uppercase tracking-wider rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_15px_rgba(28,243,202,0.2)]"
+                                                        >
+                                                            Confirm
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -214,15 +289,30 @@ const Rooms = () => {
                                             </div>
                                         </div>
 
-                                        {/* PCs */}
-                                        {res.pcNumbers.length > 0 && (
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {res.pcNumbers.map(num => (
-                                                    <span key={num} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black text-white/60">
-                                                        PC #{num}
-                                                    </span>
-                                                ))}
-                                            </div>
+                                        {/* PCs + Price */}
+                                        <div className="flex items-center justify-between">
+                                            {res.pcNumbers.length > 0 && (
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {res.pcNumbers.map(num => (
+                                                        <span key={num} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black text-white/60">
+                                                            PC #{num}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <span className="text-sm font-black text-[#1CF3CA]">
+                                                {res.priceTime ? `${res.priceTime.toFixed(2)} DT` : ""}
+                                            </span>
+                                        </div>
+
+                                        {/* Confirm button for PENDING */}
+                                        {res.status === "PENDING" && (
+                                            <button
+                                                onClick={() => handleConfirmClick(res)}
+                                                className="w-full mt-2 py-2.5 bg-[#1CF3CA] text-black text-xs font-black uppercase tracking-wider rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_15px_rgba(28,243,202,0.2)]"
+                                            >
+                                                Confirm Reservation
+                                            </button>
                                         )}
                                     </div>
                                 ))}
@@ -247,6 +337,108 @@ const Rooms = () => {
                     </div>
                 </div>
             </main>
+
+            {/* ─── Payment Type Selection Modal ─── */}
+            {confirmModalOpen && selectedReservation && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+                    style={{ background: "rgba(10, 0, 20, 0.85)", backdropFilter: "blur(12px)" }}
+                    onClick={(e) => { if (e.target === e.currentTarget) { setConfirmModalOpen(false); setSelectedReservation(null); } }}
+                >
+                    <div
+                        className="relative w-full max-w-md rounded-[32px] overflow-hidden"
+                        style={{
+                            background: "linear-gradient(145deg, #2a0045, #1a0030)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            boxShadow: "0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(28,243,202,0.05)",
+                        }}
+                    >
+                        {/* Top gradient bar */}
+                        <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #1CF3CA, #FF89EB)" }} />
+
+                        {/* Header */}
+                        <div className="flex items-start justify-between px-8 pt-7 pb-3">
+                            <div>
+                                <p className="text-[10px] font-black tracking-[0.25em] uppercase text-[#1CF3CA]/60 mb-1">
+                                    Confirm Payment
+                                </p>
+                                <h2 className="text-xl font-black uppercase italic tracking-tight text-white">
+                                    {selectedReservation.reservationType.replace('_', ' ')}
+                                </h2>
+                            </div>
+                            <button
+                                onClick={() => { setConfirmModalOpen(false); setSelectedReservation(null); }}
+                                className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all border border-white/10"
+                            >
+                                <X size={16} className="text-white/60" />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="px-8 pb-8 space-y-5">
+                            {/* Reservation summary */}
+                            <div className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(28, 243, 202, 0.05)", border: "1px solid rgba(28, 243, 202, 0.12)" }}>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-black uppercase text-white/30">Date</span>
+                                    <span className="text-xs font-bold text-white">{formatDate(selectedReservation.startTime)}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-black uppercase text-white/30">Time</span>
+                                    <span className="text-xs font-black text-white">{formatTime(selectedReservation.startTime)} → {formatTime(selectedReservation.endTime)}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 border-t border-dashed border-white/10">
+                                    <span className="text-[10px] font-black uppercase text-[#1CF3CA]">Total</span>
+                                    <span className="text-lg font-black text-[#1CF3CA] italic">
+                                        {selectedReservation.priceTime?.toFixed(2) || "0.00"} DT
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Payment method selection */}
+                            <p className="text-[10px] font-black tracking-[0.2em] uppercase text-white/40">Choose Payment Method</p>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Cash */}
+                                <button
+                                    onClick={handleCashPayment}
+                                    disabled={cashConfirming || cardLoading}
+                                    className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-[#1CF3CA]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                >
+                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/10 flex items-center justify-center group-hover:from-green-500/30 group-hover:to-green-600/20 transition-all">
+                                        <Banknote size={24} className="text-green-400" />
+                                    </div>
+                                    <span className="text-xs font-black uppercase tracking-wider text-white/70 group-hover:text-white transition-colors">
+                                        {cashConfirming ? "Confirming..." : "Cash"}
+                                    </span>
+                                </button>
+
+                                {/* Card */}
+                                <button
+                                    onClick={handleCardPayment}
+                                    disabled={cashConfirming || cardLoading}
+                                    className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-[#FF89EB]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                >
+                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF89EB]/20 to-[#DD00B8]/10 flex items-center justify-center group-hover:from-[#FF89EB]/30 group-hover:to-[#DD00B8]/20 transition-all">
+                                        <CreditCard size={24} className="text-[#FF89EB]" />
+                                    </div>
+                                    <span className="text-xs font-black uppercase tracking-wider text-white/70 group-hover:text-white transition-colors">
+                                        {cardLoading ? "Loading..." : "Card"}
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Stripe Payment Modal ─── */}
+            <ReservationPaymentModal
+                isOpen={stripeModalOpen}
+                onClose={() => { setStripeModalOpen(false); setClientSecret(null); }}
+                clientSecret={clientSecret}
+                reservation={selectedReservation}
+                onPaymentSuccess={handleStripePaymentSuccess}
+            />
         </div>
     );
 };

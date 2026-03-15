@@ -40,4 +40,18 @@ public class PaymentDtos {
         private String clientSecret;
         private String publishableKey;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReservationPaymentRequest {
+        private Integer reservationId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReservationConfirmRequest {
+        private Integer reservationId;
+    }
 }
