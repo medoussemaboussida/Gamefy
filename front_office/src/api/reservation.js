@@ -130,7 +130,7 @@ export const confirmReservationCardPayment = (reservationId) => {
  * @returns {Promise<string>}
  */
 export const confirmReservationCashPayment = (reservationId) => {
-    return apiClient.post("/gamefy/payments/confirm-reservation-cash", { reservationId });
+    return apiClient.put(`/gamefy/reservations/${reservationId}/confirm-cash`);
 };
 
 /**

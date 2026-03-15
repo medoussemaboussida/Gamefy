@@ -107,30 +107,7 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         // Confirm the reservation
-        reservationService.confirmReservationPayment(reservationId, Payment_Type.CARD_PAYMENT, userId);
-    }
-
-    /**
-     * Fulfill a cash reservation payment.
-     * Creates Payment record and confirms the reservation.
-     */
-    @Transactional
-    public void fulfillReservationCashPayment(Integer reservationId, Integer userId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Create a payment record
-        Payment payment = new Payment();
-        payment.setReservation(reservation);
-        payment.setTotalPrice(reservation.getPriceTime());
-        payment.setUser(user);
-        paymentRepository.save(payment);
-
-        // Confirm the reservation
-        reservationService.confirmReservationPayment(reservationId, Payment_Type.CASH_PAYMENT, userId);
+        reservationService.confirmCardPayment(reservationId, Payment_Type.CARD_PAYMENT, userId);
     }
 
     /**
