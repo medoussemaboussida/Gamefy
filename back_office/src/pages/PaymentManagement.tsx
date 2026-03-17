@@ -100,7 +100,7 @@ export default function PaymentManagement() {
                                             </TableCell>
                                             <TableCell className="px-5 py-4 text-right">
                                                 <span className="font-semibold text-gray-900 dark:text-white">
-                                                    DT {payment.totalPrice.toFixed(1)}
+                                                    DT {payment.totalPrice.toFixed(3)}
                                                 </span>
                                             </TableCell>
                                         </TableRow>
