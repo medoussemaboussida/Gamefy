@@ -102,28 +102,12 @@ public class PaymentController {
      */
     @PostMapping("/confirm-reservation-payment")
     @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<String> confirmReservationPayment(
+    public ResponseEntity<String> confirmCardPayment(
             @RequestBody PaymentDtos.ReservationConfirmRequest request,
             @AuthenticationPrincipal User currentUser) {
         try {
             paymentService.fulfillReservationPayment(request.getReservationId(), currentUser.getId());
             return ResponseEntity.ok("Reservation payment fulfilled successfully");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Fulfillment error: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Confirm a reservation with cash payment
-     */
-    @PostMapping("/confirm-reservation-cash")
-    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<String> confirmReservationCash(
-            @RequestBody PaymentDtos.ReservationConfirmRequest request,
-            @AuthenticationPrincipal User currentUser) {
-        try {
-            paymentService.fulfillReservationCashPayment(request.getReservationId(), currentUser.getId());
-            return ResponseEntity.ok("Reservation cash payment confirmed successfully");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Fulfillment error: " + e.getMessage());
         }

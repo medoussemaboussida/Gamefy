@@ -2,6 +2,7 @@ package com.gamefy.gamefy_back.controller;
 
 import com.gamefy.gamefy_back.dto.ReservationDto;
 import com.gamefy.gamefy_back.model.User;
+import com.gamefy.gamefy_back.model.enums.Payment_Type;
 import com.gamefy.gamefy_back.model.enums.Reservation_Type;
 import com.gamefy.gamefy_back.service.ReservationService;
 import lombok.RequiredArgsConstructor;
@@ -57,5 +58,17 @@ public class ReservationController {
     public ResponseEntity<List<ReservationDto>> getMyReservations(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         return ResponseEntity.ok(service.getReservationsByPlayer(user.getId()));
+    }
+
+    /**
+     * Set cash payment type on a reservation (status stays PENDING).
+     */
+    @PutMapping("/{id}/confirm-cash")
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<ReservationDto> confirmCashReservation(
+            @PathVariable Integer id,
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(service.setCashPaymentType(id, user.getId()));
     }
 }

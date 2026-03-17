@@ -61,6 +61,14 @@ public class Reservation {
     @Column(name = "price_time")
     private Double priceTime;
 
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @jakarta.persistence.PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now(); // Server runs in UTC
+    }
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "offer_id")
@@ -71,11 +79,11 @@ public class Reservation {
     private List<Payment> payments = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "reservation")
+    @OneToMany(mappedBy = "reservation",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PcAvailability> pcAvailabilities = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "reservation")
+    @OneToMany(mappedBy = "reservation",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CoachingSlot> coachingSlots = new ArrayList<>();
 
     @Override

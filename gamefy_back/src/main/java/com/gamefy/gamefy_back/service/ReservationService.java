@@ -5,6 +5,8 @@ import com.gamefy.gamefy_back.model.*;
 import com.gamefy.gamefy_back.model.enums.*;
 import com.gamefy.gamefy_back.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
@@ -180,10 +183,10 @@ public class ReservationService {
     }
 
     /**
-     * Confirm a reservation's payment (cash or card).
-     * Sets paymentType and changes status to CONFIRMED.
+     * Confirm a reservation after card payment succeeds.
+     * Sets paymentType to CARD_PAYMENT and status to CONFIRMED.
      */
-    public ReservationDto confirmReservationPayment(Integer reservationId, Payment_Type paymentType, Integer userId) {
+    public ReservationDto confirmCardPayment(Integer reservationId, Payment_Type paymentType, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
@@ -197,6 +200,25 @@ public class ReservationService {
 
         reservation.setPaymentType(paymentType);
         reservation.setStatus(Reservation_Status.CONFIRMED);
+        Reservation saved = reservationRepository.save(reservation);
+
+        return mapToDto(saved);
+    }
+
+    /**
+     * Set payment type to CASH_PAYMENT but keep status as PENDING.
+     * The player will pay at the location; admin confirms later.
+     */
+    public ReservationDto setCashPaymentType(Integer reservationId, Integer userId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        if (!reservation.getPlayer().getId().equals(userId)) {
+            throw new RuntimeException("This reservation does not belong to you");
+        }
+
+        reservation.setPaymentType(Payment_Type.CASH_PAYMENT);
+        // Status stays PENDING — admin will confirm after in-person payment
         Reservation saved = reservationRepository.save(reservation);
 
         return mapToDto(saved);
@@ -268,6 +290,8 @@ public class ReservationService {
                 .endTime(reservation.getEndTime())
                 .status(reservation.getStatus())
                 .priceTime(reservation.getPriceTime())
+                .paymentType(reservation.getPaymentType())
+                .createdAt(reservation.getCreatedAt())
                 .playerName(reservation.getPlayer().getFirstName() + " " + reservation.getPlayer().getLastName())
                 .pcNumbers(reservation.getPcAvailabilities().stream()
                         .map(pa -> pa.getPc().getPcNumber())
@@ -303,5 +327,31 @@ public class ReservationService {
                     return map;
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Runs every 15 minutes.
+     * Deletes PENDING reservations whose createdAt is older than 24 hours.
+     */
+    @Scheduled(fixedRate = 900000)
+    public void cleanupExpiredReservations() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
+
+        List<Reservation> expired = reservationRepository.findAll().stream()
+                .filter(r -> r.getStatus() == Reservation_Status.PENDING)
+                .filter(r -> r.getPaymentType() != Payment_Type.CASH_PAYMENT) // Cash reservations are not auto-deleted
+                .filter(r -> r.getCreatedAt() != null && r.getCreatedAt().isBefore(cutoff))
+                .toList();
+
+        for (Reservation reservation : expired) {
+            log.info("Auto-deleting expired reservation ID={} (created at {})", reservation.getId(), reservation.getCreatedAt());
+            pcAvailabilityRepository.deleteAll(reservation.getPcAvailabilities());
+            coachingSlotRepository.deleteAll(reservation.getCoachingSlots());
+            reservationRepository.delete(reservation);
+        }
+
+        if (!expired.isEmpty()) {
+            log.info("Cleaned up {} expired reservation(s)", expired.size());
+        }
     }
 }

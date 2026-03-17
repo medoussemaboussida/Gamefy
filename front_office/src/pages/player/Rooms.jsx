@@ -1,10 +1,58 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X } from "lucide-react";
+import { Search, ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer } from "lucide-react";
 import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
 import ReservationPaymentModal from "../../components/payment/ReservationPaymentModal";
+import CashPaymentModal from "../../modals/CashPaymentModal";
 import toast from "react-hot-toast";
+
+// Live countdown for PENDING reservation expiry
+const CountdownTimer = ({ createdAt, onExpired }) => {
+    const [timeLeft, setTimeLeft] = useState("");
+    const [isUrgent, setIsUrgent] = useState(false);
+    const [isExpired, setIsExpired] = useState(false);
+
+    useEffect(() => {
+        const calc = () => {
+            // createdAt is UTC from backend
+            const created = new Date(createdAt.includes("Z") ? createdAt : createdAt + "Z");
+            const expiresAt = new Date(created.getTime() + 24 * 60 * 60 * 1000);
+            const now = new Date();
+            const diff = expiresAt - now;
+
+            if (diff <= 0) {
+                setIsExpired(true);
+                setTimeLeft("Expired");
+                if (onExpired) onExpired();
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            setTimeLeft(`${hours}h ${mins}m`);
+            setIsUrgent(hours < 2);
+        };
+
+        calc();
+        const interval = setInterval(calc, 60000); // update every minute
+        return () => clearInterval(interval);
+    }, [createdAt, onExpired]);
+
+    if (isExpired) {
+        return (
+            <span className="inline-flex items-center gap-1 text-red-400 text-[10px] font-black uppercase">
+                <AlertTriangle size={11} /> Expired
+            </span>
+        );
+    }
+
+    return (
+        <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase ${isUrgent ? "text-red-400" : "text-yellow-400"}`}>
+            <Timer size={11} /> {timeLeft} left
+        </span>
+    );
+};
 
 const Rooms = () => {
     const navigate = useNavigate();
@@ -23,11 +71,10 @@ const Rooms = () => {
     const [stripeModalOpen, setStripeModalOpen] = useState(false);
     const [clientSecret, setClientSecret] = useState(null);
 
-    useEffect(() => {
-        fetchReservations();
-    }, []);
+    // Cash info modal state
+    const [cashModalOpen, setCashModalOpen] = useState(false);
 
-    const fetchReservations = async () => {
+    const fetchReservations = useCallback(async () => {
         try {
             const data = await getMyReservations();
             setReservations(data);
@@ -36,7 +83,14 @@ const Rooms = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchReservations();
+        // Auto-refresh every 5 minutes to pick up backend expiry deletions
+        const interval = setInterval(fetchReservations, 300000);
+        return () => clearInterval(interval);
+    }, [fetchReservations]);
 
     const handleConfirmClick = (reservation) => {
         setSelectedReservation(reservation);
@@ -48,19 +102,18 @@ const Rooms = () => {
         setCashConfirming(true);
         try {
             await confirmReservationCashPayment(selectedReservation.id);
-            toast.success("Reservation confirmed with cash payment!", {
-                duration: 5000,
-                style: { background: "#24003E", color: "#1CF3CA", border: "1px solid #1CF3CA" },
-            });
             setConfirmModalOpen(false);
-            setSelectedReservation(null);
-            await fetchReservations();
+            setCashModalOpen(true);
+            await fetchReservations(); // Refresh to reflect paymentType change
         } catch (error) {
-            toast.error(error?.message || "Failed to confirm cash payment");
+            toast.error(error?.message || "Failed to set cash payment");
         } finally {
             setCashConfirming(false);
         }
     };
+
+    // Check if a PENDING reservation needs the Confirm button
+    const needsConfirmation = (res) => res.status === "PENDING" && !res.paymentType;
 
     const handleCardPayment = async () => {
         if (!selectedReservation) return;
@@ -89,6 +142,17 @@ const Rooms = () => {
         PENDING: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
         CANCELLED: "bg-red-500/10 text-red-400 border-red-500/20",
         REJECTED: "bg-red-900/20 text-red-500 border-red-900/30",
+    };
+
+    const paymentBadge = (res) => {
+        if (res.status === "PENDING" && res.paymentType === "CASH_PAYMENT") {
+            return (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest bg-orange-500/10 text-orange-400 border-orange-500/20">
+                    <Banknote size={10} /> Awaiting Cash
+                </span>
+            );
+        }
+        return null;
     };
 
     const filteredReservations = reservations
@@ -240,12 +304,18 @@ const Rooms = () => {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 lg:px-8 py-5 text-right">
-                                                    <span className={`inline-flex items-center px-5 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
-                                                        {res.status}
-                                                    </span>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className={`inline-flex items-center px-5 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
+                                                            {res.status}
+                                                        </span>
+                                                        {paymentBadge(res)}
+                                                        {needsConfirmation(res) && res.createdAt && (
+                                                            <CountdownTimer createdAt={res.createdAt} onExpired={fetchReservations} />
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 lg:px-8 py-5 text-right">
-                                                    {res.status === "PENDING" && (
+                                                    {needsConfirmation(res) && (
                                                         <button
                                                             onClick={() => handleConfirmClick(res)}
                                                             className="px-4 py-2 bg-[#1CF3CA] text-black text-xs font-black uppercase tracking-wider rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_15px_rgba(28,243,202,0.2)]"
@@ -272,9 +342,15 @@ const Rooms = () => {
                                                     {res.reservationType.replace('_', ' ')}
                                                 </span>
                                             </div>
-                                            <span className={`shrink-0 inline-flex items-center px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
-                                                {res.status}
-                                            </span>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className={`shrink-0 inline-flex items-center px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
+                                                    {res.status}
+                                                </span>
+                                                {paymentBadge(res)}
+                                                {needsConfirmation(res) && res.createdAt && (
+                                                    <CountdownTimer createdAt={res.createdAt} onExpired={fetchReservations} />
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Date & time */}
@@ -305,8 +381,8 @@ const Rooms = () => {
                                             </span>
                                         </div>
 
-                                        {/* Confirm button for PENDING */}
-                                        {res.status === "PENDING" && (
+                                        {/* Confirm button for PENDING without paymentType */}
+                                        {needsConfirmation(res) && (
                                             <button
                                                 onClick={() => handleConfirmClick(res)}
                                                 className="w-full mt-2 py-2.5 bg-[#1CF3CA] text-black text-xs font-black uppercase tracking-wider rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_15px_rgba(28,243,202,0.2)]"
@@ -438,6 +514,13 @@ const Rooms = () => {
                 clientSecret={clientSecret}
                 reservation={selectedReservation}
                 onPaymentSuccess={handleStripePaymentSuccess}
+            />
+
+            {/* ─── Cash Info Modal ─── */}
+            <CashPaymentModal
+                isOpen={cashModalOpen}
+                onClose={() => { setCashModalOpen(false); setSelectedReservation(null); }}
+                reservation={selectedReservation}
             />
         </div>
     );
