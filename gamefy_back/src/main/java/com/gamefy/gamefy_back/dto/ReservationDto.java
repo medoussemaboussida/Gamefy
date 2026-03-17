@@ -28,5 +28,6 @@ public class ReservationDto {
     private LocalDateTime createdAt;
     private List<Integer> pcIds;
     private Integer coachId;
+    private String coachName;
     private String game;
 }
