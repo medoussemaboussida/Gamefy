@@ -45,7 +45,7 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/gamefy/auth/**", "/uploads/**", "/gamefy/payments/webhook", "/gamefy/work-days-schedules/public").permitAll()
+                .requestMatchers("/gamefy/auth/**", "/uploads/**", "/gamefy/payments/webhook", "/gamefy/work-days-schedules/public", "/gamefy/offers/active").permitAll()
                 .anyRequest().authenticated() // Require authentication for all other endpoints
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

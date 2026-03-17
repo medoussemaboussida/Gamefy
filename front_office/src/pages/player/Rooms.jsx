@@ -300,7 +300,7 @@ const Rooms = () => {
                                                 </td>
                                                 <td className="px-6 lg:px-8 py-5">
                                                     <span className="text-sm font-black text-[#1CF3CA]">
-                                                        {res.priceTime ? `${res.priceTime.toFixed(2)} DT` : "—"}
+                                                        {res.priceTime ? `${res.priceTime.toFixed(3)} DT` : "—"}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 lg:px-8 py-5 text-right">
@@ -377,7 +377,7 @@ const Rooms = () => {
                                                 </div>
                                             )}
                                             <span className="text-sm font-black text-[#1CF3CA]">
-                                                {res.priceTime ? `${res.priceTime.toFixed(2)} DT` : ""}
+                                                {res.priceTime ? `${res.priceTime.toFixed(3)} DT` : ""}
                                             </span>
                                         </div>
 
@@ -465,7 +465,7 @@ const Rooms = () => {
                                 <div className="flex justify-between items-center pt-2 border-t border-dashed border-white/10">
                                     <span className="text-[10px] font-black uppercase text-[#1CF3CA]">Total</span>
                                     <span className="text-lg font-black text-[#1CF3CA] italic">
-                                        {selectedReservation.priceTime?.toFixed(2) || "0.00"} DT
+                                        {selectedReservation.priceTime?.toFixed(3) || "0.000"} DT
                                     </span>
                                 </div>
                             </div>
