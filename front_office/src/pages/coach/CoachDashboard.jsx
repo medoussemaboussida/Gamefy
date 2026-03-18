@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
-import { Search, Bell, MoreHorizontal, ChevronDown, Gamepad2, Banknote, Edit3, PlusCircle, CalendarDays } from "lucide-react";
+import { Bell, MoreHorizontal, ChevronDown, Gamepad2, Banknote, Edit3, PlusCircle, CalendarDays } from "lucide-react";
 import { coachProfileApi } from "../../api/coach_profile";
 import CoachProfileForm from "../../modals/CoachProfileForm";
 import CoachScheduleModal from "../../modals/CoachScheduleModal";
@@ -34,7 +34,6 @@ const CoachDashboard = () => {
       id: 1,
       user: "Dahmax",
       time: "3PM To 5PM",
-      price: "80TND",
       status: "PENDING",
       statusColor: "bg-[#7B6600] text-[#CEB22D]",
     },
@@ -75,16 +74,6 @@ const CoachDashboard = () => {
               >
                 <CalendarDays size={20} />
               </button>
-              <div className="relative group flex-1 md:flex-none">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <Search size={18} className="text-[#1CF3CA]" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="w-full md:w-[380px] h-[40px] bg-transparent border border-[#1CF3CA]/40 rounded-full pl-11 pr-4 text-white text-[14px] font-medium font-['Inter'] placeholder:text-white/40 focus:outline-none focus:border-[#1CF3CA] transition-all"
-                />
-              </div>
 
               <button className="relative p-2 text-[#1CF3CA] hover:bg-white/5 rounded-full transition-all flex-shrink-0">
                 <Bell size={24} />
@@ -117,7 +106,7 @@ const CoachDashboard = () => {
                 <MoreHorizontal className="text-white/40 cursor-pointer" />
               </div>
               <div className="text-white text-[32px] font-bold font-['Inter']">
-                55
+                10
               </div>
             </div>
 
@@ -139,7 +128,7 @@ const CoachDashboard = () => {
 
                   <div className="space-y-3">
                     <div className="text-white text-[24px] font-black font-['Inter'] flex items-baseline gap-1">
-                      {profile.hourlyPrice} <span className="text-[14px] text-white/40 font-medium">TND/hr</span>
+                      {Number(profile.hourlyPrice).toFixed(3)} <span className="text-[14px] text-white/40 font-medium">DT/hr</span>
                     </div>
 
                     {profile.bio && (

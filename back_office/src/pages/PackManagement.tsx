@@ -222,7 +222,7 @@ export default function PackManagement() {
                                                     {pack.name}
                                                 </TableCell>
                                                 <TableCell className="px-5 py-4 text-start text-gray-500 dark:text-gray-400 font-bold">
-                                                    {pack.price}
+                                                    {pack.price.toFixed(3)}
                                                 </TableCell>
                                                 <TableCell className="px-5 py-4 text-start">
                                                     <div className="flex flex-wrap gap-1">

@@ -68,7 +68,7 @@ const ReservationCheckoutForm = ({ onPaymentSuccess, amount, reservationId }) =>
             <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-400 mb-2">Reservation</label>
                 <div className="text-xl font-bold text-[#1CF3CA]">Gaming Session</div>
-                <div className="text-2xl font-bold text-white mt-1">{amount?.toFixed(2)} DT</div>
+                <div className="text-2xl font-bold text-white mt-1">{amount?.toFixed(3)} DT</div>
             </div>
 
             <div className="bg-white/5 p-4 rounded-2xl border border-white/10">

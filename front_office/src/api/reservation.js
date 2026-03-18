@@ -140,3 +140,11 @@ export const confirmReservationCashPayment = (reservationId) => {
 export const getMyReservations = () => {
     return apiClient.get("/gamefy/reservations/my");
 };
+
+/**
+ * Get the currently active offer (if any).
+ * @returns {Promise<{id: number, offerName: string, reduction: number, status: string}|null>}
+ */
+export const getActiveOffer = () => {
+    return apiClient.get("/gamefy/offers/active");
+};

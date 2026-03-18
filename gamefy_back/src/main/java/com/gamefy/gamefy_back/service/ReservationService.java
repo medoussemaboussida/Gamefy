@@ -282,6 +282,32 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
+    public List<ReservationDto> getAllReservations() {
+        return reservationRepository.findAll()
+                .stream()
+                .sorted(Comparator.comparing(Reservation::getStartTime).reversed())
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    public void deleteReservation(Integer id) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
+
+        log.info("Admin deleting reservation ID={}", id);
+        
+        // Cleanup associated data
+        if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
+            pcAvailabilityRepository.deleteAll(reservation.getPcAvailabilities());
+        }
+        
+        if (reservation.getCoachingSlots() != null && !reservation.getCoachingSlots().isEmpty()) {
+            coachingSlotRepository.deleteAll(reservation.getCoachingSlots());
+        }
+
+        reservationRepository.delete(reservation);
+    }
+
     private ReservationDto mapToDto(Reservation reservation) {
         return ReservationDto.builder()
                 .id(reservation.getId())
@@ -297,6 +323,10 @@ public class ReservationService {
                         .map(pa -> pa.getPc().getPcNumber())
                         .collect(Collectors.toList()))
                 .coachId(reservation.getCoach() != null ? reservation.getCoach().getId() : null)
+                .coachName(reservation.getCoach() != null ? 
+                        reservation.getCoach().getFirstName() + " " + reservation.getCoach().getLastName() : null)
+                .game(reservation.getCoach() != null && reservation.getCoach().getCoachProfile() != null ? 
+                        reservation.getCoach().getCoachProfile().getGame() : null)
                 .build();
     }
 

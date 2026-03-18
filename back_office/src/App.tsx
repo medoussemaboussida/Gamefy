@@ -28,6 +28,7 @@ import PCManagement from "./pages/PcManagement";
 import OfferManagement from "./pages/OfferManagement";
 import PackManagement from "./pages/PackManagement";
 import PaymentManagement from "./pages/PaymentManagement";
+import ReservationManagement from "./pages/ReservationManagement";
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="/events" element={<EventManagement />} />
             <Route path="/packs" element={<PackManagement />} />
             <Route path="/payments" element={<PaymentManagement />} />
+            <Route path="/reservations" element={<ReservationManagement />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

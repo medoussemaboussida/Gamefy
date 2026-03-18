@@ -71,7 +71,7 @@ export default function CashPaymentModal({ isOpen, onClose, reservation }) {
                     >
                         <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1">Amount Due</p>
                         <p className="text-2xl font-black text-[#1CF3CA] italic">
-                            {reservation.priceTime?.toFixed(2) || "0.00"} DT
+                            {reservation.priceTime?.toFixed(3) || "0.000"} DT
                         </p>
                     </div>
 

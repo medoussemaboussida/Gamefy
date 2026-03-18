@@ -2,6 +2,7 @@ package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.OfferDto;
 import com.gamefy.gamefy_back.model.Offer;
+import com.gamefy.gamefy_back.model.enums.Offer_Status;
 import com.gamefy.gamefy_back.repository.OfferRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,13 @@ import java.util.stream.Collectors;
 public class OfferService {
 
     private final OfferRepository repository;
+
+    public OfferDto getActiveOffer() {
+        return repository.findFirstByStatus(Offer_Status.ACTIVE)
+                .map(this::mapToDto)
+                .orElse(null);
+    }
+
     public List<OfferDto> getAllOffers() {
         return repository.findAll().stream()
                 .map(this::mapToDto)

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getWorkSchedule, getAvailablePCs, createReservation, getAvailableGames, getCoachesByGame, getCoachSessions, getAllFixedPrices } from "../../api/reservation";
+import { getWorkSchedule, getAvailablePCs, createReservation, getAvailableGames, getCoachesByGame, getCoachSessions, getAllFixedPrices, getActiveOffer } from "../../api/reservation";
 import TimeSelectionModal from "../../modals/TimeSelectionModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Monitor, Gamepad2, Check, ArrowRight, Info } from "lucide-react";
+import { Monitor, Gamepad2, Check, ArrowRight, Info, Percent } from "lucide-react";
 import streamingImg from "../../assets/images/streaming.png";
 import gamingRoomImg from "../../assets/images/gaming_room.jpg";
 import coachingRoomImg from "../../assets/images/event.png"; // Using event.png for coaching for now
@@ -60,8 +60,8 @@ export default function ReservationPage() {
     const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
     const [fixedPrices, setFixedPrices] = useState([]);
     const [pricingLoading, setPricingLoading] = useState(false);
+    const [activeOffer, setActiveOffer] = useState(null);
 
-    // ─── Fetch fixed prices on mount ───
     useEffect(() => {
         const fetchPrices = async () => {
             setPricingLoading(true);
@@ -74,7 +74,17 @@ export default function ReservationPage() {
                 setPricingLoading(false);
             }
         };
+        const fetchOffer = async () => {
+            try {
+                const data = await getActiveOffer();
+                if (data) setActiveOffer(data);
+            } catch (e) {
+                // 204 No Content or error — no active offer
+                setActiveOffer(null);
+            }
+        };
         fetchPrices();
+        fetchOffer();
     }, []);
 
     // ─── Fetch work schedule when month changes ───
@@ -333,6 +343,38 @@ export default function ReservationPage() {
             }
         }
 
+        const subtotal = totalGamingPrice + coachingFee;
+
+        // Apply active offer reduction
+        if (activeOffer && activeOffer.reduction > 0) {
+            return subtotal * (1 - activeOffer.reduction / 100);
+        }
+
+        return subtotal;
+    };
+
+    // Calculate subtotal before discount (for display purposes)
+    const calculateSubtotal = () => {
+        if (!startTime || !endTime || fixedPrices.length === 0) return 0;
+
+        const durationHours = (Number(endTime) - Number(startTime)) / 60;
+        const pcPriceType = reservationType === "VIP_ROOM" ? "VIP" : "GAMING";
+        const pricing = fixedPrices.find(p => p.pcType === pcPriceType);
+        if (!pricing) return 0;
+
+        const hours = Math.ceil(durationHours);
+        let baseGamingPrice = 0;
+        if (hours >= 4) baseGamingPrice = pricing.oneHourPrice * hours;
+        else if (hours === 3) baseGamingPrice = pricing.threeHoursPrice;
+        else if (hours === 2) baseGamingPrice = pricing.twoHoursPrice;
+        else if (hours === 1) baseGamingPrice = pricing.oneHourPrice;
+
+        const totalGamingPrice = baseGamingPrice * selectedPcIds.length;
+        let coachingFee = 0;
+        if (reservationType === "COACHING_ROOM" && selectedCoachId) {
+            const coach = coaches.find(c => c.id === selectedCoachId);
+            if (coach) coachingFee = coach.hourlyPrice * durationHours;
+        }
         return totalGamingPrice + coachingFee;
     };
 
@@ -575,7 +617,7 @@ export default function ReservationPage() {
                                         >
                                             <div className="flex justify-between items-start mb-2">
                                                 <h3 className="font-bold text-lg">{coach.name}</h3>
-                                                <span className="text-[#1CF3CA] font-black">${coach.hourlyPrice}/hr</span>
+                                                <span className="text-[#1CF3CA] font-black">{Number(coach.hourlyPrice).toFixed(3)} DT/hr</span>
                                             </div>
                                             <p className="text-white/40 text-sm line-clamp-2">{coach.bio || "Pro player and expert coach."}</p>
                                         </button>
@@ -783,11 +825,36 @@ export default function ReservationPage() {
                                                                 {timeSlots.find(s => String(s.value) === String(startTime))?.label} — {timeSlots.find(s => String(s.value) === String(endTime))?.label}
                                                             </span>
                                                         </div>
-                                                        <div className="pt-2 border-t border-dashed border-white/10 flex justify-between items-center">
-                                                            <span className="text-[10px] font-black uppercase text-[#1CF3CA]">Estimated Total</span>
-                                                            <span className="text-sm font-black text-[#1CF3CA] italic">
-                                                                 {calculateTotalPrice().toFixed(2)} DT
-                                                            </span>
+                                                        <div className="pt-2 border-t border-dashed border-white/10 space-y-2">
+                                                            {activeOffer && activeOffer.reduction > 0 ? (
+                                                                <>
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span className="text-[10px] font-black uppercase text-white/30">Subtotal</span>
+                                                                        <span className="text-xs font-bold text-white/40 line-through italic">
+                                                                            {calculateSubtotal().toFixed(3)} DT
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
+                                                                        <Percent size={10} className="text-green-400" />
+                                                                        <span className="text-[10px] font-black text-green-400 uppercase">
+                                                                            {activeOffer.offerName} — {activeOffer.reduction}% OFF
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span className="text-[10px] font-black uppercase text-[#1CF3CA]">Final Price</span>
+                                                                        <span className="text-sm font-black text-[#1CF3CA] italic">
+                                                                            {calculateTotalPrice().toFixed(3)} DT
+                                                                        </span>
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-[10px] font-black uppercase text-[#1CF3CA]">Estimated Total</span>
+                                                                    <span className="text-sm font-black text-[#1CF3CA] italic">
+                                                                        {calculateTotalPrice().toFixed(3)} DT
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
 

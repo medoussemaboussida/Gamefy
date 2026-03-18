@@ -16,6 +16,19 @@ import java.util.List;
 public class OfferController {
 
     private final OfferService service;
+
+    /**
+     * Public endpoint — returns the currently active offer (or 204 if none).
+     */
+    @GetMapping("/active")
+    public ResponseEntity<OfferDto> getActiveOffer() {
+        OfferDto active = service.getActiveOffer();
+        if (active == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(active);
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
     public ResponseEntity<List<OfferDto>> getAllOffers() {

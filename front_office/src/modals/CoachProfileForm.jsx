@@ -9,7 +9,7 @@ const CoachProfileForm = ({ profile, onClose, onSave }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [formData, setFormData] = useState({
         game: profile?.game || "",
-        hourlyPrice: profile?.hourlyPrice || "",
+        hourlyPrice: profile?.hourlyPrice ? profile.hourlyPrice.toFixed(3) : "",
         bio: profile?.bio || "",
     });
 
@@ -17,7 +17,22 @@ const CoachProfileForm = ({ profile, onClose, onSave }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        if (name === "hourlyPrice") {
+            // Allow only numbers and one decimal point
+            const regex = /^\d*\.?\d{0,3}$/;
+            if (value === "" || regex.test(value)) {
+                setFormData((prev) => ({ ...prev, [name]: value }));
+            }
+        } else {
+            setFormData((prev) => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handlePriceBlur = () => {
+        if (formData.hourlyPrice) {
+            const formatted = parseFloat(formData.hourlyPrice).toFixed(3);
+            setFormData((prev) => ({ ...prev, hourlyPrice: formatted }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -162,14 +177,15 @@ const CoachProfileForm = ({ profile, onClose, onSave }) => {
 
                         <div className="space-y-2">
                             <label className="font-['Inter'] text-[12px] text-[#1CF3CA] font-medium tracking-wider uppercase">
-                                Hourly Price (TND)
+                                Hourly Price (DT)
                             </label>
                             <input
                                 name="hourlyPrice"
-                                type="number"
-                                placeholder="e.g. 40"
+                                type="text"
+                                placeholder="e.g. 5.000"
                                 value={formData.hourlyPrice}
                                 onChange={handleChange}
+                                onBlur={handlePriceBlur}
                                 className="w-full h-12 bg-white/5 border border-[#1CF3CA]/30 rounded-full px-6 text-white text-sm focus:outline-none focus:border-[#1CF3CA] transition-all"
                             />
                         </div>

@@ -60,6 +60,12 @@ public class ReservationController {
         return ResponseEntity.ok(service.getReservationsByPlayer(user.getId()));
     }
 
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<List<ReservationDto>> getAllReservations() {
+        return ResponseEntity.ok(service.getAllReservations());
+    }
+
     /**
      * Set cash payment type on a reservation (status stays PENDING).
      */
@@ -70,5 +76,12 @@ public class ReservationController {
             Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         return ResponseEntity.ok(service.setCashPaymentType(id, user.getId()));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<Void> deleteReservation(@PathVariable Integer id) {
+        service.deleteReservation(id);
+        return ResponseEntity.noContent().build();
     }
 }
