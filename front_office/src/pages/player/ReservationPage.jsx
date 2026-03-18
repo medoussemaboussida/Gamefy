@@ -617,7 +617,7 @@ export default function ReservationPage() {
                                         >
                                             <div className="flex justify-between items-start mb-2">
                                                 <h3 className="font-bold text-lg">{coach.name}</h3>
-                                                <span className="text-[#1CF3CA] font-black">${coach.hourlyPrice}/hr</span>
+                                                <span className="text-[#1CF3CA] font-black">{Number(coach.hourlyPrice).toFixed(3)} DT/hr</span>
                                             </div>
                                             <p className="text-white/40 text-sm line-clamp-2">{coach.bio || "Pro player and expert coach."}</p>
                                         </button>
