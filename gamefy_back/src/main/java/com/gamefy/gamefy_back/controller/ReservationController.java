@@ -84,4 +84,18 @@ public class ReservationController {
         service.deleteReservation(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Admin/Webmaster: change a reservation's status.
+     * CONFIRMED → payment record created immediately.
+     * CANCELLED / PENDING → scheduler auto-deletes after 24 h (uses createdAt).
+     */
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<ReservationDto> updateReservationStatus(
+            @PathVariable Integer id,
+            @RequestBody Map<String, String> body) {
+        String status = body.get("status");
+        return ResponseEntity.ok(service.updateStatus(id, status));
+    }
 }

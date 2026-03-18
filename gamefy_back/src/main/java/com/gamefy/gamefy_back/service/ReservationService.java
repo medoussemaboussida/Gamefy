@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.gamefy.gamefy_back.model.Payment;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class ReservationService {
     private final CoachingSlotRepository coachingSlotRepository;
     private final CoachingSessionRepository coachingSessionRepository;
     private final CoachProfileRepository coachProfileRepository;
+    private final PaymentRepository paymentRepository;
 
     /**
      * Create a reservation with multiple PCs.
@@ -308,6 +310,43 @@ public class ReservationService {
         reservationRepository.delete(reservation);
     }
 
+    /**
+     * Admin/Webmaster: update reservation status.
+     * - CONFIRMED  → creates a Payment record immediately.
+     * - PENDING / CANCELLED → just updates the status; scheduler auto-deletes
+     *   PENDING/CANCELLED reservations whose createdAt is older than 24 hours.
+     */
+    public ReservationDto updateStatus(Integer reservationId, String newStatus) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + reservationId));
+
+        Reservation_Status status;
+        try {
+            status = Reservation_Status.valueOf(newStatus.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid status: " + newStatus);
+        }
+
+        reservation.setStatus(status);
+        Reservation saved = reservationRepository.save(reservation);
+
+        if (status == Reservation_Status.CONFIRMED) {
+            // Check if a payment record already exists for this reservation
+            boolean alreadyPaid = !saved.getPayments().isEmpty();
+            if (!alreadyPaid) {
+                Payment payment = new Payment();
+                payment.setReservation(saved);
+                payment.setTotalPrice(saved.getPriceTime());
+                payment.setUser(saved.getPlayer());
+                paymentRepository.save(payment);
+                log.info("Payment record created for confirmed reservation ID={}", reservationId);
+            }
+        }
+
+        log.info("Admin updated reservation ID={} status to {}", reservationId, status);
+        return mapToDto(saved);
+    }
+
     private ReservationDto mapToDto(Reservation reservation) {
         return ReservationDto.builder()
                 .id(reservation.getId())
@@ -361,27 +400,35 @@ public class ReservationService {
 
     /**
      * Runs every 15 minutes.
-     * Deletes PENDING reservations whose createdAt is older than 24 hours.
+     * Deletes PENDING (without CASH_PAYMENT) and CANCELLED reservations
+     * whose createdAt is older than 24 hours.
      */
     @Scheduled(fixedRate = 900000)
     public void cleanupExpiredReservations() {
         LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
 
         List<Reservation> expired = reservationRepository.findAll().stream()
-                .filter(r -> r.getStatus() == Reservation_Status.PENDING)
-                .filter(r -> r.getPaymentType() != Payment_Type.CASH_PAYMENT) // Cash reservations are not auto-deleted
+                .filter(r -> {
+                    // PENDING without cash selection → auto-delete after 24h
+                    boolean isPendingAutoDelete = r.getStatus() == Reservation_Status.PENDING
+                            && r.getPaymentType() != Payment_Type.CASH_PAYMENT;
+                    // CANCELLED by admin → auto-delete after 24h
+                    boolean isCancelled = r.getStatus() == Reservation_Status.CANCELLED;
+                    return isPendingAutoDelete || isCancelled;
+                })
                 .filter(r -> r.getCreatedAt() != null && r.getCreatedAt().isBefore(cutoff))
                 .toList();
 
         for (Reservation reservation : expired) {
-            log.info("Auto-deleting expired reservation ID={} (created at {})", reservation.getId(), reservation.getCreatedAt());
+            log.info("Auto-deleting expired/cancelled reservation ID={} status={} (created at {})",
+                    reservation.getId(), reservation.getStatus(), reservation.getCreatedAt());
             pcAvailabilityRepository.deleteAll(reservation.getPcAvailabilities());
             coachingSlotRepository.deleteAll(reservation.getCoachingSlots());
             reservationRepository.delete(reservation);
         }
 
         if (!expired.isEmpty()) {
-            log.info("Cleaned up {} expired reservation(s)", expired.size());
+            log.info("Cleaned up {} expired/cancelled reservation(s)", expired.size());
         }
     }
 }

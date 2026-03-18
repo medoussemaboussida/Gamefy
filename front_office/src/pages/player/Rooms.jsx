@@ -112,7 +112,7 @@ const Rooms = () => {
         }
     };
 
-    // Check if a PENDING reservation needs the Confirm button
+    const shouldShowCountdown = (res) => (res.status === "PENDING" && !res.paymentType) || res.status === "CANCELLED";
     const needsConfirmation = (res) => res.status === "PENDING" && !res.paymentType;
 
     const handleCardPayment = async () => {
@@ -309,7 +309,7 @@ const Rooms = () => {
                                                             {res.status}
                                                         </span>
                                                         {paymentBadge(res)}
-                                                        {needsConfirmation(res) && res.createdAt && (
+                                                        {shouldShowCountdown(res) && res.createdAt && (
                                                             <CountdownTimer createdAt={res.createdAt} onExpired={fetchReservations} />
                                                         )}
                                                     </div>
@@ -347,7 +347,7 @@ const Rooms = () => {
                                                     {res.status}
                                                 </span>
                                                 {paymentBadge(res)}
-                                                {needsConfirmation(res) && res.createdAt && (
+                                                {shouldShowCountdown(res) && res.createdAt && (
                                                     <CountdownTimer createdAt={res.createdAt} onExpired={fetchReservations} />
                                                 )}
                                             </div>
