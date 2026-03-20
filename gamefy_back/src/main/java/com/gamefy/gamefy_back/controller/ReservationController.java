@@ -60,6 +60,13 @@ public class ReservationController {
         return ResponseEntity.ok(service.getReservationsByPlayer(user.getId()));
     }
 
+    @GetMapping("/my-coaching")
+    @PreAuthorize("hasAnyAuthority('COACH')")
+    public ResponseEntity<List<ReservationDto>> getMyCoachingReservations(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(service.getReservationsByCoach(user.getId()));
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
     public ResponseEntity<List<ReservationDto>> getAllReservations() {

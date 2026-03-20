@@ -35,15 +35,18 @@ export default function PCManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
+  const [selectedGame, setSelectedGame] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
   const [isTypeFilterOpen, setIsTypeFilterOpen] = useState(false);
+  const [isGameFilterOpen, setIsGameFilterOpen] = useState(false);
   const [isPCModalOpen, setIsPCModalOpen] = useState(false);
   const [selectedPC, setSelectedPC] = useState<PC | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [pcToDelete, setPcToDelete] = useState<PC | null>(null);
+
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
 
@@ -68,6 +71,15 @@ export default function PCManagement() {
     { value: "VIP", label: "VIP" },
   ];
 
+  const gameOptions = [
+    { value: "ALL", label: "All Games" },
+    { value: "FC26", label: "FC 26" },
+    { value: "VALORANT", label: "Valorant" },
+    { value: "CS_GO", label: "CS:GO" },
+    { value: "LEAGUE_OF_LEGENDS", label: "League of Legends" },
+  ];
+
+
   const fetchPCs = async () => {
     try {
       const data = await pcApi.getAllPCs();
@@ -85,13 +97,16 @@ export default function PCManagement() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedStatus, selectedType]);
+  }, [selectedStatus, selectedType, selectedGame]);
+
 
   const filteredPCs = pcs.filter((pc) => {
     const statusMatch = selectedStatus === "ALL" || pc.status === selectedStatus;
     const typeMatch = selectedType === "ALL" || pc.pcType === selectedType;
-    return statusMatch && typeMatch;
+    const gameMatch = selectedGame === "ALL" || pc.games === selectedGame;
+    return statusMatch && typeMatch && gameMatch;
   });
+
 
   const totalItems = filteredPCs.length;
   const currentPCs = filteredPCs.slice(
@@ -104,6 +119,10 @@ export default function PCManagement() {
 
   const getTypeLabel = (value: string) =>
     typeOptions.find((opt) => opt.value === value)?.label || value;
+
+  const getGameLabel = (value: string) =>
+    gameOptions.find((opt) => opt.value === value)?.label || value;
+
 
   const handleConfirmDelete = async () => {
     if (!pcToDelete) return;
@@ -265,6 +284,45 @@ export default function PCManagement() {
               </Dropdown>
             </div>
 
+            {/* Game Filter Dropdown */}
+            <div className="relative">
+              <Button
+                onClick={() => setIsGameFilterOpen(!isGameFilterOpen)}
+                variant="primary"
+                size="sm"
+                className="w-40 dropdown-toggle"
+                endIcon={
+                  <ChevronDownIcon
+                    className={`w-5 h-5 transition-transform duration-200 ${isGameFilterOpen ? "rotate-180" : ""}`}
+                  />
+                }
+              >
+                {getGameLabel(selectedGame)}
+              </Button>
+              <Dropdown
+                isOpen={isGameFilterOpen}
+                onClose={() => setIsGameFilterOpen(false)}
+                className="w-40 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-900 dark:border-gray-800"
+              >
+                {gameOptions.map((option) => (
+                  <DropdownItem
+                    key={option.value}
+                    onClick={() => {
+                      setSelectedGame(option.value);
+                      setIsGameFilterOpen(false);
+                    }}
+                    className={`flex items-center w-full px-4 py-2 text-sm text-left ${selectedGame === option.value
+                        ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10"
+                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+                      }`}
+                  >
+                    {option.label}
+                  </DropdownItem>
+                ))}
+              </Dropdown>
+            </div>
+
+
             {/* Add Button */}
             {isWebMasterOrAdmin && (
               <Button variant="primary" size="sm" onClick={openAddModal}>
@@ -377,8 +435,9 @@ export default function PCManagement() {
                         )}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {pc.games}
+                        {getGameLabel(pc.games)}
                       </TableCell>
+
                       <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         <Badge size="sm" color={getTypeBadgeColor(pc.pcType)}>
                           {pc.pcType}

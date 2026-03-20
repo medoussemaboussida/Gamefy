@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Integer> {
     List<Reservation> findByPlayerIdOrderByStartTimeDesc(Integer playerId);
+    List<Reservation> findByCoachIdOrderByStartTimeDesc(Integer coachId);
 }

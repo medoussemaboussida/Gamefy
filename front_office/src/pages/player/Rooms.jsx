@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer } from "lucide-react";
+import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer, Filter } from "lucide-react";
+
 import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
+import Pagination from "../../components/pagination/Pagination";
 import ReservationPaymentModal from "../../components/payment/ReservationPaymentModal";
 import CashPaymentModal from "../../modals/CashPaymentModal";
 import toast from "react-hot-toast";
@@ -58,8 +60,11 @@ const Rooms = () => {
     const navigate = useNavigate();
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("newest");
+    const [isSortOpen, setIsSortOpen] = useState(false);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 3;
 
     // Payment confirmation state
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -155,11 +160,7 @@ const Rooms = () => {
         return null;
     };
 
-    const filteredReservations = reservations
-        .filter((res) =>
-            res.reservationType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            res.pcNumbers.some(num => String(num).includes(searchTerm))
-        )
+    const allFilteredReservations = reservations
         .sort((a, b) => {
             const dateA = new Date(a.startTime.includes('Z') ? a.startTime : a.startTime + 'Z');
             const dateB = new Date(b.startTime.includes('Z') ? b.startTime : b.startTime + 'Z');
@@ -167,6 +168,9 @@ const Rooms = () => {
             if (sortBy === "oldest") return dateA - dateB;
             return 0;
         });
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const filteredReservations = allFilteredReservations.slice(startIndex, startIndex + itemsPerPage);
 
     const formatTime = (isoString) => {
         const date = new Date(isoString.includes('Z') ? isoString : isoString + 'Z');
@@ -195,50 +199,66 @@ const Rooms = () => {
                     <div className="mb-8 md:mb-10">
                         {/* Title row */}
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
-                        <div className="pl-16 md:pl-0">
+                            <div className="pl-16 md:pl-0">
                                 <h1 className="text-3xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
                                     My Reservations
                                 </h1>
-                                <p className="text-white/40 mt-1 text-xs font-medium tracking-widest uppercase">
+                                <p className="text-gray-400">
                                     Manage your upcoming gaming sessions
                                 </p>
                             </div>
 
-                            {/* Book Now — always visible, top-right on md+ */}
-                            <button
-                                onClick={() => navigate("/player/reservation")}
-                                className="self-start md:self-auto flex items-center gap-2 px-5 py-3 bg-[#1CF3CA] text-black font-bold font-['Inter'] text-sm tracking-tight rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_20px_rgba(28,243,202,0.3)]"
-                            >
-                                <Plus size={16} />
-                                Book Now
-                            </button>
-                        </div>
+                            <div className="flex items-center gap-3 self-end md:self-auto">
+                                {/* Sort Filter Dropdown */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsSortOpen(!isSortOpen)}
+                                        className="bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8] px-6 h-[40px] rounded-[18px] text-white font-medium flex items-center gap-2 hover:opacity-90 transition-all text-[15px]"
+                                    >
+                                        <Filter size={18} />
+                                        <span>{sortBy === "newest" ? "Sort by newest" : "Sort by oldest"}</span>
+                                        <ChevronDown size={18} className={`transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`} />
+                                    </button>
 
-                        {/* Search & Sort row */}
-                        <div className="flex flex-col md:flex-row gap-3">
-                            {/* Search */}
-                            <div className="relative flex-1 group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#1CF3CA] transition-colors" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Search by type or PC number..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full bg-[#320141] border border-white/5 pl-11 pr-4 py-3 rounded-full text-sm focus:outline-none focus:border-[#1CF3CA]/50 focus:ring-1 focus:ring-[#1CF3CA]/30 transition-all shadow-xl"
-                                />
-                            </div>
+                                    {isSortOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-10"
+                                                onClick={() => setIsSortOpen(false)}
+                                            ></div>
+                                            <div className="absolute right-0 mt-3 w-56 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
+                                                {[
+                                                    { value: "newest", label: "Sort by newest" },
+                                                    { value: "oldest", label: "Sort by oldest" },
+                                                ].map((option) => (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => {
+                                                            setSortBy(option.value);
+                                                            setIsSortOpen(false);
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className={`w-full flex items-center px-5 py-3 rounded-2xl text-[14px] font-medium transition-all ${sortBy === option.value
+                                                            ? "bg-[#1CF3CA] text-black"
+                                                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                                                            }`}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
 
-                            {/* Sort */}
-                            <div className="relative shrink-0">
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
-                                    className="appearance-none w-full md:w-auto bg-[#320141] border border-white/5 pl-5 pr-10 py-3 rounded-full text-sm font-black font-bold tracking-wide focus:outline-none focus:border-[#1CF3CA]/50 transition-all cursor-pointer shadow-xl"
+                                {/* Book Now */}
+                                <button
+                                    onClick={() => navigate("/player/reservation")}
+                                    className="flex items-center gap-2 px-5 py-3 bg-[#1CF3CA] text-black font-bold font-['Inter'] text-sm tracking-tight rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_20px_rgba(28,243,202,0.3)]"
                                 >
-                                    <option value="newest">Sort by newest</option>
-                                    <option value="oldest">Sort by oldest</option>
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1CF3CA] pointer-events-none" size={15} />
+                                    <Plus size={16} />
+                                    Book Now
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -274,7 +294,7 @@ const Rooms = () => {
                                                 <td className="px-6 lg:px-8 py-5">
                                                     <div className="flex items-center gap-3">
                                                         {roomIcon(res.reservationType)}
-                                                        <span className="font-black italic uppercase text-base tracking-tight text-[#1CF3CA]">
+                                                        <span className="font-bold uppercase text-base tracking-tight text-[#1CF3CA]">
                                                             {res.reservationType.replace('_', ' ')}
                                                         </span>
                                                     </div>
@@ -393,6 +413,13 @@ const Rooms = () => {
                                     </div>
                                 ))}
                             </div>
+
+                            <Pagination
+                                currentPage={currentPage}
+                                totalItems={allFilteredReservations.length}
+                                itemsPerPage={itemsPerPage}
+                                onPageChange={setCurrentPage}
+                            />
 
                         </>) : (
                             /* Empty state */

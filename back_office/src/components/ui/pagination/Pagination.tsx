@@ -27,12 +27,7 @@ const Pagination: React.FC<PaginationProps> = ({
     }
 
     return (
-        <div className="flex flex-col items-center justify-between gap-4 px-5 py-4 border-t border-gray-100 sm:flex-row dark:border-white/[0.05]">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-                Showing <span className="font-medium text-gray-800 dark:text-white/90">{startItem}</span> to{" "}
-                <span className="font-medium text-gray-800 dark:text-white/90">{endItem}</span> of{" "}
-                <span className="font-medium text-gray-800 dark:text-white/90">{totalItems}</span> entries
-            </p>
+        <div className="flex flex-col items-center justify-center gap-4 px-5 py-4 border-t border-gray-100 sm:flex-row dark:border-white/[0.05]">
 
             <div className="flex items-center gap-2">
                 <button

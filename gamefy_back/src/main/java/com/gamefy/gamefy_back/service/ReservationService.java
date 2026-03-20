@@ -284,6 +284,13 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
+    public List<ReservationDto> getReservationsByCoach(Integer coachId) {
+        return reservationRepository.findByCoachIdOrderByStartTimeDesc(coachId)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
     public List<ReservationDto> getAllReservations() {
         return reservationRepository.findAll()
                 .stream()

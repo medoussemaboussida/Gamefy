@@ -142,6 +142,14 @@ export const getMyReservations = () => {
 };
 
 /**
+ * Get reservations booked with the current coach.
+ * @returns {Promise<ReservationDto[]>}
+ */
+export const getMyCoachingReservations = () => {
+    return apiClient.get("/gamefy/reservations/my-coaching");
+};
+
+/**
  * Get the currently active offer (if any).
  * @returns {Promise<{id: number, offerName: string, reduction: number, status: string}|null>}
  */

@@ -141,12 +141,16 @@ const EventsPage = () => {
                 <div className="max-w-[1400px] mx-auto space-y-12">
 
                     {/* Header Section */}
-                    <header className="flex flex-col md:flex-row items-center justify-between w-full gap-6 md:gap-0">
-                        <h2 className="text-white text-[18px] font-bold font-['Inter'] self-start md:self-auto pl-14 md:pl-0">
-                            Upcoming Events
-                        </h2>
+                    <header className="flex flex-col md:flex-row items-center justify-between w-full gap-6">
+                        <div className="pl-16 md:pl-0 self-start md:self-auto">
+                            <h1 className="text-3xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
+                            E-sport events and tournaments
+                            </h1>
+                            <p className="text-gray-400">Making memories, Good times and great vibes</p>
+                        </div>
 
                         <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
+
                             {/* Search Bar */}
                             <div className="relative group flex-1 md:flex-none">
                                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -209,14 +213,6 @@ const EventsPage = () => {
 
                     {/* Events Horizontal Scroll Section */}
                     <div className="space-y-8">
-                        <div className="flex flex-col gap-2">
-                            <h1 className="text-[32px] md:text-[54px] font-black font-['Inter'] leading-tight tracking-tight uppercase">
-                                <span className="bg-gradient-to-r from-white to-[#2BDFC8] bg-clip-text text-transparent">
-                                    Discover platform events
-                                </span>
-                            </h1>
-                            <p className="text-white/60 text-lg font-medium">Join our gaming community in epic tournaments and meetups.</p>
-                        </div>
 
                         {filteredEvents.length === 0 ? (
                             <div className="bg-[#320141] border border-white/5 rounded-[50px] p-20 flex flex-col items-center justify-center text-center space-y-4">
@@ -227,17 +223,16 @@ const EventsPage = () => {
                                 <p className="text-white/40">Try searching for something else or check back later!</p>
                             </div>
                         ) : (
-                            <div className="flex overflow-x-auto gap-8 pb-12 snap-x no-scrollbar custom-scrollbar-h">
+                        <div className="flex overflow-x-auto gap-8 py-6 px-4 pb-16 snap-x no-scrollbar custom-scrollbar-h -mx-4">
+
                                 {filteredEvents.map((event) => (
                                     <div
                                         key={event.id}
-                                        className="flex-shrink-0 w-full max-w-[450px] snap-center transform transition-all duration-500 hover:translate-y-[-10px]"
+                                        className="flex-shrink-0 w-full max-w-[450px] snap-center relative group bg-[#320141]/40 border border-white/5 rounded-[50px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:bg-[#320141]/60 hover:border-[#1CF3CA]/30 flex flex-col h-full shadow-2xl backdrop-blur-xl"
                                     >
-                                        <div className="relative group h-full">
-                                            {/* Glow Effect */}
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-[50px] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                                        {/* Hover Light Effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[#1CF3CA]/0 via-[#1CF3CA]/5 to-[#FF89EB]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
-                                            <div className="relative bg-[#320141] border border-white/5 rounded-[50px] overflow-hidden h-full flex flex-col shadow-2xl">
                                                 {/* Image Section */}
                                                 <div className="relative h-[250px] overflow-hidden">
                                                     {event.photo ? (
@@ -304,9 +299,8 @@ const EventsPage = () => {
                                                         )}
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
                                     </div>
+
                                 ))}
                             </div>
                         )}
