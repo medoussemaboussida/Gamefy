@@ -69,6 +69,9 @@ public class User implements UserDetails {
     @Column(name = "2fa_token")
     private String twoFaToken;
 
+    @Column(name = "two_fa_activated", nullable = false)
+    private boolean twoFaActivated = false;
+
     @JsonIgnore
     @OneToOne(mappedBy = "coach", cascade = CascadeType.ALL, orphanRemoval = true)
     private CoachProfile coachProfile;

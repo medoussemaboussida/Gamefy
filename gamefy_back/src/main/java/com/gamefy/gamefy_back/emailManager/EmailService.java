@@ -69,6 +69,18 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    public void send2FACode(String to, String code) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Your Gamefy 2FA Verification Code");
+        message.setText("Your two-factor authentication code is:\n\n" +
+                code + "\n\n" +
+                "This code will expire when you log in again.\n" +
+                "If you did not request this, please ignore this email.");
+
+        mailSender.send(message);
+    }
+
     private void sendResetEmail(String to, String token, String baseUrl) {
         String resetLink = baseUrl + "/reset-password?token=" + token;
         

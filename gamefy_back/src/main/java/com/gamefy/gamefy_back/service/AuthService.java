@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -83,6 +84,22 @@ public class AuthService {
         // Validate password
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Invalid email or password");
+        }
+
+        // Check if 2FA is activated
+        if (user.isTwoFaActivated()) {
+            // Generate a 6-digit code
+            String code = String.format("%06d", new Random().nextInt(999999));
+            user.setTwoFaToken(code);
+            userRepository.save(user);
+
+            // Send the code via email
+            emailService.send2FACode(user.getEmail(), code);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("requires2FA", "true");
+            response.put("userId", user.getId().toString());
+            return response;
         }
 
         // Generate tokens
@@ -209,6 +226,38 @@ public class AuthService {
     public User getUserById(Integer id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    /**
+     * Verify the 2FA code and return auth tokens
+     */
+    public Map<String, String> verifyTwoFa(Integer userId, String code) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getTwoFaToken() == null || !user.getTwoFaToken().equals(code)) {
+            throw new BadCredentialsException("Invalid 2FA code");
+        }
+
+        // Clear the token after successful verification
+        user.setTwoFaToken(null);
+        userRepository.save(user);
+
+        return generateAuthResponse(user);
+    }
+
+    /**
+     * Toggle 2FA on or off for a user
+     */
+    public void toggleTwoFa(Integer userId, boolean enabled) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setTwoFaActivated(enabled);
+        if (!enabled) {
+            user.setTwoFaToken(null);
+        }
+        userRepository.save(user);
     }
 
 }

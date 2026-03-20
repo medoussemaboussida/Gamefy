@@ -32,11 +32,24 @@ import { apiClient } from "./apiClient";
  */
 
 /**
+ * @typedef {Object} VerifyTwoFaRequestDto
+ * @property {number} userId
+ * @property {string} code
+ */
+
+/**
+ * @typedef {Object} ToggleTwoFaRequestDto
+ * @property {boolean} enabled
+ */
+
+/**
  * @typedef {Object} AuthResponseDto
  * @property {string} message
  * @property {string} accessToken
  * @property {string} role
  * @property {number} userId
+ * @property {boolean} requires2FA
+ * @property {boolean} twoFaActivated
  */
 
 /**
@@ -93,5 +106,22 @@ export const authApi = {
      */
     signUpCoach: async (dto) => {
         return apiClient.post("/gamefy/auth/signup/coach", dto);
+    },
+    /**
+     * @param {VerifyTwoFaRequestDto} dto
+     * @returns {Promise<AuthResponseDto>}
+     */
+    verify2FA: async (dto) => {
+        return apiClient.post("/gamefy/auth/verify-2fa", dto);
+    },
+    /**
+     * @param {ToggleTwoFaRequestDto} dto
+     * @returns {Promise<MessageResponseDto>}
+     */
+    toggle2FA: async (dto) => {
+        const userId = localStorage.getItem("userId");
+        return apiClient.post("/gamefy/auth/toggle-2fa", dto, {
+            headers: { userId }
+        });
     },
 };

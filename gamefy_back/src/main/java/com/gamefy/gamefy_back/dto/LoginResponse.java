@@ -12,4 +12,6 @@ public class LoginResponse {
     private String accessToken;
     private String role;
     private Integer userId;
+    private boolean requires2FA;
+    private boolean twoFaActivated;
 }

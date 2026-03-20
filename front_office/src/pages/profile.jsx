@@ -293,6 +293,42 @@ const ProfilePage = () => {
                                     <span className="text-white/60 font-medium">Account Role</span>
                                     <span className="text-[#FF89EB] font-bold text-sm uppercase">{user.role}</span>
                                 </div>
+                                <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+                                    <div className="flex flex-col">
+                                        <span className="text-white/60 font-medium">Two-Factor Authentication</span>
+                                        <span className="text-white/30 text-xs mt-1">Extra security for your account</span>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            const newVal = !user.twoFaActivated;
+                                            try {
+                                                await authApi.toggle2FA({ enabled: newVal });
+                                                setUser(prev => ({ ...prev, twoFaActivated: newVal }));
+                                                toast.success(newVal ? "2FA enabled" : "2FA disabled", {
+                                                    style: {
+                                                        border: '1px solid #1CF3CA',
+                                                        padding: '16px',
+                                                        color: '#1CF3CA',
+                                                        background: '#24003E',
+                                                        boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+                                                    },
+                                                });
+                                            } catch (error) {
+                                                toast.error(error.message || "Failed to update 2FA", {
+                                                    style: {
+                                                        border: '1px solid #DE3D3D',
+                                                        padding: '16px',
+                                                        color: '#DE3D3D',
+                                                        background: '#360200',
+                                                    },
+                                                });
+                                            }
+                                        }}
+                                        className={`relative w-14 h-7 rounded-full transition-all duration-300 ${user.twoFaActivated ? 'bg-[#1CF3CA]' : 'bg-white/10'}`}
+                                    >
+                                        <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 ${user.twoFaActivated ? 'translate-x-7' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

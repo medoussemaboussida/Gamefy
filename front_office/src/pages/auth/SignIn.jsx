@@ -70,7 +70,27 @@ const SignIn = () => {
 
     try {
       const response = await authApi.login({ email: formData.email, password: formData.password });
+      
+      // Check if 2FA verification is required
+      if (response.requires2FA) {
+        toast.dismiss(loadingToast);
+        toast("A verification code has been sent to your email", {
+          icon: "🔐",
+          style: {
+            border: '1px solid #1CF3CA',
+            padding: '16px',
+            color: '#1CF3CA',
+            background: '#24003E',
+            boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+          },
+        });
+        sessionStorage.setItem("2fa_userId", response.userId);
+        navigate("/verify-2fa");
+        return;
+      }
+
       localStorage.setItem("accessToken", response.accessToken);
+      localStorage.setItem("userId", response.userId);
 
       toast.success("Welcome back!", {
         id: loadingToast,

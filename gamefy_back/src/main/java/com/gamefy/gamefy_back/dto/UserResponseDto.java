@@ -20,4 +20,5 @@ public class UserResponseDto {
     private UserStatus status;
     private String profilePhoto;
     private Integer packGamefyId;
+    private boolean twoFaActivated;
 }
