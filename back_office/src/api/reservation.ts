@@ -36,4 +36,8 @@ export const reservationApi = {
     deleteReservation: async (id: number): Promise<void> => {
         await apiClient.delete(`/gamefy/reservations/${id}`);
     },
+
+    updateStatus: async (id: number, status: Reservation_Status): Promise<ReservationDto> => {
+        return apiClient.put(`/gamefy/reservations/${id}/status`, { status });
+    },
 };

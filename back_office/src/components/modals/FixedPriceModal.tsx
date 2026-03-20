@@ -98,7 +98,7 @@ const FixedPriceModal: React.FC<FixedPriceModalProps> = ({ isOpen, onClose }) =>
 
                             <div className="flex flex-col gap-4">
                                 <div>
-                                    <Label>1 Hour (TND)</Label>
+                                    <Label>1 Hour (DT)</Label>
                                     <Input
                                         type="number"
                                         value={gamingPrices.oneHourPrice}
@@ -106,7 +106,7 @@ const FixedPriceModal: React.FC<FixedPriceModalProps> = ({ isOpen, onClose }) =>
                                     />
                                 </div>
                                 <div>
-                                    <Label>2 Hours (TND)</Label>
+                                    <Label>2 Hours (DT)</Label>
                                     <Input
                                         type="number"
                                         value={gamingPrices.twoHoursPrice}
@@ -114,7 +114,7 @@ const FixedPriceModal: React.FC<FixedPriceModalProps> = ({ isOpen, onClose }) =>
                                     />
                                 </div>
                                 <div>
-                                    <Label>3 Hours (TND)</Label>
+                                    <Label>3 Hours (DT)</Label>
                                     <Input
                                         type="number"
                                         value={gamingPrices.threeHoursPrice}
@@ -144,7 +144,7 @@ const FixedPriceModal: React.FC<FixedPriceModalProps> = ({ isOpen, onClose }) =>
 
                             <div className="flex flex-col gap-4">
                                 <div>
-                                    <Label>1 Hour (TND)</Label>
+                                    <Label>1 Hour (DT)</Label>
                                     <Input
                                         type="number"
                                         value={vipPrices.oneHourPrice}
@@ -152,7 +152,7 @@ const FixedPriceModal: React.FC<FixedPriceModalProps> = ({ isOpen, onClose }) =>
                                     />
                                 </div>
                                 <div>
-                                    <Label>2 Hours (TND)</Label>
+                                    <Label>2 Hours (DT)</Label>
                                     <Input
                                         type="number"
                                         value={vipPrices.twoHoursPrice}
@@ -160,7 +160,7 @@ const FixedPriceModal: React.FC<FixedPriceModalProps> = ({ isOpen, onClose }) =>
                                     />
                                 </div>
                                 <div>
-                                    <Label>3 Hours (TND)</Label>
+                                    <Label>3 Hours (DT)</Label>
                                     <Input
                                         type="number"
                                         value={vipPrices.threeHoursPrice}

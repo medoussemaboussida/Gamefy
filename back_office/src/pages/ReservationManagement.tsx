@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
 import ComponentCard from "../components/common/ComponentCard";
 import PageMeta from "../components/common/PageMeta";
@@ -16,8 +16,135 @@ import Badge from "../components/ui/badge/Badge";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
-import { ChevronDownIcon, TrashBinIcon } from "../icons";
+import { ChevronDownIcon, TrashBinIcon, TimeIcon, AlertIcon } from "../icons";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
+import StatusChangeModal from "../components/modals/StatusChangeModal";
+
+// ─── Countdown Timer ─────────────────────────────────────────────────────────
+
+const CountdownTimer = ({ createdAt }: { createdAt: string }) => {
+    const [timeLeft, setTimeLeft] = useState("");
+    const [isUrgent, setIsUrgent] = useState(false);
+    const [isExpired, setIsExpired] = useState(false);
+
+    useEffect(() => {
+        const calc = () => {
+            const created = new Date(createdAt.includes("Z") ? createdAt : createdAt + "Z");
+            const expiresAt = new Date(created.getTime() + 24 * 60 * 60 * 1000);
+            const now = new Date();
+            const diff = expiresAt.getTime() - now.getTime();
+
+            if (diff <= 0) {
+                setIsExpired(true);
+                setTimeLeft("Expired");
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            setTimeLeft(`${hours}h ${mins}m`);
+            setIsUrgent(hours < 2);
+        };
+
+        calc();
+        const interval = setInterval(calc, 60000);
+        return () => clearInterval(interval);
+    }, [createdAt]);
+
+    if (isExpired) {
+        return (
+            <span className="flex items-center gap-1 mt-1 text-error-500 text-[10px] font-medium uppercase">
+                <AlertIcon className="w-3 h-3" /> Expired
+            </span>
+        );
+    }
+
+    return (
+        <span className={`flex items-center gap-1 mt-1 text-[10px] font-medium uppercase ${isUrgent ? "text-error-500" : "text-warning-500"}`}>
+            <TimeIcon className="w-3 h-3" /> {timeLeft} left
+        </span>
+    );
+};
+
+// ─── Status Dropdown Cell ────────────────────────────────────────────────────
+
+interface StatusCellProps {
+    res: ReservationDto;
+    onStatusChange: (res: ReservationDto, status: Reservation_Status) => void;
+}
+
+function StatusCell({ res, onStatusChange }: StatusCellProps) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClick = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClick);
+        return () => document.removeEventListener("mousedown", handleClick);
+    }, []);
+
+    const getStatusColor = (status: Reservation_Status) => {
+        switch (status) {
+            case Reservation_Status.CONFIRMED: return "success";
+            case Reservation_Status.PENDING: return "warning";
+            case Reservation_Status.CANCELLED: return "error";
+            default: return "light";
+        }
+    };
+
+    const allStatuses = [
+        Reservation_Status.PENDING,
+        Reservation_Status.CONFIRMED,
+        Reservation_Status.CANCELLED,
+    ];
+
+    return (
+        <div ref={ref} className="relative inline-block">
+            <button
+                onClick={() => setOpen((v) => !v)}
+                className="flex flex-col items-start gap-1 group"
+                title="Click to change status"
+            >
+                <div className="flex items-center gap-1">
+                    <Badge size="sm" color={getStatusColor(res.status)}>
+                        {res.status}
+                    </Badge>
+                    <ChevronDownIcon
+                        className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                    />
+                </div>
+                {(res.status === Reservation_Status.PENDING || res.status === Reservation_Status.CANCELLED) && (
+                    <CountdownTimer createdAt={res.createdAt} />
+                )}
+            </button>
+
+            {open && (
+                <div className="absolute left-0 top-full mt-1 z-20 min-w-[140px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/[0.08] rounded-xl shadow-lg py-1">
+                    {allStatuses.map((s) => (
+                        <button
+                            key={s}
+                            onClick={() => {
+                                setOpen(false);
+                                if (s !== res.status) onStatusChange(res, s);
+                            }}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.05]
+                                ${s === res.status ? "opacity-40 cursor-default" : "cursor-pointer"}`}
+                        >
+                            <Badge size="sm" color={getStatusColor(s)}>{s}</Badge>
+                            {s === res.status && <span className="text-xs text-gray-400">(current)</span>}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function ReservationManagement() {
     const [reservations, setReservations] = useState<ReservationDto[]>([]);
@@ -27,9 +154,17 @@ export default function ReservationManagement() {
     const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
     const [isTypeOpen, setIsTypeOpen] = useState(false);
     const [isStatusOpen, setIsStatusOpen] = useState(false);
+
+    // Delete modal
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedRes, setSelectedRes] = useState<{id: number, playerName: string} | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+
+    // Status change modal
+    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [statusChangeTarget, setStatusChangeTarget] = useState<{ res: ReservationDto; status: Reservation_Status } | null>(null);
+    const [statusChangeLoading, setStatusChangeLoading] = useState(false);
+
     const itemsPerPage = 5;
 
     const typeOptions = [
@@ -77,6 +212,8 @@ export default function ReservationManagement() {
         currentPage * itemsPerPage,
     );
 
+    // ── Delete handlers ──────────────────────────────────────────────────────
+
     const handleDeleteClick = (id: number, playerName: string) => {
         setSelectedRes({ id, playerName });
         setIsDeleteModalOpen(true);
@@ -84,7 +221,6 @@ export default function ReservationManagement() {
 
     const handleConfirmDelete = async () => {
         if (!selectedRes) return;
-        
         setDeleteLoading(true);
         try {
             await reservationApi.deleteReservation(selectedRes.id);
@@ -98,29 +234,47 @@ export default function ReservationManagement() {
         }
     };
 
-    const getStatusColor = (status: Reservation_Status) => {
-        switch (status) {
-            case Reservation_Status.CONFIRMED:
-                return "success";
-            case Reservation_Status.PENDING:
-                return "warning";
-            case Reservation_Status.CANCELLED:
-                return "error";
-            default:
-                return "light";
+    // ── Status change handlers ───────────────────────────────────────────────
+
+    const handleStatusChange = (res: ReservationDto, status: Reservation_Status) => {
+        setStatusChangeTarget({ res, status });
+        setIsStatusModalOpen(true);
+    };
+
+    const handleConfirmStatusChange = async () => {
+        if (!statusChangeTarget) return;
+        setStatusChangeLoading(true);
+        try {
+            const updated = await reservationApi.updateStatus(statusChangeTarget.res.id, statusChangeTarget.status);
+            // Update in place
+            setReservations((prev) =>
+                prev.map((r) => (r.id === updated.id ? updated : r))
+            );
+
+            if (statusChangeTarget.status === Reservation_Status.CONFIRMED) {
+                toast.success("Reservation confirmed & payment record created!");
+            } else if (statusChangeTarget.status === Reservation_Status.CANCELLED) {
+                toast.success("Reservation cancelled. It will be auto-deleted after 24 hours.");
+            } else {
+                toast.success("Reservation status updated to PENDING.");
+            }
+
+            setIsStatusModalOpen(false);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to update status");
+        } finally {
+            setStatusChangeLoading(false);
         }
     };
 
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
     const getTypeColor = (type: Reservation_Type) => {
         switch (type) {
-            case Reservation_Type.COACHING_ROOM:
-                return "info";
-            case Reservation_Type.VIP_ROOM:
-                return "warning";
-            case Reservation_Type.PC_ROOM:
-                return "success";
-            default:
-                return "light";
+            case Reservation_Type.COACHING_ROOM: return "info";
+            case Reservation_Type.VIP_ROOM: return "warning";
+            case Reservation_Type.PC_ROOM: return "success";
+            default: return "light";
         }
     };
 
@@ -251,13 +405,13 @@ export default function ReservationManagement() {
                                 <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                                     {loading ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="px-5 py-10 text-center text-gray-500">
+                                            <TableCell colSpan={8} className="px-5 py-10 text-center text-gray-500">
                                                 Loading reservations...
                                             </TableCell>
                                         </TableRow>
                                     ) : currentReservations.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="px-5 py-10 text-center text-gray-500">
+                                            <TableCell colSpan={8} className="px-5 py-10 text-center text-gray-500">
                                                 No reservations found
                                             </TableCell>
                                         </TableRow>
@@ -298,9 +452,7 @@ export default function ReservationManagement() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="px-5 py-4 text-start">
-                                                    <Badge size="sm" color={getStatusColor(res.status)}>
-                                                        {res.status}
-                                                    </Badge>
+                                                    <StatusCell res={res} onStatusChange={handleStatusChange} />
                                                 </TableCell>
                                                 <TableCell className="px-5 py-4 text-start">
                                                     <div className="flex items-center gap-2">
@@ -339,9 +491,7 @@ export default function ReservationManagement() {
                                                 </h4>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Badge size="sm" color={getStatusColor(res.status)}>
-                                                    {res.status}
-                                                </Badge>
+                                                <StatusCell res={res} onStatusChange={handleStatusChange} />
                                                 <button
                                                     onClick={() => handleDeleteClick(res.id, res.playerName)}
                                                     className="p-1 px-2 transition-colors duration-200 rounded-lg text-gray-500 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-500/10"
@@ -368,7 +518,7 @@ export default function ReservationManagement() {
                                             </div>
                                             <div className="col-span-2">
                                                 <p className="text-gray-500 dark:text-gray-400 text-xs uppercase mb-1">Schedule</p>
-                                                <div className="flex items-center gap-2 text-brand-500 font-medium font-medium">
+                                                <div className="flex items-center gap-2 text-brand-500 font-medium">
                                                     <span>{formatDateTime(res.startTime)}</span>
                                                     <span className="text-gray-400">→</span>
                                                     <span>{formatDateTime(res.endTime)}</span>
@@ -390,12 +540,23 @@ export default function ReservationManagement() {
                 </ComponentCard>
             </div>
 
+            {/* Delete Modal */}
             <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleConfirmDelete}
                 userName={selectedRes?.playerName || "this reservation"}
                 loading={deleteLoading}
+            />
+
+            {/* Status Change Modal */}
+            <StatusChangeModal
+                isOpen={isStatusModalOpen}
+                reservation={statusChangeTarget?.res ?? null}
+                targetStatus={statusChangeTarget?.status ?? null}
+                loading={statusChangeLoading}
+                onConfirm={handleConfirmStatusChange}
+                onClose={() => setIsStatusModalOpen(false)}
             />
         </>
     );

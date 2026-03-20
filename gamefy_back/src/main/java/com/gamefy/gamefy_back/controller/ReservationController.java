@@ -60,6 +60,13 @@ public class ReservationController {
         return ResponseEntity.ok(service.getReservationsByPlayer(user.getId()));
     }
 
+    @GetMapping("/my-coaching")
+    @PreAuthorize("hasAnyAuthority('COACH')")
+    public ResponseEntity<List<ReservationDto>> getMyCoachingReservations(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(service.getReservationsByCoach(user.getId()));
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
     public ResponseEntity<List<ReservationDto>> getAllReservations() {
@@ -83,5 +90,19 @@ public class ReservationController {
     public ResponseEntity<Void> deleteReservation(@PathVariable Integer id) {
         service.deleteReservation(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Admin/Webmaster: change a reservation's status.
+     * CONFIRMED → payment record created immediately.
+     * CANCELLED / PENDING → scheduler auto-deletes after 24 h (uses createdAt).
+     */
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<ReservationDto> updateReservationStatus(
+            @PathVariable Integer id,
+            @RequestBody Map<String, String> body) {
+        String status = body.get("status");
+        return ResponseEntity.ok(service.updateStatus(id, status));
     }
 }

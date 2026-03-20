@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../../components/Sidebar";
-import { Bell, MoreHorizontal, ChevronDown, Gamepad2, Banknote, Edit3, PlusCircle, CalendarDays } from "lucide-react";
+import { Bell, MoreHorizontal, ChevronDown, Gamepad2, Banknote, Edit3, PlusCircle, CalendarDays, Monitor, Clock, User } from "lucide-react";
 import { coachProfileApi } from "../../api/coach_profile";
+import { getMyCoachingReservations } from "../../api/reservation";
 import CoachProfileForm from "../../modals/CoachProfileForm";
 import CoachScheduleModal from "../../modals/CoachScheduleModal";
 import toast from "react-hot-toast";
@@ -11,6 +12,8 @@ const CoachDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [reservations, setReservations] = useState([]);
+  const [reservationsLoading, setReservationsLoading] = useState(true);
 
   const fetchProfile = async () => {
     try {
@@ -25,35 +28,47 @@ const CoachDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
+  const fetchReservations = useCallback(async () => {
+    try {
+      const data = await getMyCoachingReservations();
+      setReservations(data);
+    } catch (error) {
+      console.error("Failed to fetch coaching reservations", error);
+    } finally {
+      setReservationsLoading(false);
+    }
   }, []);
 
-  const sessions = [
-    {
-      id: 1,
-      user: "Dahmax",
-      time: "3PM To 5PM",
-      status: "PENDING",
-      statusColor: "bg-[#7B6600] text-[#CEB22D]",
-    },
-    {
-      id: 2,
-      user: "LOUJEY",
-      time: "3PM To 5PM",
-      price: "80TND",
-      status: "CONFIRMED",
-      statusColor: "bg-[#242C11] text-[#48CE2F]",
-    },
-    {
-      id: 3,
-      user: "D0wn",
-      time: "3PM To 5PM",
-      price: "80TND",
-      status: "REJECTED",
-      statusColor: "bg-[#360200] text-[#DE3D3D]",
-    },
-  ];
+  useEffect(() => {
+    fetchProfile();
+    fetchReservations();
+  }, [fetchReservations]);
+
+  const statusColors = {
+    CONFIRMED: "bg-green-500/10 text-green-400 border-green-500/20",
+    PENDING: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+    CANCELLED: "bg-red-500/10 text-red-400 border-red-500/20",
+    REJECTED: "bg-red-900/20 text-red-500 border-red-900/30",
+  };
+
+  const formatTime = (isoString) => {
+    const date = new Date(isoString.includes('Z') ? isoString : isoString + 'Z');
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (isoString) => {
+    const date = new Date(isoString.includes('Z') ? isoString : isoString + 'Z');
+    return date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+  };
+
+  // Show latest 3 reservations sorted by newest
+  const latestReservations = [...reservations]
+    .sort((a, b) => {
+      const dateA = new Date(a.startTime.includes('Z') ? a.startTime : a.startTime + 'Z');
+      const dateB = new Date(b.startTime.includes('Z') ? b.startTime : b.startTime + 'Z');
+      return dateB - dateA;
+    })
+    .slice(0, 3);
 
   return (
     <div className="h-screen bg-[#24003E] flex overflow-hidden">
@@ -160,39 +175,60 @@ const CoachDashboard = () => {
               <h3 className="text-white text-[16px] font-bold font-['Inter']">
                 Latest coaching sessions
               </h3>
-              <button className="bg-gradient-to-r  from-[#DD00B8] to-[#2BDFC8] px-6 py-2 rounded-[18px] text-white font-medium flex items-center gap-2 hover:opacity-90 transition-all text-[15px]">
-                Sort by newest <ChevronDown size={18} />
-              </button>
             </div>
 
             <div className="overflow-x-auto w-full">
-              <table className="w-full border-collapse">
-                <tbody>
-                  {sessions.map((session, index) => (
-                    <tr
-                      key={session.id}
-                      className={`${index !== sessions.length - 1 ? "border-b border-[#1CF3CA]/30" : ""}`}
-                    >
-                      <td className="py-8">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                          <div className="text-white text-[14px] font-medium font-['Inter'] text-center md:text-left">
-                            Reservation By{" "}
-                            <span className="text-[#1CF3CA] font-bold">
-                              {session.user}
-                            </span>{" "}
-                            From {session.time} - {session.price}
+              {reservationsLoading ? (
+                <div className="py-12 text-center">
+                  <div className="w-8 h-8 border-4 border-[#1CF3CA]/20 border-t-[#1CF3CA] rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-white/40 text-xs font-bold uppercase tracking-widest">Loading sessions...</p>
+                </div>
+              ) : latestReservations.length > 0 ? (
+                <table className="w-full border-collapse">
+                  <tbody>
+                    {latestReservations.map((res, index) => (
+                      <tr
+                        key={res.id}
+                        className={`${index !== latestReservations.length - 1 ? "border-b border-[#1CF3CA]/30" : ""}`}
+                      >
+                        <td className="py-8">
+                          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#2BDFC8] to-blue-500 shadow-lg shadow-black/20">
+                                <User size={18} className="text-white" />
+                              </div>
+                              <div className="text-white text-[14px] font-medium font-['Inter'] text-center md:text-left">
+                                Reservation By{" "}
+                                <span className="text-[#1CF3CA] font-bold">
+                                  {res.playerName || "Unknown"}
+                                </span>{" "}
+                                <span className="text-white/50">
+                                  {formatDate(res.startTime)} · {formatTime(res.startTime)} → {formatTime(res.endTime)}
+                                </span>
+                                {res.pcNumbers && res.pcNumbers.length > 0 && (
+                                  <span className="text-white/30 ml-2">
+                                    {res.pcNumbers.map(n => `PC #${n}`).join(", ")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <span
+                              className={`inline-flex items-center justify-center px-5 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest w-[120px] ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}
+                            >
+                              {res.status}
+                            </span>
                           </div>
-                          <button
-                            className={`${session.statusColor} px-6 py-2 rounded-[18px] text-[14px] font-medium flex items-center gap-2 w-[150px] justify-center hover:opacity-80 transition-all`}
-                          >
-                            {session.status} <ChevronDown size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="py-12 text-center">
+                  <Monitor className="mx-auto mb-3 text-white/10" size={40} />
+                  <p className="text-white/30 text-sm font-medium">No coaching sessions yet</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
