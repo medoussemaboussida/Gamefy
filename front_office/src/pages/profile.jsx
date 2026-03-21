@@ -330,7 +330,11 @@ const ProfilePage = () => {
                             <div className="space-y-4 pt-2">
                                 <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
                                     <span className="text-white/60 font-medium">Member Since</span>
-                                    <span className="text-white/40 text-sm">Jan 2024</span>
+                                    <span className="text-white/40 text-sm">
+                                        {user.createdAt
+                                            ? new Date(user.createdAt + "Z").toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
+                                            : "N/A"}
+                                    </span>
                                 </div>
                             </div>
                         </div>

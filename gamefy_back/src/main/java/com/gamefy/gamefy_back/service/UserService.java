@@ -128,6 +128,7 @@ public class UserService {
                 .profilePhoto(user.getProfilePhoto())
                 .packGamefyId(user.getPackGamefy() != null ? user.getPackGamefy().getId() : null)
                 .twoFaActivated(user.isTwoFaActivated())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 

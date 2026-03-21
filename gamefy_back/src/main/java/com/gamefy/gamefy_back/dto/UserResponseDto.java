@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,4 +23,5 @@ public class UserResponseDto {
     private String profilePhoto;
     private Integer packGamefyId;
     private boolean twoFaActivated;
+    private LocalDateTime createdAt;
 }
