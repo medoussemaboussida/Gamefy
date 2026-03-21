@@ -193,23 +193,6 @@ const ProfilePage = () => {
                         <h2 className="text-white text-[18px] font-bold font-['Inter'] self-start md:self-auto pl-14 md:pl-0">
                             User Profile
                         </h2>
-
-                        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
-                            <div className="relative group flex-1 md:flex-none">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                    <Search size={18} className="text-[#1CF3CA]" />
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder="Search"
-                                    className="w-full md:w-[380px] h-[40px] bg-transparent border border-[#1CF3CA]/40 rounded-full pl-11 pr-4 text-white text-[14px] font-medium font-['Inter'] placeholder:text-white/40 focus:outline-none focus:border-[#1CF3CA] transition-all"
-                                />
-                            </div>
-                            <button className="relative p-2 text-[#1CF3CA] hover:bg-white/5 rounded-full transition-all flex-shrink-0">
-                                <Bell size={24} />
-                                <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF89EB] rounded-full"></span>
-                            </button>
-                        </div>
                     </header>
 
                     {/* Profile Banner Section */}

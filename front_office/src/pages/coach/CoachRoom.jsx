@@ -84,10 +84,10 @@ const CoachRoom = () => {
                                     View reservations booked with you
                                 </p>
                             </div>
-                        </div>
+                
 
                         {/* Sort Row */}
-                        <div className="flex flex-col md:flex-row justify-end gap-3">
+                        <div className="flex items-center gap-3 self-end md:self-auto">
                             <div className="relative">
                                 <button
                                     onClick={() => setIsSortOpen(!isSortOpen)}
@@ -129,7 +129,7 @@ const CoachRoom = () => {
                                 )}
                             </div>
                         </div>
-
+                    </div>
                     </div>
 
                     {/* ─── Content ─── */}
