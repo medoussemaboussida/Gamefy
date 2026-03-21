@@ -390,7 +390,7 @@ export default function ReservationPage() {
                 whileTap={pc.available ? { scale: 0.98 } : {}}
                 onClick={() => pc.available && onToggle(pc.id)}
                 disabled={!pc.available}
-                className={`group relative flex flex-col p-5 rounded-[26px] transition-all duration-500 overflow-visible ${
+                className={`group relative flex flex-col p-5 md:p-7 rounded-[24px] md:rounded-[32px] transition-all duration-500 overflow-visible min-h-[180px] md:min-h-[220px] ${
                     !pc.available 
                         ? "opacity-20 cursor-not-allowed bg-white/2" 
                         : isSelected 
@@ -399,7 +399,7 @@ export default function ReservationPage() {
                 }`}
             >
                 {/* Background Clips & Decor - Moved here to prevent clipping the card border */}
-                <div className="absolute inset-0 rounded-[26px] overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 rounded-[24px] md:rounded-[32px] overflow-hidden pointer-events-none">
                     {/* Glow Effect for Selected */}
                     <AnimatePresence>
                         {isSelected && (
@@ -417,15 +417,15 @@ export default function ReservationPage() {
                 </div>
 
                 {/* Premium Border Overlay - Stays outside the overflow-hidden wrapper */}
-                <div className={`absolute inset-0 rounded-[26px] border-2 transition-all duration-500 pointer-events-none ${
+                <div className={`absolute inset-0 rounded-[24px] md:rounded-[32px] border-2 transition-all duration-500 pointer-events-none ${
                     isSelected 
                         ? "border-[#1CF3CA] z-20" 
                         : "border-white/10 group-hover:border-[#1CF3CA]/40 z-20"
                 }`} />
 
-                <div className="flex justify-between items-start relative z-30 mb-4">
-                    <div className={`p-3 rounded-xl transition-colors duration-500 ${isSelected ? "bg-[#1CF3CA] text-black" : "bg-white/5 text-white/40 group-hover:text-[#1CF3CA] group-hover:bg-[#1CF3CA]/10"}`}>
-                        <Monitor size={20} strokeWidth={2.5} />
+                <div className="flex justify-center items-start relative z-30 mb-4 md:mb-6">
+                    <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl transition-colors duration-500 ${isSelected ? "bg-[#1CF3CA] text-black" : "bg-white/5 text-white/40 group-hover:text-[#1CF3CA] group-hover:bg-[#1CF3CA]/10"}`}>
+                        <Monitor className="w-6 h-6 md:w-8 md:h-8" strokeWidth={2.5} />
                     </div>
                     {isSelected && (
                         <motion.div 
@@ -443,20 +443,19 @@ export default function ReservationPage() {
                     )}
                 </div>
 
-                <div className="mt-auto relative z-30">
-                    <div className="flex items-baseline gap-1">
-                        <span className={`text-3xl font-black italic tracking-tighter transition-colors duration-500 ${isSelected ? "text-[#1CF3CA]" : "text-white"}`}>
-                            #{pc.pcNumber}
+                <div className="mt-auto relative z-30 flex flex-col items-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                        <span className={`text-lg md:text-2xl font-black italic tracking-tighter transition-colors duration-500 ${isSelected ? "text-[#1CF3CA]" : "text-white"}`}>
+                            PC {pc.pcNumber}
                         </span>
-                        <span className="text-[10px] font-black uppercase text-white/20 italic">Elite</span>
                     </div>
                     
-                    <div className="flex items-center gap-2 mt-2">
-                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all duration-500 ${
+                    <div className="flex items-center justify-center gap-2 mt-2 w-full">
+                        <div className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-500 w-full max-w-[200px] ${
                             isSelected ? "bg-[#1CF3CA]/20 text-[#1CF3CA]" : "bg-white/5 text-white/40"
                         }`}>
                             <Gamepad2 size={12} />
-                            <span>{pc.games?.split(',')[0] || "All Games"}</span>
+                            <span className="truncate">{pc.games?.split(',')[0] || "All Games"}</span>
                         </div>
                     </div>
                 </div>
@@ -472,13 +471,13 @@ export default function ReservationPage() {
         <>
             <div className="min-h-screen bg-[#24003E] text-white py-10 px-4 font-sans">
                 <style>{scrollbarStyle}</style>
-                <div className="max-w-4xl mx-auto">
+                <div className={`mx-auto transition-all duration-500 ${step === 5 ? 'max-w-6xl' : 'max-w-4xl'}`}>
                     {/* Header */}
                     <div className="text-center mb-10">
-                        <h1 className="text-[32px] md:text-[54px] font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8] uppercase italic">
+                        <h1 className="text-[32px] md:text-[51px] font-black font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8] uppercase">
                             Book Your Session
                         </h1>
-                        <p className="text-white/60 mt-2 font-medium">Reserve your gaming setup in just a few steps</p>
+                        <p className="text-white/60 mt-2 font-normal font-['Inter']">Reserve your gaming setup in just a few steps</p>
                     </div>
 
                     {/* Step Indicator */}
@@ -493,13 +492,13 @@ export default function ReservationPage() {
                             return (
                                 <div key={s} className="flex items-center gap-2">
                                     <div className="flex flex-col items-center">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${step === s ? "bg-[#1CF3CA] text-black shadow-lg shadow-[#1CF3CA]/30 scale-110" :
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold font-['Inter'] text-sm transition-all duration-300 ${step === s ? "bg-[#1CF3CA] text-black shadow-lg shadow-[#1CF3CA]/30 scale-110" :
                                             step > s ? "bg-[#1CF3CA]/20 text-[#1CF3CA] border border-[#1CF3CA]/30" :
                                                 "bg-white/5 text-gray-500 border border-white/10"
                                             }`}>
                                             {step > s ? "✓" : s}
                                         </div>
-                                        <span className="text-[10px] uppercase font-black tracking-tighter mt-1 text-white/40">{labels[s]}</span>
+                                        <span className="text-[10px] uppercase font-bold font-['Inter'] tracking-tighter mt-1 text-white/40">{labels[s]}</span>
                                     </div>
                                     {(s < 5 && (reservationType === "COACHING_ROOM" || s === 1 || s >= 4)) && (
                                         <div className={`w-8 md:w-16 h-0.5 mt-[-15px] ${step > s ? "bg-[#1CF3CA]/50" : "bg-white/10"}`} />
@@ -552,7 +551,7 @@ export default function ReservationPage() {
                                         <div className="w-full h-32 mb-4 rounded-xl overflow-hidden border border-white/10 group-hover:border-[#1CF3CA]/30 transition-all">
                                             <img src={img} alt={label} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
                                         </div>
-                                        <h3 className="text-lg font-bold mb-1 uppercase italic tracking-tight">{label}</h3>
+                                        <h3 className="text-lg font-bold mb-1 uppercase font-['Inter'] tracking-tight ">{label}</h3>
                                         <p className="text-white/40 text-[12px] line-clamp-2">{desc}</p>
                                     </div>
                                 </button>
@@ -563,10 +562,10 @@ export default function ReservationPage() {
                     {/* ─── STEP 2: Game Selection (Coaching Only) ─── */}
                     {step === 2 && (
                         <div className="space-y-6">
-                            <button onClick={() => setStep(1)} className="text-[#1CF3CA] hover:text-[#1CF3CA]/80 text-sm font-bold uppercase tracking-wider flex items-center gap-1 group">
+                            <button onClick={() => setStep(1)} className="text-[#1CF3CA] hover:text-[#1CF3CA]/80 text-sm font-bold font-['Inter'] uppercase tracking-wider flex items-center gap-1 group">
                                 <span className="transition-transform group-hover:-translate-x-1">←</span> Back
                             </button>
-                            <h2 className="text-2xl font-black uppercase italic italic tracking-tight mb-4 text-[#1CF3CA]">Select Your Game</h2>
+                            <h2 className="text-2xl font-black font-['Inter'] uppercase tracking-tight mb-4 text-[#1CF3CA]">Select Your Game</h2>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 {availableGames.map(game => (
                                     <button
@@ -586,7 +585,7 @@ export default function ReservationPage() {
                                         }}
                                         className={`p-4 rounded-xl border text-center transition-all ${selectedGame === game ? "bg-[#1CF3CA] text-black" : "bg-white/5 border-white/10 hover:border-[#1CF3CA]/50"}`}
                                     >
-                                        <span className="font-black uppercase italic text-sm">{game}</span>
+                                        <span className="font-black font-['Inter'] uppercase text-sm">{game}</span>
                                     </button>
                                 ))}
                             </div>
@@ -596,10 +595,10 @@ export default function ReservationPage() {
                     {/* ─── STEP 3: Coach Selection (Coaching Only) ─── */}
                     {step === 3 && (
                         <div className="space-y-6">
-                            <button onClick={() => setStep(2)} className="text-[#1CF3CA] hover:text-[#1CF3CA]/80 text-sm font-bold uppercase tracking-wider flex items-center gap-1 group">
+                            <button onClick={() => setStep(2)} className="text-[#1CF3CA] hover:text-[#1CF3CA]/80 text-sm font-bold font-['Inter'] uppercase tracking-wider flex items-center gap-1 group">
                                 <span className="transition-transform group-hover:-translate-x-1">←</span> Back
                             </button>
-                            <h2 className="text-2xl font-black uppercase italic tracking-tight mb-4 text-[#FF89EB]">Choose Your Coach</h2>
+                            <h2 className="text-2xl font-black font-['Inter'] uppercase tracking-tight mb-4 text-[#FF89EB]">Choose Your Coach</h2>
                             {coachLoading ? (
                                 <div className="text-center py-10 text-white/40">Loading coaches...</div>
                             ) : coaches.length === 0 ? (
@@ -636,7 +635,7 @@ export default function ReservationPage() {
                                     else setStep(1); 
                                     setSelectedDate(null); 
                                 }} 
-                                className="text-[#1CF3CA] hover:text-[#1CF3CA]/80 text-sm font-bold uppercase tracking-wider flex items-center gap-1 group"
+                                className="text-[#1CF3CA] hover:text-[#1CF3CA]/80 text-sm font-bold font-['Inter'] uppercase tracking-wider flex items-center gap-1 group"
                             >
                                 <span className="transition-transform group-hover:-translate-x-1">←</span> Back
                             </button>
@@ -648,7 +647,7 @@ export default function ReservationPage() {
                                     else setCurrentMonth(m => m - 1);
                                     setSelectedDate(null);
                                 }} className="text-[#1CF3CA] hover:bg-white/5 p-2 rounded-lg transition">‹</button>
-                                <h3 className="text-lg font-black uppercase italic tracking-tight text-white">{MONTHS[currentMonth]} {currentYear}</h3>
+                                <h3 className="text-lg font-black uppercase font-['Inter'] tracking-tight text-white">{MONTHS[currentMonth]} {currentYear}</h3>
                                 <button onClick={() => {
                                     if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(y => y + 1); }
                                     else setCurrentMonth(m => m + 1);
@@ -665,7 +664,7 @@ export default function ReservationPage() {
                                     <div className="relative">
                                         <div className="grid grid-cols-7 gap-1 mb-4">
                                             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-                                                <div key={d} className="text-center text-[10px] font-black uppercase tracking-widest text-[#1CF3CA]/60 py-2">{d}</div>
+                                                <div key={d} className="text-center text-[10px] font-black font-['Inter'] uppercase tracking-widest text-[#1CF3CA]/60 py-2">{d}</div>
                                             ))}
                                         </div>
                                         <div className="grid grid-cols-7 gap-2">
@@ -682,7 +681,7 @@ export default function ReservationPage() {
                                                         key={day}
                                                         onClick={() => handleDayClick(day)}
                                                         disabled={!open || past}
-                                                        className={`aspect-square rounded-xl flex items-center justify-center text-sm font-black transition-all duration-300 ${selected ? "bg-[#1CF3CA] text-black shadow-[0_0_20px_rgba(28,243,202,0.4)]" :
+                                                        className={`aspect-square rounded-xl flex items-center justify-center text-sm font-black font-['Inter'] transition-all duration-300 ${selected ? "bg-[#1CF3CA] text-black shadow-[0_0_20px_rgba(28,243,202,0.4)]" :
                                                             !open || past ? "text-white/10 cursor-not-allowed" :
                                                                 "text-white/70 hover:bg-[#1CF3CA] hover:text-black cursor-pointer"
                                                             }`}
@@ -692,7 +691,7 @@ export default function ReservationPage() {
                                                 );
                                             })}
                                         </div>
-                                        <div className="flex items-center gap-6 mt-8 text-[10px] font-black uppercase tracking-widest text-white/40">
+                                        <div className="flex items-center gap-6 mt-8 text-[10px] font-black font-['Inter'] uppercase tracking-widest text-white/40">
                                             <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#1CF3CA]" /> Selected</span>
                                             <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-white/10" /> {reservationType === "COACHING_ROOM" ? "Coach Available" : "Open"}</span>
                                             <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-white/5 opacity-30" /> {reservationType === "COACHING_ROOM" ? "No Session" : "Closed"} / Past</span>
@@ -708,12 +707,11 @@ export default function ReservationPage() {
                                     className="w-full mt-6 flex items-center justify-between bg-[#320141] rounded-2xl border border-[#1CF3CA]/20 px-6 py-4 hover:border-[#1CF3CA]/40 transition-all group shadow-xl"
                                 >
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-[#1CF3CA]/60 mb-0.5">Session Scheduled</p>
-                                        <p className="font-black italic uppercase text-white tracking-tight">
+                                        <p className="font-black font-['Inter'] uppercase text-white tracking-tight">
                                             {MONTHS[currentMonth]} {selectedDate} — {timeSlots.find(s => String(s.value) === String(startTime))?.label} → {timeSlots.find(s => String(s.value) === String(endTime))?.label}
                                         </p>
                                     </div>
-                                    <span className="text-[#1CF3CA] text-xs font-black uppercase tracking-widest group-hover:underline">Edit ›</span>
+                                    <span className="text-[#1CF3CA] text-xs font-black font-['Inter'] uppercase tracking-widest group-hover:underline">Edit ›</span>
                                 </button>
                             )}
 
@@ -721,9 +719,9 @@ export default function ReservationPage() {
                                 <button
                                     onClick={handleTimeConfirm}
                                     disabled={pcLoading}
-                                    className="w-full py-5 rounded-full font-black uppercase tracking-[0.2em] text-black bg-[#1CF3CA] hover:bg-[#19d4b0] transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_30px_rgba(28,243,202,0.3)] hover:shadow-[0_0_40px_rgba(28,243,202,0.5)] active:scale-95"
+                                    className="w-full py-5 rounded-full font-black font-[inter] uppercase tracking-[0.2em] text-black bg-[#1CF3CA] hover:bg-[#19d4b0] transition-all duration-500 disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_30px_rgba(28,243,202,0.3)] hover:shadow-[0_0_40px_rgba(28,243,202,0.5)] active:scale-95"
                                 >
-                                    {pcLoading ? "Scanning available systems..." : "Explore Available PCs →"}
+                                    {pcLoading ? "Scanning available systems..." : "Explore Available PCs"}
                                 </button>
                             )}
                         </div>
@@ -736,40 +734,40 @@ export default function ReservationPage() {
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 onClick={() => setStep(4)} 
-                                className="text-[#1CF3CA] hover:text-[#19d4b0] text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 group"
+                                className="text-[#1CF3CA] hover:text-[#19d4b0] text-sm font-black font-['Inter'] uppercase tracking-[0.2em] flex items-center gap-2 group"
                             >
-                                <span className="p-1 rounded-md bg-[#1CF3CA]/10 group-hover:bg-[#1CF3CA]/20 transition-colors">
+                                <span className="p-1 rounded-md bg-[#1CF3CA]/10  group-hover:bg-[#1CF3CA]/20 transition-colors">
                                     <ArrowRight size={14} className="rotate-180" />
                                 </span>
                                 Back to Schedule
                             </motion.button>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                                {/* Left Side: PC Grid */}
-                                <div className="lg:col-span-8 space-y-6">
+                            <div className="space-y-12">
+                                {/* Top: PC Grid Section */}
+                                <div className="space-y-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white">
+                                            <h2 className="text-2xl md:text-3xl font-black font-['Inter'] uppercase tracking-tighter text-white">
                                                 Select Your <span className="text-[#1CF3CA]">Station</span>
                                             </h2>
-                                            <p className="text-white/40 text-xs mt-1 font-medium tracking-wide">Choose one or more available gaming rigs</p>
+                                            <p className="text-white/40 text-xs mt-1 font-normal font-['Inter'] tracking-wide">Choose one or more available gaming rigs</p>
                                         </div>
                                         <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
                                             <div className="w-2 h-2 rounded-full bg-[#1CF3CA] animate-pulse" />
-                                            <span className="text-[10px] font-black uppercase text-white/60">{pcs.filter(p => p.available).length} Live</span>
+                                            <span className="text-[10px] font-black font-['Inter'] uppercase text-white/60">{pcs.filter(p => p.available).length} Live</span>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar pb-10 p-4">
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar pb-10 p-2 md:p-4">
                                         {pcLoading ? (
                                             <div className="col-span-full py-24 flex flex-col items-center justify-center space-y-4">
                                                 <div className="w-12 h-12 border-4 border-[#1CF3CA]/20 border-t-[#1CF3CA] rounded-full animate-spin" />
-                                                <p className="text-white/20 text-sm font-black uppercase tracking-widest">Scanning Network...</p>
+                                                <p className="text-white/20 text-sm font-black font-['Inter'] uppercase tracking-widest">Scanning Network...</p>
                                             </div>
                                         ) : pcs.length === 0 ? (
                                             <div className="col-span-full py-24 text-center bg-white/2 border border-dashed border-white/10 rounded-3xl">
                                                 <Info className="mx-auto text-white/10 mb-4" size={48} />
-                                                <p className="text-white/40 text-sm font-medium">No gaming units found for this time slot.</p>
+                                                <p className="text-white/40 text-sm font-normal font-['Inter']">No gaming units found for this time slot.</p>
                                             </div>
                                         ) : (
                                             <AnimatePresence mode="popLayout">
@@ -786,12 +784,12 @@ export default function ReservationPage() {
                                     </div>
                                 </div>
 
-                                {/* Right Side: Summary Sidebar */}
-                                <div className="lg:col-span-4 sticky top-10">
+                                {/* Bottom: Summary Section (Centered) */}
+                                <div className="flex justify-center pt-8">
                                     <motion.div 
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="relative p-8 rounded-[32px] bg-[#320141] border border-white/10 overflow-hidden shadow-2xl"
+                                        initial={{ opacity: 0, y: 30 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="relative w-full max-w-3xl p-8 md:p-12 rounded-[40px] bg-[#320141]/60 backdrop-blur-xl border border-white/10 overflow-hidden shadow-2xl"
                                     >
                                         {/* Background Decoration */}
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#1CF3CA]/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50" />
