@@ -102,4 +102,22 @@ export const participantApi = {
             params: { status },
         });
     },
+
+    /**
+     * Export participants to Excel
+     */
+    exportParticipantsToExcel: async (eventId: number, filename?: string): Promise<void> => {
+        const response = await apiClient.get(`/gamefy/participants/event/${eventId}/export`, {
+            responseType: 'blob'
+        });
+        
+        const url = window.URL.createObjectURL(new Blob([response as any]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename || `participants_event_${eventId}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    },
 };

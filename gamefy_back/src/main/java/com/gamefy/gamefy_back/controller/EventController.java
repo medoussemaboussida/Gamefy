@@ -19,9 +19,15 @@ public class EventController {
     private final EventService service;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'PLAYER', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
     public ResponseEntity<List<EventDto>> getAllEvents() {
         return ResponseEntity.ok(service.getAllEvents());
+    }
+
+    @GetMapping("/active")
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'WEB_MASTER')")
+    public ResponseEntity<List<EventDto>> getActiveEvents() {
+        return ResponseEntity.ok(service.getActiveEvents());
     }
 
     @GetMapping("/{id}")

@@ -14,9 +14,10 @@ import { eventApi, EventDto, EventStatus, participantApi, ParticipantDto, Partic
 import { getUserRole } from "../utils/jwt";
 import toast from "react-hot-toast";
 import Button from "../components/ui/button/Button";
-import { Plus, Pencil, Trash2, Eye, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Users, ExternalLink, FileText } from "lucide-react";
 import AddEventModal from "../components/modals/AddEventModal";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
+import EventDescriptionModal from "../components/modals/EventDescriptionModal";
 import { Modal } from "../components/ui/modal";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
@@ -39,6 +40,8 @@ export default function EventManagement() {
     const [participants, setParticipants] = useState<ParticipantDto[]>([]);
     const [participantsLoading, setParticipantsLoading] = useState(false);
     const [participantsEventTitle, setParticipantsEventTitle] = useState("");
+    const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
+    const [descriptionModalContent, setDescriptionModalContent] = useState({ title: "", description: "" });
 
     const currentUserRole = getUserRole();
     const isAdmin = currentUserRole === "ADMIN";
@@ -160,6 +163,18 @@ export default function EventManagement() {
         return new Date(utcString).toLocaleString();
     };
 
+    const handleExportExcel = async () => {
+        if (!selectedEvent?.id) return;
+        try {
+            const filename = `participants_${selectedEvent.title.replace(/\s+/g, '_')}.xlsx`;
+            await participantApi.exportParticipantsToExcel(selectedEvent.id, filename);
+            toast.success("Participants exported to Excel!");
+        } catch (error) {
+            console.error("Export failed:", error);
+            toast.error("Failed to export participants");
+        }
+    };
+
     return (
         <>
             <PageMeta
@@ -228,9 +243,6 @@ export default function EventManagement() {
                                 <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                                     <TableRow>
                                         <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                                            Photo
-                                        </TableCell>
-                                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                                             Title
                                         </TableCell>
                                         <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
@@ -246,6 +258,9 @@ export default function EventManagement() {
                                             Status
                                         </TableCell>
                                         <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                                            Link
+                                        </TableCell>
+                                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                                             Actions
                                         </TableCell>
                                     </TableRow>
@@ -253,14 +268,14 @@ export default function EventManagement() {
                                 <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                                     {loading ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="px-5 py-10 text-center text-gray-500">
+                                            <TableCell colSpan={8} className="px-5 py-10 text-center text-gray-500">
                                                 Loading events...
                                             </TableCell>
                                         </TableRow>
                                     ) : currentEvents.length === 0 ? (
                                         <TableRow>
                                             <TableCell
-                                                colSpan={isAdmin ? 7 : 6}
+                                                colSpan={isAdmin ? 8 : 7}
                                                 className="px-5 py-10 text-center text-gray-500"
                                             >
                                                 No events match the selected filters
@@ -269,21 +284,6 @@ export default function EventManagement() {
                                     ) : (
                                         currentEvents.map((event) => (
                                             <TableRow key={event.id}>
-                                                <TableCell className="px-5 py-4">
-                                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-                                                        {event.photo ? (
-                                                            <img
-                                                                src={`http://localhost:8080/api/uploads/event_photos/${event.photo}`}
-                                                                alt={event.title}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="flex items-center justify-center w-full h-full text-gray-400">
-                                                                <Eye size={20} />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
                                                 <TableCell className="px-5 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90">
                                                     {event.title}
                                                 </TableCell>
@@ -302,6 +302,21 @@ export default function EventManagement() {
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="px-5 py-4">
+                                                    {event.registerLink ? (
+                                                        <a
+                                                            href={event.registerLink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-500 font-bold  hover:underline inline-flex items-center gap-1"
+                                                        >
+                                                            Link
+                                                            <ExternalLink className="w-3.5 h-3.5" />
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-gray-400">—</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="px-5 py-4">
                                                     <div className="flex items-center gap-2">
                                                         <button
                                                             onClick={() => handleViewParticipants(event)}
@@ -311,12 +326,24 @@ export default function EventManagement() {
                                                             <Users className="w-4 h-4" />
                                                         </button>
                                                         <button
+                                                            onClick={() => {
+                                                                setDescriptionModalContent({ title: event.title, description: event.description });
+                                                                setIsDescriptionModalOpen(true);
+                                                            }}
+                                                            className="p-2 text-gray-500 hover:text-brand-500 transition-colors bg-gray-50 dark:bg-white/5 rounded-lg"
+                                                            title="View Description"
+                                                        >
+                                                            <FileText className="w-4 h-4" />
+                                                        </button>
+                                                        {event.photo && (
+                                                        <button
                                                             onClick={() => handleViewPhoto(event)}
                                                             className="p-2 text-gray-500 hover:text-brand-500 transition-colors bg-gray-50 dark:bg-white/5 rounded-lg"
                                                             title="View Event Photo"
                                                         >
                                                             <Eye className="w-4 h-4" />
                                                         </button>
+                                                        )}
                                                         <button
                                                             onClick={() => handleEdit(event)}
                                                             className="p-2 text-gray-500 hover:text-brand-500 transition-colors bg-gray-50 dark:bg-white/5 rounded-lg"
@@ -448,18 +475,39 @@ export default function EventManagement() {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-gray-200 dark:border-white/10 flex justify-between items-center">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {participants.length} participant{participants.length !== 1 ? "s" : ""}
-                    </span>
-                    <Button
-                        onClick={() => setIsParticipantsModalOpen(false)}
-                        variant="outline"
-                        size="sm"
-                    >
-                        Close
-                    </Button>
+                    <div className="flex flex-col">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {participants.length} participant{participants.length !== 1 ? "s" : ""}
+                        </span>
+                    </div>
+                    <div className="flex gap-2">
+                        {participants.length > 0 && (
+                            <Button
+                                onClick={handleExportExcel}
+                                variant="outline"
+                                size="sm"
+                                className="text-green-600 border-green-200 hover:bg-green-50 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-500/10"
+                                startIcon={<FileText className="w-4 h-4" />}
+                            >
+                                Export Excel
+                            </Button>
+                        )}
+                        <Button
+                            onClick={() => setIsParticipantsModalOpen(false)}
+                            variant="outline"
+                            size="sm"
+                        >
+                            Close
+                        </Button>
+                    </div>
                 </div>
             </Modal>
+            <EventDescriptionModal
+                isOpen={isDescriptionModalOpen}
+                onClose={() => setIsDescriptionModalOpen(false)}
+                title={descriptionModalContent.title}
+                description={descriptionModalContent.description}
+            />
         </>
     );
 }

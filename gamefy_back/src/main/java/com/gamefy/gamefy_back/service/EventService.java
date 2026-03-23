@@ -2,6 +2,7 @@ package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.EventDto;
 import com.gamefy.gamefy_back.model.Event;
+import com.gamefy.gamefy_back.model.enums.Event_Status;
 import com.gamefy.gamefy_back.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,14 @@ public class EventService {
                 .collect(Collectors.toList());
     }
 
+    public List<EventDto> getActiveEvents() {
+        return repository.findByEventStatusIn(
+                List.of(Event_Status.SCHEDULED, Event_Status.ONGOING, Event_Status.COMPLETED)
+        ).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
     public EventDto getEventById(Integer id) {
         Event event = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
@@ -33,6 +42,7 @@ public class EventService {
     }
 
     public EventDto createEvent(EventDto dto) {
+        validateEventTimes(dto.getStartTime(), dto.getEndTime());
         Event event = mapToEntity(dto);
         return mapToDto(repository.save(event));
     }
@@ -40,6 +50,15 @@ public class EventService {
     public EventDto updateEvent(Integer id, EventDto dto) {
         Event existing = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
+
+        // Use current values if not provided in dto
+        java.time.LocalDateTime start = dto.getStartTime() != null ? dto.getStartTime() : existing.getStartTime();
+        java.time.LocalDateTime end = dto.getEndTime() != null ? dto.getEndTime() : existing.getEndTime();
+        
+        // Only validate if times are being changed or it's a new validation
+        if (dto.getStartTime() != null || dto.getEndTime() != null) {
+            validateEventTimes(start, end);
+        }
 
         if (dto.getTitle() != null) existing.setTitle(dto.getTitle());
         if (dto.getDescription() != null) existing.setDescription(dto.getDescription());
@@ -95,5 +114,17 @@ public class EventService {
         event.setPhoto(dto.getPhoto());
         event.setRegisterLink(dto.getRegisterLink());
         return event;
+    }
+
+    private void validateEventTimes(java.time.LocalDateTime startTime, java.time.LocalDateTime endTime) {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        if (startTime == null || endTime == null) return;
+
+        if (startTime.isBefore(now.minusMinutes(1))) { // 1 min buffer for network
+            throw new RuntimeException("Event start time cannot be in the past");
+        }
+        if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
+            throw new RuntimeException("Event end time must be after the start time");
+        }
     }
 }

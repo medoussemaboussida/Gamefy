@@ -3,6 +3,7 @@ package com.gamefy.gamefy_back.emailManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -77,6 +78,34 @@ public class EmailService {
                 code + "\n\n" +
                 "This code will expire when you log in again.\n" +
                 "If you did not request this, please ignore this email.");
+
+        mailSender.send(message);
+    }
+
+    @Async
+    public void sendEventParticipationEmail(String to, String firstName, String eventTitle) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Event Registration Confirmed - " + eventTitle);
+        message.setText("Hello " + firstName + ",\n\n" +
+                "You have successfully registered for the event: " + eventTitle + ".\n\n" +
+                "Please visit the Gamefy local place to complete your payment.\n" +
+                "You can find the price details in the event description.\n\n" +
+                "We look forward to seeing you there!\n" +
+                "- The Gamefy Team");
+
+        mailSender.send(message);
+    }
+
+    @Async
+    public void sendEventCancellationEmail(String to, String firstName, String eventTitle) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Event Participation Cancelled - " + eventTitle);
+        message.setText("Hello " + firstName + ",\n\n" +
+                "Your participation in the event: " + eventTitle + " has been cancelled.\n\n" +
+                "If this was a mistake, you can re-register through the Gamefy platform.\n\n" +
+                "- The Gamefy Team");
 
         mailSender.send(message);
     }

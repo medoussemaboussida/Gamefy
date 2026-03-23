@@ -5,6 +5,8 @@ import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.enums.Participant_Status;
 import com.gamefy.gamefy_back.service.ParticipantService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,6 +31,17 @@ public class ParticipantController {
     public ResponseEntity<java.util.List<ParticipantDto>> getEventParticipants(
             @PathVariable Integer eventId) {
         return ResponseEntity.ok(participantService.getParticipantsByEventId(eventId));
+    }
+
+    @GetMapping("/event/{eventId}/export")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<byte[]> exportParticipantsToExcel(
+            @PathVariable Integer eventId) throws Exception {
+        byte[] excelBytes = participantService.exportParticipantsToExcel(eventId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=participants_event_" + eventId + ".xlsx")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelBytes);
     }
 
     @PutMapping("/{participantId}/status")

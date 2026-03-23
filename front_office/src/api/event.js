@@ -24,12 +24,13 @@ import { apiClient } from "./apiClient";
  */
 
 export const eventApi = {
+
     /**
-     * Get all events
+     * Get active events (SCHEDULED, ONGOING, COMPLETED) - for Coach/WebMaster
      * @returns {Promise<EventDto[]>}
      */
-    getAllEvents: async () => {
-        return apiClient.get("/gamefy/events");
+    getActiveEvents: async () => {
+        return apiClient.get("/gamefy/events/active");
     },
 
     /**

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
-import { Search, Bell, Calendar, MapPin, ExternalLink, Loader2, ChevronDown, Filter } from "lucide-react";
+import { Search, Bell, Calendar, MapPin, ExternalLink, Loader2, ChevronDown, Filter, FileText } from "lucide-react";
 import { eventApi } from "../api/event";
 import toast from "react-hot-toast";
+import EventDescriptionModal from "../modals/EventDescriptionModal";
 
 const EventsPage = () => {
     const [events, setEvents] = useState([]);
@@ -11,6 +12,7 @@ const EventsPage = () => {
     const [selectedStatus, setSelectedStatus] = useState("ALL");
     const [isStatusOpen, setIsStatusOpen] = useState(false);
     const [userParticipations, setUserParticipations] = useState([]);
+    const [descriptionModal, setDescriptionModal] = useState({ open: false, title: "", description: "" });
 
     const statusOptions = [
         { value: "ALL", label: "All Statuses" },
@@ -24,7 +26,7 @@ const EventsPage = () => {
         try {
             setIsLoading(true);
             const [eventsData, participationsData] = await Promise.all([
-                eventApi.getAllEvents(),
+                eventApi.getActiveEvents(),
                 eventApi.getMyParticipations()
             ]);
             setEvents(eventsData);
@@ -227,7 +229,7 @@ const EventsPage = () => {
                                                         </div>
                                                     )}
                                                     <div className="absolute top-6 right-6">
-                                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md ${getStatusStyle(event.eventStatus)}`}>
+                                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black font-[inter] uppercase tracking-widest border backdrop-blur-md ${getStatusStyle(event.eventStatus)}`}>
                                                             {event.eventStatus}
                                                         </span>
                                                     </div>
@@ -236,7 +238,7 @@ const EventsPage = () => {
                                                 {/* Content Section */}
                                                 <div className="p-8 flex flex-col flex-grow bg-gradient-to-b from-transparent to-black/30">
                                                     <div className="flex-grow space-y-4">
-                                                        <h3 className="text-xl md:text-xl font-black text-white italic truncate uppercase tracking-tight">
+                                                        <h3 className="text-xl md:text-xl font-black font-[inter] uppercase tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
                                                             {event.title}
                                                         </h3>
 
@@ -251,14 +253,29 @@ const EventsPage = () => {
                                                             </div>
                                                         </div>
 
-                                                        <p className="text-white/40 text-sm line-clamp-3 leading-relaxed pt-2">
-                                                            {event.description}
-                                                        </p>
+                                                        <button
+                                                            onClick={() => setDescriptionModal({ open: true, title: event.title, description: event.description })}
+                                                            className="flex items-center gap-2 text-[#1CF3CA] hover:text-[#19d4b0] text-sm font-semibold transition-all mt-2"
+                                                        >
+                                                            <FileText size={16} />
+                                                            Show Description
+                                                        </button>
                                                     </div>
 
                                                     {/* Participation Logic */}
                                                     <div className="pt-8 w-full">
-                                                        {new Date(event.endTime.endsWith("Z") ? event.endTime : event.endTime + "Z") < new Date() ? (
+                                                        {event.registerLink ? (
+                                                            <div className="w-full text-center">
+                                                                <a
+                                                                    href={event.registerLink}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-blue-500 font-bold font-['Inter'] uppercase text-lg hover:underline"
+                                                                >
+                                                                    Participation Link
+                                                                </a>
+                                                            </div>
+                                                        ) : new Date(event.endTime.endsWith("Z") ? event.endTime : event.endTime + "Z") < new Date() ? (
                                                             <div className="w-full px-8 py-4 bg-white/5 text-white/40 font-black uppercase tracking-widest rounded-full text-center border border-white/5">
                                                                 This event has passed
                                                             </div>
@@ -287,6 +304,13 @@ const EventsPage = () => {
                     </div>
                 </div>
             </main>
+
+            <EventDescriptionModal
+                open={descriptionModal.open}
+                title={descriptionModal.title}
+                description={descriptionModal.description}
+                onClose={() => setDescriptionModal({ open: false, title: "", description: "" })}
+            />
 
             <style jsx>{`
                 .no-scrollbar::-webkit-scrollbar {
