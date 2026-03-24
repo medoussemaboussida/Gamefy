@@ -104,6 +104,7 @@ public class ParticipantService {
         emailService.sendEventParticipationEmail(
                 user.getEmail(),
                 user.getFirstName(),
+                user.getLastName(),
                 event.getTitle()
         );
 
@@ -122,6 +123,7 @@ public class ParticipantService {
         emailService.sendEventCancellationEmail(
                 user.getEmail(),
                 user.getFirstName(),
+                user.getLastName(),
                 eventTitle
         );
 

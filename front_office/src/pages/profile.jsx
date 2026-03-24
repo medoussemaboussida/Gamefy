@@ -372,9 +372,11 @@ const ProfilePage = () => {
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full bg-[#24003E] flex items-center justify-center">
-                                                    <Calendar size={64} className="text-white/10" />
-                                                </div>
+                                                <img
+                                                    src="src/assets/images/vitrine_page_images/blogs.png"
+                                                    alt={event.title}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60"
+                                                />
                                             )}
                                         </div>
 

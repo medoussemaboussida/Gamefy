@@ -174,9 +174,9 @@ const Sidebar = () => {
             )}
           </div>
           <span
-            className={`font-['Inter'] font-medium text-[14px] whitespace-nowrap transition-all duration-300 ${!isMobile && !isHovered
-              ? "opacity-0 w-0 overflow-hidden"
-              : "opacity-100"
+            className={`font-['Inter'] font-medium text-[14px] transition-all duration-300 ${!isMobile && !isHovered
+              ? "opacity-0 w-0 overflow-hidden whitespace-nowrap"
+              : "opacity-100 text-left leading-tight"
               }`}
           >
             {user ? `${user.firstName} ${user.lastName}` : "Loading..."}

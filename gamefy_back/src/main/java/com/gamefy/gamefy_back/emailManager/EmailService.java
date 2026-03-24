@@ -83,29 +83,29 @@ public class EmailService {
     }
 
     @Async
-    public void sendEventParticipationEmail(String to, String firstName, String eventTitle) {
+    public void sendEventParticipationEmail(String to, String firstName, String lastName, String eventTitle) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setSubject("Event Registration Confirmed - " + eventTitle);
-        message.setText("Hello " + firstName + ",\n\n" +
+        message.setText("Hello " + firstName + " " + lastName + ",\n\n" +
                 "You have successfully registered for the event: " + eventTitle + ".\n\n" +
                 "Please visit the Gamefy local place to complete your payment.\n" +
                 "You can find the price details in the event description.\n\n" +
                 "We look forward to seeing you there!\n" +
-                "- The Gamefy Team");
+                "The Gamefy Academy Team !");
 
         mailSender.send(message);
     }
 
     @Async
-    public void sendEventCancellationEmail(String to, String firstName, String eventTitle) {
+    public void sendEventCancellationEmail(String to, String firstName, String lastName, String eventTitle) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setSubject("Event Participation Cancelled - " + eventTitle);
-        message.setText("Hello " + firstName + ",\n\n" +
+        message.setText("Hello " + firstName + " " + lastName + ",\n\n" +
                 "Your participation in the event: " + eventTitle + " has been cancelled.\n\n" +
                 "If this was a mistake, you can re-register through the Gamefy platform.\n\n" +
-                "- The Gamefy Team");
+                "The Gamefy Team !");
 
         mailSender.send(message);
     }
