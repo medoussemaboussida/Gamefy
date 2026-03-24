@@ -130,7 +130,7 @@ export default function UserMetaCard({ user, onUserUpdate }: UserMetaCardProps) 
                 </p>
                 <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Gamefy Registry
+                  Gamefy
                 </p>
               </div>
             </div>
@@ -138,7 +138,7 @@ export default function UserMetaCard({ user, onUserUpdate }: UserMetaCardProps) 
               {/* Social links omitted as per instructions */}
             </div>
           </div>
-          <button
+          {/* <button
             onClick={openModal}
             className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
           >
@@ -158,7 +158,7 @@ export default function UserMetaCard({ user, onUserUpdate }: UserMetaCardProps) 
               />
             </svg>
             Edit
-          </button>
+          </button> */}
         </div>
       </div>
       <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">

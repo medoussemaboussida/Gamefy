@@ -6,8 +6,10 @@ import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import TwoFaVerify from "./pages/auth/TwoFaVerify";
 import PlayerDashboard from "./pages/player/PlayerDashboard";
 import CoachDashboard from "./pages/coach/CoachDashboard";
+import CoachRoom from "./pages/coach/CoachRoom";
 import SignUpCoach from "./pages/auth/SignUpCoach";
 import Rooms from "./pages/player/Rooms";
 
@@ -40,11 +42,13 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-2fa" element={<TwoFaVerify />} />
         <Route path="/player/dashboard" element={<PlayerDashboard />} />
         <Route path="/player/rooms" element={<Rooms />} />
         <Route path="/player/packs" element={<PlayerPacks />} />
         <Route path="/player/reservation" element={<ReservationPage />} />
         <Route path="/coach/dashboard" element={<CoachDashboard />} />
+        <Route path="/coach/coachRoom" element={<CoachRoom />} />
 
 
         {/* Add more routes as needed */}

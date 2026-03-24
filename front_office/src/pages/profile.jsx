@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Shield, Camera, Edit2, Loader2, ChevronRight, LogOut, Search, Bell, Calendar, MapPin, X } from "lucide-react";
+import { User, Mail, Shield, Camera, Edit2, Loader2, ChevronRight, LogOut, Search, Bell, Calendar, MapPin, X, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import { profileApi } from "../api/profile";
 import { authApi } from "../api/auth";
 import { eventApi } from "../api/event";
 import { getUserId } from "../utils/jwt";
 import ProfileForm from "../modals/ProfileForm";
+import EventDescriptionModal from "../modals/EventDescriptionModal";
 
 const ProfilePage = () => {
     const navigate = useNavigate();
@@ -15,6 +16,7 @@ const ProfilePage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [participatedEvents, setParticipatedEvents] = useState([]);
+    const [descriptionModal, setDescriptionModal] = useState({ open: false, title: "", description: "" });
     const fileInputRef = useRef(null);
 
     const fetchProfile = async () => {
@@ -31,7 +33,7 @@ const ProfilePage = () => {
             // Fetch participated events
             const [participations, allEvents] = await Promise.all([
                 eventApi.getMyParticipations(),
-                eventApi.getAllEvents()
+                eventApi.getActiveEvents()
             ]);
             const participatedEventIds = participations.map(p => p.eventId);
             const userEvents = allEvents.filter(e => participatedEventIds.includes(e.id));
@@ -193,23 +195,6 @@ const ProfilePage = () => {
                         <h2 className="text-white text-[18px] font-bold font-['Inter'] self-start md:self-auto pl-14 md:pl-0">
                             User Profile
                         </h2>
-
-                        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
-                            <div className="relative group flex-1 md:flex-none">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                    <Search size={18} className="text-[#1CF3CA]" />
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder="Search"
-                                    className="w-full md:w-[380px] h-[40px] bg-transparent border border-[#1CF3CA]/40 rounded-full pl-11 pr-4 text-white text-[14px] font-medium font-['Inter'] placeholder:text-white/40 focus:outline-none focus:border-[#1CF3CA] transition-all"
-                                />
-                            </div>
-                            <button className="relative p-2 text-[#1CF3CA] hover:bg-white/5 rounded-full transition-all flex-shrink-0">
-                                <Bell size={24} />
-                                <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF89EB] rounded-full"></span>
-                            </button>
-                        </div>
                     </header>
 
                     {/* Profile Banner Section */}
@@ -293,6 +278,42 @@ const ProfilePage = () => {
                                     <span className="text-white/60 font-medium">Account Role</span>
                                     <span className="text-[#FF89EB] font-bold text-sm uppercase">{user.role}</span>
                                 </div>
+                                <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+                                    <div className="flex flex-col">
+                                        <span className="text-white/60 font-medium">Two-Factor Authentication</span>
+                                        <span className="text-white/30 text-xs mt-1">Extra security for your account</span>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            const newVal = !user.twoFaActivated;
+                                            try {
+                                                await authApi.toggle2FA({ enabled: newVal });
+                                                setUser(prev => ({ ...prev, twoFaActivated: newVal }));
+                                                toast.success(newVal ? "2FA enabled" : "2FA disabled", {
+                                                    style: {
+                                                        border: '1px solid #1CF3CA',
+                                                        padding: '16px',
+                                                        color: '#1CF3CA',
+                                                        background: '#24003E',
+                                                        boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+                                                    },
+                                                });
+                                            } catch (error) {
+                                                toast.error(error.message || "Failed to update 2FA", {
+                                                    style: {
+                                                        border: '1px solid #DE3D3D',
+                                                        padding: '16px',
+                                                        color: '#DE3D3D',
+                                                        background: '#360200',
+                                                    },
+                                                });
+                                            }
+                                        }}
+                                        className={`relative w-14 h-7 rounded-full transition-all duration-300 ${user.twoFaActivated ? 'bg-[#1CF3CA]' : 'bg-white/10'}`}
+                                    >
+                                        <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 ${user.twoFaActivated ? 'translate-x-7' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -311,7 +332,11 @@ const ProfilePage = () => {
                             <div className="space-y-4 pt-2">
                                 <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
                                     <span className="text-white/60 font-medium">Member Since</span>
-                                    <span className="text-white/40 text-sm">Jan 2024</span>
+                                    <span className="text-white/40 text-sm">
+                                        {user.createdAt
+                                            ? new Date(user.createdAt + "Z").toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
+                                            : "N/A"}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -329,54 +354,77 @@ const ProfilePage = () => {
                                 <p className="text-white/40 font-medium">You haven't joined any events yet.</p>
                             </div>
                         ) : (
-                            <div className="flex overflow-x-auto gap-6 pb-4 snap-x no-scrollbar">
+                            <div className="flex overflow-x-auto gap-8 py-6 px-4 pb-12 snap-x no-scrollbar -mx-4">
                                 {participatedEvents.map((event) => (
                                     <div
                                         key={event.id}
-                                        className="flex-shrink-0 w-[350px] snap-center"
+                                        className="flex-shrink-0 w-full max-w-[400px] snap-center relative group bg-[#320141]/40 border border-white/5 rounded-[50px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:bg-[#320141]/60 hover:border-[#1CF3CA]/30 flex flex-col h-full shadow-2xl backdrop-blur-xl"
                                     >
-                                        <div className="relative group h-full">
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-[32px] blur opacity-15 group-hover:opacity-30 transition duration-700"></div>
-                                            <div className="relative bg-[#320141] border border-white/5 rounded-[32px] overflow-hidden h-full flex flex-col">
-                                                {/* Image */}
-                                                <div className="relative h-[160px] overflow-hidden">
-                                                    {event.photo ? (
-                                                        <img
-                                                            src={`http://localhost:8080/api/uploads/event_photos/${event.photo}`}
-                                                            alt={event.title}
-                                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-[#24003E] flex items-center justify-center">
-                                                            <Calendar size={40} className="text-white/10" />
-                                                        </div>
-                                                    )}
+                                        {/* Hover Light Effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[#1CF3CA]/0 via-[#1CF3CA]/5 to-[#FF89EB]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+                                        {/* Image Section */}
+                                        <div className="relative h-[200px] overflow-hidden">
+                                            {event.photo ? (
+                                                <img
+                                                    src={`http://localhost:8080/api/uploads/event_photos/${event.photo}`}
+                                                    alt={event.title}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-[#24003E] flex items-center justify-center">
+                                                    <Calendar size={64} className="text-white/10" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Content Section */}
+                                        <div className="p-8 flex flex-col flex-grow bg-gradient-to-b from-transparent to-black/30">
+                                            <div className="flex-grow space-y-4">
+                                                <h3 className="text-xl font-black font-[inter] uppercase tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
+                                                    {event.title}
+                                                </h3>
+
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-3 text-white/70 font-medium">
+                                                        <Calendar size={18} className="text-[#1CF3CA]" />
+                                                        <span className="text-sm">{formatDate(event.startTime)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-white/70 font-medium">
+                                                        <MapPin size={18} className="text-[#FF89EB]" />
+                                                        <span className="text-sm">{event.place}</span>
+                                                    </div>
                                                 </div>
 
-                                                {/* Content */}
-                                                <div className="p-6 flex flex-col flex-grow space-y-3">
-                                                    <h3 className="text-lg font-black text-white uppercase tracking-tight truncate">
-                                                        {event.title}
-                                                    </h3>
-                                                    <div className="flex items-center gap-2 text-white/60 text-sm">
-                                                        <Calendar size={14} className="text-[#1CF3CA]" />
-                                                        <span>{formatDate(event.startTime)}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-white/60 text-sm">
-                                                        <MapPin size={14} className="text-[#FF89EB]" />
-                                                        <span>{event.place}</span>
-                                                    </div>
+                                                <button
+                                                    onClick={() => setDescriptionModal({ open: true, title: event.title, description: event.description })}
+                                                    className="flex items-center gap-2 text-[#1CF3CA] hover:text-[#19d4b0] text-sm font-semibold transition-all mt-2"
+                                                >
+                                                    <FileText size={16} />
+                                                    Show Description
+                                                </button>
+                                            </div>
 
-                                                    <div className="pt-3 mt-auto">
-                                                        <button
-                                                            onClick={() => handleCancelParticipation(event.id)}
-                                                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-500/15 hover:bg-red-500/25 text-red-400 font-bold uppercase tracking-widest text-xs rounded-full transition-all active:scale-95 border border-red-500/20"
+                                            {/* Action Section */}
+                                            <div className="pt-8 w-full flex flex-col gap-4">
+                                                {event.registerLink && (
+                                                    <div className="w-full text-center">
+                                                        <a
+                                                            href={event.registerLink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-500 font-bold font-['Inter'] uppercase text-sm hover:underline"
                                                         >
-                                                            <X size={16} />
-                                                            Cancel Participation
-                                                        </button>
+                                                            Event Link
+                                                        </a>
                                                     </div>
-                                                </div>
+                                                )}
+                                                <button
+                                                    onClick={() => handleCancelParticipation(event.id)}
+                                                    className="w-full px-6 py-3 bg-red-500/15 hover:bg-red-500/25 text-red-400 font-bold uppercase tracking-widest text-[10px] rounded-full transition-all active:scale-95 border border-red-500/20"
+                                                >
+                                                    Cancel Participation
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -386,6 +434,14 @@ const ProfilePage = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Description Modal */}
+            <EventDescriptionModal
+                open={descriptionModal.open}
+                title={descriptionModal.title}
+                description={descriptionModal.description}
+                onClose={() => setDescriptionModal({ open: false, title: "", description: "" })}
+            />
 
             {/* Edit Modal */}
             {isModalOpen && (

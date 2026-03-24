@@ -89,15 +89,15 @@ export default function TimeSelectionModal({
                 {/* Header */}
                 <div className="flex items-start justify-between px-8 pt-7 pb-4">
                     <div>
-                        <p className="text-[10px] font-black tracking-[0.25em] uppercase text-[#1CF3CA]/60 mb-1">
+                        <p className="text-[10px] font-black tracking-[0.25em] font-[inter] uppercase text-[#1CF3CA]/60 mb-1">
                             Select Time Slot
                         </p>
-                        <h2 className="text-2xl font-black uppercase italic tracking-tight text-white">
+                        <h2 className="text-2xl font-black uppercase font-[inter] tracking-tight text-white">
                             {dayName},{" "}
                             <span className="text-[#1CF3CA]">{selectedDate}</span>{" "}
                             {monthName} {currentYear}
                         </h2>
-                        <p className="text-white/30 text-xs mt-1 font-medium">
+                        <p className="text-white/30 text-xs mt-1 font-medium font-[inter]">
                             Open hours: {scheduleOpen} → {scheduleClose}
                         </p>
                     </div>
@@ -116,16 +116,16 @@ export default function TimeSelectionModal({
                     <div>
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-2 h-2 rounded-full bg-[#1CF3CA]" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#1CF3CA]/80">Start Time</span>
+                            <span className="text-[10px] font-black font-[inter] uppercase tracking-widest text-[#1CF3CA]/80">Start Time</span>
                         </div>
-                        <div className="grid grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
                             {timeSlots.map((slot) => (
                                 <button
                                     key={slot.value}
                                     onClick={() => { onSelectStart(String(slot.value)); onSelectEnd(""); }}
                                     className={`py-2.5 rounded-xl text-xs font-black transition-all border ${String(slot.value) === startTime
                                         ? "bg-[#1CF3CA] text-black border-transparent shadow-lg shadow-[#1CF3CA]/20"
-                                        : "bg-white/[0.04] border-white/[0.06] text-white/60 hover:bg-white/10 hover:text-white"
+                                        : "bg-white/[0.04] border-white/[0.06] text-white/60 hover:bg-white/10 hover:text-white font-[inter]" 
                                         }`}
                                 >
                                     {slot.label}
@@ -138,18 +138,18 @@ export default function TimeSelectionModal({
                     <div>
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-2 h-2 rounded-full bg-[#FF89EB]" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#FF89EB]/80">
-                                End Time {!startTime && <span className="text-white/20 normal-case font-medium">(pick start first)</span>}
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#FF89EB]/80 font-[inter]">
+                                End Time {!startTime && <span className="text-white/20 normal-case font-medium font-[inter]">(pick start first)</span>}
                             </span>
                         </div>
-                        <div className={`grid grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar ${!startTime ? "opacity-40 pointer-events-none" : ""}`}>
+                        <div className={`grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar ${!startTime ? "opacity-40 pointer-events-none" : ""}`}>
                             {(startTime ? endSlots : timeSlots).map((slot) => (
                                 <button
                                     key={slot.value}
                                     onClick={() => onSelectEnd(String(slot.value))}
                                     className={`py-2.5 rounded-xl text-xs font-black transition-all border ${String(slot.value) === endTime
                                         ? "bg-[#FF89EB] text-black border-transparent shadow-lg shadow-[#FF89EB]/20"
-                                        : "bg-white/[0.04] border-white/[0.06] text-white/60 hover:bg-white/10 hover:text-white"
+                                        : "bg-white/[0.04] border-white/[0.06] text-white/60 hover:bg-white/10 hover:text-white font-[inter]"
                                         }`}
                                 >
                                     {slot.label}
@@ -161,7 +161,7 @@ export default function TimeSelectionModal({
                     {/* Duration summary */}
                     {canConfirm && (
                         <div
-                            className="flex items-center justify-between rounded-2xl px-6 py-4"
+                            className="flex items-center justify-between rounded-2xl px-6 py-4 font-[inter]"
                             style={{
                                 background: "rgba(28, 243, 202, 0.05)",
                                 border: "1px solid rgba(28, 243, 202, 0.12)",
@@ -173,7 +173,7 @@ export default function TimeSelectionModal({
                                     {startLabel} → {endLabel}
                                 </span>
                             </div>
-                            <span className="font-black text-[#1CF3CA] text-sm">{durationText}</span>
+                            <span className="font-black font-[inter] text-[#1CF3CA] text-sm">{durationText}</span>
                         </div>
                     )}
 
@@ -188,7 +188,7 @@ export default function TimeSelectionModal({
                     <button
                         onClick={onConfirm}
                         disabled={!canConfirm || loading}
-                        className={`w-full py-4 rounded-2xl font-black uppercase italic tracking-tighter text-sm transition-all ${canConfirm && !loading
+                        className={`w-full py-4 rounded-2xl font-black uppercase font-[inter] tracking-tighter text-sm transition-all ${canConfirm && !loading
                             ? "bg-[#1CF3CA] text-black shadow-[0_0_30px_rgba(28,243,202,0.3)] hover:shadow-[0_0_45px_rgba(28,243,202,0.5)] hover:scale-[1.02] active:scale-[0.98]"
                             : "bg-white/5 text-white/20 cursor-not-allowed border border-white/10"
                             }`}
@@ -200,7 +200,6 @@ export default function TimeSelectionModal({
                             </span>
                         ) : (
                             <span className="flex items-center justify-center gap-2">
-                                <Zap size={16} />
                                 Explore Available PCs
                             </span>
                         )}

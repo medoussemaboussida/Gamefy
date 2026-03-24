@@ -79,17 +79,20 @@ const Packs = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-[#0F011E] text-white font-['Inter']">
+        <div className="flex min-h-screen bg-[#24003E] text-white font-['Inter']">
             <Sidebar />
 
-            <div className="flex-1 flex flex-col p-4 md:p-8 overflow-hidden">
-                <div className="mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold text-[#1CF3CA] mb-2 flex items-center gap-3">
-                        <Gift className="text-[#FF89EB]" size={36} />
-                        Gaming Packs
-                    </h1>
-                    <p className="text-gray-400">Exclusive bundles designed to level up your experience.</p>
-                </div>
+            <main className="flex-1 overflow-y-auto">
+                <div className="max-w-[1400px] mx-auto px-10 md:px-12 pt-8 pb-12 transition-all duration-300">
+
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                        <div className="pl-16 md:pl-0">
+                            <h1 className="text-3xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
+                            Gaming packs
+                            </h1>
+                         <p className="text-gray-400">Exclusive bundles designed to level up your experience.</p>
+                        </div>
+                    </div>
 
                 {loading ? (
                     <div className="flex-grow flex items-center justify-center">
@@ -112,7 +115,8 @@ const Packs = () => {
                                         <Gift size={24} />
                                     </div>
                                     <div className="text-right">
-                                        <span className="block text-2xl font-bold text-[#1CF3CA]">{pack.price} TND</span>
+                                         <span className="block text-2xl font-bold text-[#1CF3CA]">{Number(pack.price).toFixed(3)} DT</span>
+
                                         <span className="text-xs text-gray-500 uppercase tracking-wider">Per Pack</span>
                                     </div>
                                 </div>
@@ -168,7 +172,9 @@ const Packs = () => {
                         ))}
                     </div>
                 )}
-            </div>
+                </div>
+            </main>
+
 
             <PaymentModal
                 isOpen={isPaymentModalOpen}

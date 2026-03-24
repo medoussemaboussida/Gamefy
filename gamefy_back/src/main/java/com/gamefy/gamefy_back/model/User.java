@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gamefy.gamefy_back.model.enums.Roles;
 import com.gamefy.gamefy_back.model.enums.UserStatus;
 import jakarta.persistence.*;
@@ -11,6 +12,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -58,16 +61,22 @@ public class User implements UserDetails {
     @JoinColumn(name = "pack_player_id")
     private PackGamefy packGamefy;
 
-    @com.fasterxml.jackson.annotation.JsonProperty("packGamefyId")
-    public Integer getPackGamefyId() {
-        return packGamefy != null ? packGamefy.getId() : null;
-    }
-
     @Column(name = "reset_pwd_token")
     private String resetPwdToken;
 
     @Column(name = "2fa_token")
     private String twoFaToken;
+
+    @Column(name = "two_fa_activated", nullable = false)
+    private boolean twoFaActivated = false;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now(ZoneOffset.UTC);
+    }
 
     @JsonIgnore
     @OneToOne(mappedBy = "coach", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -117,6 +126,11 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return status == UserStatus.ACTIVE;
+    }
+
+    @JsonProperty("packGamefyId")
+    public Integer getPackGamefyId() {
+        return packGamefy != null ? packGamefy.getId() : null;
     }
 
     @Override

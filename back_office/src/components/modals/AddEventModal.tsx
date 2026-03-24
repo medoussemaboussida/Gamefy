@@ -64,18 +64,54 @@ const AddEventModal: React.FC<AddEventModalProps> = ({ isOpen, onClose, eventToE
 
     const validateField = (name: string, value: any) => {
         let errorMsg = "";
+        const now = new Date();
+
         if (name === "title" || name === "description") {
             if (!value || !value.trim()) {
                 errorMsg = `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
             } else if (value.trim().length < 5) {
                 errorMsg = "Minimum 5 characters required";
             }
-        } else if (name === "place" || name === "startTime" || name === "endTime") {
+        } else if (name === "place") {
             if (!value || !value.trim()) {
-                errorMsg = `${name.charAt(0).toUpperCase() + name.slice(1).replace(/([A-Z])/g, ' $1')} is required`;
+                errorMsg = "Place is required";
+            }
+        } else if (name === "startTime") {
+            if (!value || !value.trim()) {
+                errorMsg = "Start time is required";
+            } else {
+                const startDate = new Date(value);
+                const originalStart = eventToEdit ? formatToLocalDatetime(eventToEdit.startTime) : null;
+                const isNewOrChanged = !eventToEdit || value !== originalStart;
+
+                if (isNewOrChanged && startDate < new Date(now.getTime() - 60000)) {
+                    errorMsg = "Start time cannot be in the past";
+                }
+            }
+        } else if (name === "endTime") {
+            if (!value || !value.trim()) {
+                errorMsg = "End time is required";
+            } else if (formData.startTime) {
+                const startDate = new Date(formData.startTime);
+                const endDate = new Date(value);
+                if (endDate <= startDate) {
+                    errorMsg = "End time must be after start time";
+                }
             }
         }
-        setFieldErrors((prev) => ({ ...prev, [name]: errorMsg }));
+
+        setFieldErrors((prev) => {
+            const newErrors = { ...prev, [name]: errorMsg };
+            // If we are validating startTime and it's valid, re-validate endTime to clear cross-field error
+            if (name === "startTime" && !errorMsg && formData.endTime) {
+                const startDate = new Date(value);
+                const endDate = new Date(formData.endTime);
+                if (endDate > startDate) {
+                    delete newErrors.endTime;
+                }
+            }
+            return newErrors;
+        });
         return errorMsg;
     };
 

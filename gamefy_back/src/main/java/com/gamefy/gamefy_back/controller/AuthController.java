@@ -72,6 +72,15 @@ public class AuthController {
         // Authenticate and generate tokens
         Map<String, String> tokens = service.login(request.getEmail(), request.getPassword());
         
+        // Check if 2FA is required
+        if ("true".equals(tokens.get("requires2FA"))) {
+            LoginResponse loginResponse = new LoginResponse();
+            loginResponse.setMessage("2FA verification required");
+            loginResponse.setRequires2FA(true);
+            loginResponse.setUserId(Integer.parseInt(tokens.get("userId")));
+            return ResponseEntity.ok(loginResponse);
+        }
+        
         // Create HttpOnly cookie for refresh token
         Cookie refreshTokenCookie = new Cookie("refreshToken", tokens.get("refreshToken"));
         refreshTokenCookie.setHttpOnly(true);
@@ -82,7 +91,12 @@ public class AuthController {
         
         // Return access token, role and userId in response body
         User user = service.getUserByEmail(request.getEmail());
-        LoginResponse loginResponse = new LoginResponse("Login Successful", tokens.get("accessToken"), user.getRole().name(), user.getId());
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setMessage("Login Successful");
+        loginResponse.setAccessToken(tokens.get("accessToken"));
+        loginResponse.setRole(user.getRole().name());
+        loginResponse.setUserId(user.getId());
+        loginResponse.setTwoFaActivated(user.isTwoFaActivated());
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -115,7 +129,12 @@ public class AuthController {
         
         // Fetch user and return response
         User user = service.getUserById(Integer.parseInt(tokens.get("userId")));
-        LoginResponse loginResponse = new LoginResponse("Google Login Successful", tokens.get("accessToken"), user.getRole().name(), user.getId());
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setMessage("Google Login Successful");
+        loginResponse.setAccessToken(tokens.get("accessToken"));
+        loginResponse.setRole(user.getRole().name());
+        loginResponse.setUserId(user.getId());
+        loginResponse.setTwoFaActivated(user.isTwoFaActivated());
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -133,7 +152,12 @@ public class AuthController {
             Map<String, String> tokens = service.refreshToken(refreshToken);
             User user = service.getUserById(Integer.parseInt(tokens.get("userId")));
             log.info("Token successfully refreshed for user ID: {}", user.getId());
-            LoginResponse loginResponse = new LoginResponse("Token Refreshed", tokens.get("accessToken"), user.getRole().name(), user.getId());
+            LoginResponse loginResponse = new LoginResponse();
+            loginResponse.setMessage("Token Refreshed");
+            loginResponse.setAccessToken(tokens.get("accessToken"));
+            loginResponse.setRole(user.getRole().name());
+            loginResponse.setUserId(user.getId());
+            loginResponse.setTwoFaActivated(user.isTwoFaActivated());
             return ResponseEntity.ok(loginResponse);
         } catch (Exception e) {
             log.error("Token refresh failed: {}", e.getMessage());
@@ -150,6 +174,49 @@ public class AuthController {
         response.addCookie(cookie);
         
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+    }
+
+    @PostMapping("/verify-2fa")
+    public ResponseEntity<LoginResponse> verifyTwoFa(
+            @RequestBody TwoFaDto.VerifyTwoFaRequest request,
+            HttpServletResponse response) {
+        try {
+            Map<String, String> tokens = service.verifyTwoFa(request.getUserId(), request.getCode());
+            
+            // Create HttpOnly cookie for refresh token
+            Cookie refreshTokenCookie = new Cookie("refreshToken", tokens.get("refreshToken"));
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setSecure(false);
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
+            response.addCookie(refreshTokenCookie);
+            
+            User user = service.getUserById(request.getUserId());
+            LoginResponse loginResponse = new LoginResponse();
+            loginResponse.setMessage("2FA Verified");
+            loginResponse.setAccessToken(tokens.get("accessToken"));
+            loginResponse.setRole(user.getRole().name());
+            loginResponse.setUserId(user.getId());
+            loginResponse.setTwoFaActivated(user.isTwoFaActivated());
+            return ResponseEntity.ok(loginResponse);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new LoginResponse());
+        }
+    }
+
+    @PostMapping("/toggle-2fa")
+    public ResponseEntity<Map<String, String>> toggleTwoFa(
+            @RequestBody TwoFaDto.ToggleTwoFaRequest request,
+            @RequestHeader("userId") Integer userId) {
+        try {
+            service.toggleTwoFa(userId, request.isEnabled());
+            String msg = request.isEnabled() ? "2FA enabled successfully" : "2FA disabled successfully";
+            return ResponseEntity.ok(Map.of("message", msg));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 
 }

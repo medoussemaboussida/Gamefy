@@ -54,7 +54,7 @@ const Sidebar = () => {
   const role = getUserRole();
   const navItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: role === "COACH" ? "/coach/dashboard" : "/player/dashboard" },
-    { name: "Rooms", icon: Monitor, path: "/player/rooms" },
+    { name: "Rooms", icon: Monitor, path: role === "COACH" ? "/coach/coachRoom" : "/player/rooms" },
     { name: "Events", icon: Calendar, path: "/events" },
     ...(role === "PLAYER" ? [{ name: "Packs", icon: Gift, path: "/player/packs" }] : []),
   ];

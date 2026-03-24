@@ -54,6 +54,11 @@ const navItems: NavItem[] = [
     path: "/events",
   },
   {
+    icon: <CalenderIcon />,
+    name: "Reservations",
+    path: "/reservations",
+  },
+  {
     icon: <BoxCubeIcon />,
     name: "Pack Management",
     path: "/packs",

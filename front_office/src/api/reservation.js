@@ -44,11 +44,40 @@ export const getWorkSchedule = (month, year) => {
  * Get available PCs for a given time range and reservation type.
  * @param {string} startTime - ISO datetime string
  * @param {string} endTime - ISO datetime string
- * @param {string} type - "PC_ROOM" or "VIP_ROOM"
+ * @param {string} type - "PC_ROOM", "VIP_ROOM", or "COACHING_ROOM"
+ * @param {string} [game] - Optional game for filtering PCs in coaching flow
  * @returns {Promise<AvailablePcDto[]>}
  */
-export const getAvailablePCs = (startTime, endTime, type) => {
-    return apiClient.get(`/gamefy/reservations/available-pcs?start=${startTime}&end=${endTime}&type=${type}`);
+export const getAvailablePCs = (startTime, endTime, type, game) => {
+    let url = `/gamefy/reservations/available-pcs?start=${startTime}&end=${endTime}&type=${type}`;
+    if (game) url += `&game=${game}`;
+    return apiClient.get(url);
+};
+
+/**
+ * Get the list of available games for coaching.
+ * @returns {Promise<string[]>}
+ */
+export const getAvailableGames = () => {
+    return apiClient.get("/gamefy/reservations/games");
+};
+
+/**
+ * Get the list of coaches for a specific game.
+ * @param {string} game
+ * @returns {Promise<Object[]>}
+ */
+export const getCoachesByGame = (game) => {
+    return apiClient.get(`/gamefy/reservations/coaches?game=${game}`);
+};
+
+/**
+ * Get coach sessions for a specific coach.
+ * @param {number} coachId
+ * @returns {Promise<Object[]>}
+ */
+export const getCoachSessions = (coachId) => {
+    return apiClient.get(`/gamefy/coaching-sessions/coach/${coachId}`);
 };
 
 /**
@@ -61,9 +90,69 @@ export const createReservation = (dto) => {
 };
 
 /**
+ * Get all fixed prices.
+ * @returns {Promise<Object[]>}
+ */
+export const getAllFixedPrices = () => {
+    return apiClient.get("/gamefy/fixed-prices");
+};
+
+/**
+ * Get fixed price by PC type (GAMING or VIP).
+ * @param {string} pcType
+ * @returns {Promise<Object>}
+ */
+export const getFixedPriceByPcType = (pcType) => {
+    return apiClient.get(`/gamefy/fixed-prices/${pcType}`);
+};
+
+/**
+ * Create a Stripe PaymentIntent for a reservation (card payment).
+ * @param {number} reservationId
+ * @returns {Promise<{clientSecret: string, publishableKey: string}>}
+ */
+export const createReservationPaymentIntent = (reservationId) => {
+    return apiClient.post("/gamefy/payments/create-reservation-intent", { reservationId });
+};
+
+/**
+ * Confirm a reservation card payment after Stripe succeeds.
+ * @param {number} reservationId
+ * @returns {Promise<string>}
+ */
+export const confirmReservationCardPayment = (reservationId) => {
+    return apiClient.post("/gamefy/payments/confirm-reservation-payment", { reservationId });
+};
+
+/**
+ * Confirm a reservation with cash payment.
+ * @param {number} reservationId
+ * @returns {Promise<string>}
+ */
+export const confirmReservationCashPayment = (reservationId) => {
+    return apiClient.put(`/gamefy/reservations/${reservationId}/confirm-cash`);
+};
+
+/**
  * Get personalized reservations for the current player.
  * @returns {Promise<ReservationDto[]>}
  */
 export const getMyReservations = () => {
     return apiClient.get("/gamefy/reservations/my");
+};
+
+/**
+ * Get reservations booked with the current coach.
+ * @returns {Promise<ReservationDto[]>}
+ */
+export const getMyCoachingReservations = () => {
+    return apiClient.get("/gamefy/reservations/my-coaching");
+};
+
+/**
+ * Get the currently active offer (if any).
+ * @returns {Promise<{id: number, offerName: string, reduction: number, status: string}|null>}
+ */
+export const getActiveOffer = () => {
+    return apiClient.get("/gamefy/offers/active");
 };

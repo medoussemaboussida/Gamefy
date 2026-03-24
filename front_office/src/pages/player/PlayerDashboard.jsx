@@ -69,17 +69,6 @@ const PlayerDashboard = () => {
                         </h2>
 
                         <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
-                            {/* Search Bar */}
-                            <div className="relative group flex-1 md:flex-none">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                    <Search size={18} className="text-[#1CF3CA]" />
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder="Search"
-                                    className="w-full md:w-[380px] h-[40px] bg-transparent border border-[#1CF3CA]/40 rounded-full pl-11 pr-4 text-white text-[14px] font-medium font-['Inter'] placeholder:text-white/40 focus:outline-none focus:border-[#1CF3CA] transition-all"
-                                />
-                            </div>
 
                             {/* Notification Icon */}
                             <button className="relative p-2 text-[#1CF3CA] hover:bg-white/5 rounded-full transition-all flex-shrink-0">

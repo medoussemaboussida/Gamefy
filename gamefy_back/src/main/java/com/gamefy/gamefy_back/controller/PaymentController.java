@@ -87,6 +87,33 @@ public class PaymentController {
     }
 
     /**
+     * Create a Stripe PaymentIntent for a reservation
+     */
+    @PostMapping("/create-reservation-intent")
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<PaymentDtos.PaymentIntentResponse> createReservationIntent(
+            @RequestBody PaymentDtos.ReservationPaymentRequest request,
+            @AuthenticationPrincipal User currentUser) throws StripeException {
+        return ResponseEntity.ok(paymentService.createReservationPaymentIntent(request.getReservationId(), currentUser.getId()));
+    }
+
+    /**
+     * Confirm a reservation card payment after Stripe succeeds
+     */
+    @PostMapping("/confirm-reservation-payment")
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<String> confirmCardPayment(
+            @RequestBody PaymentDtos.ReservationConfirmRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        try {
+            paymentService.fulfillReservationPayment(request.getReservationId(), currentUser.getId());
+            return ResponseEntity.ok("Reservation payment fulfilled successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Fulfillment error: " + e.getMessage());
+        }
+    }
+
+    /**
      * Get all pack IDs that the current user has already purchased
      */
     @GetMapping("/my-purchased-packs")
