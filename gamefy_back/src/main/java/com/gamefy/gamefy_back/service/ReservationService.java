@@ -30,6 +30,7 @@ public class ReservationService {
     private final CoachingSessionRepository coachingSessionRepository;
     private final CoachProfileRepository coachProfileRepository;
     private final PaymentRepository paymentRepository;
+    private final SubscriptionService subscriptionService;
 
     /**
      * Create a reservation with multiple PCs.
@@ -200,9 +201,15 @@ public class ReservationService {
             throw new RuntimeException("Only PENDING reservations can be confirmed");
         }
 
+        Reservation_Status oldStatus = reservation.getStatus();
         reservation.setPaymentType(paymentType);
         reservation.setStatus(Reservation_Status.CONFIRMED);
         Reservation saved = reservationRepository.save(reservation);
+
+        // Transition: Not Confirmed -> Confirmed
+        if (oldStatus != Reservation_Status.CONFIRMED) {
+            subscriptionService.addHoursForConfirmedReservation(saved);
+        }
 
         return mapToDto(saved);
     }
@@ -305,6 +312,11 @@ public class ReservationService {
 
         log.info("Admin deleting reservation ID={}", id);
         
+        // If it was confirmed, remove the hours from subscription
+        if (reservation.getStatus() == Reservation_Status.CONFIRMED) {
+            subscriptionService.removeHoursForConfirmedReservation(reservation);
+        }
+
         // Cleanup associated data
         if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
             pcAvailabilityRepository.deleteAll(reservation.getPcAvailabilities());
@@ -327,6 +339,7 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + reservationId));
 
+        Reservation_Status oldStatus = reservation.getStatus();
         Reservation_Status status;
         try {
             status = Reservation_Status.valueOf(newStatus.toUpperCase());
@@ -337,7 +350,8 @@ public class ReservationService {
         reservation.setStatus(status);
         Reservation saved = reservationRepository.save(reservation);
 
-        if (status == Reservation_Status.CONFIRMED) {
+        // Transition: Not Confirmed -> Confirmed
+        if (oldStatus != Reservation_Status.CONFIRMED && status == Reservation_Status.CONFIRMED) {
             // Check if a payment record already exists for this reservation
             boolean alreadyPaid = !saved.getPayments().isEmpty();
             if (!alreadyPaid) {
@@ -348,6 +362,12 @@ public class ReservationService {
                 paymentRepository.save(payment);
                 log.info("Payment record created for confirmed reservation ID={}", reservationId);
             }
+            // Update / create the player's subscription hours
+            subscriptionService.addHoursForConfirmedReservation(saved);
+        }
+        // Transition: Confirmed -> Not Confirmed
+        else if (oldStatus == Reservation_Status.CONFIRMED && status != Reservation_Status.CONFIRMED) {
+            subscriptionService.removeHoursForConfirmedReservation(saved);
         }
 
         log.info("Admin updated reservation ID={} status to {}", reservationId, status);

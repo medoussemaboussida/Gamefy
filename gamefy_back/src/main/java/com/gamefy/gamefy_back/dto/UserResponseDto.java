@@ -24,4 +24,5 @@ public class UserResponseDto {
     private Integer packGamefyId;
     private boolean twoFaActivated;
     private LocalDateTime createdAt;
+    private Double totalHours;
 }

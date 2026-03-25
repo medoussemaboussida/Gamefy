@@ -7,6 +7,7 @@ import com.gamefy.gamefy_back.emailManager.EmailService;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.enums.Roles;
 import com.gamefy.gamefy_back.model.enums.UserStatus;
+import com.gamefy.gamefy_back.repository.SubscriptionRepository;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +23,7 @@ public class UserService {
     private final UserRepository repository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final SubscriptionRepository subscriptionRepository;
 
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
     private static final SecureRandom random = new SecureRandom();
@@ -118,6 +120,9 @@ public class UserService {
     }
 
     private UserResponseDto mapToResponseDto(User user) {
+        double totalHours = subscriptionRepository.findByPlayerId(user.getId())
+                .map(s -> s.getTotalHours())
+                .orElse(0.0);
         return UserResponseDto.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
@@ -129,6 +134,7 @@ public class UserService {
                 .packGamefyId(user.getPackGamefy() != null ? user.getPackGamefy().getId() : null)
                 .twoFaActivated(user.isTwoFaActivated())
                 .createdAt(user.getCreatedAt())
+                .totalHours(totalHours)
                 .build();
     }
 

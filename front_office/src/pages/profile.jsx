@@ -338,6 +338,14 @@ const ProfilePage = () => {
                                             : "N/A"}
                                     </span>
                                 </div>
+                                {user.role === "PLAYER" && (
+                                    <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+                                        <span className="text-white/60 font-medium">Total Hours</span>
+                                        <span className="text-[#1CF3CA] font-bold text-sm">
+                                            {user.totalHours ?? 0} h
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

@@ -320,17 +320,24 @@ export default function ReservationPage() {
 
         if (!pricing) return 0;
 
-        const hours = Math.ceil(durationHours);
+        const fullHours = Math.floor(durationHours);
+        const hasHalfHour = durationHours % 1 !== 0;
         let baseGamingPrice = 0;
 
-        if (hours >= 4) {
-            baseGamingPrice = pricing.oneHourPrice * hours;
-        } else if (hours === 3) {
+        if (fullHours >= 4) {
+            baseGamingPrice = pricing.oneHourPrice * fullHours;
+            if (hasHalfHour) baseGamingPrice += (pricing.oneHourPrice * 0.5);
+        } else if (fullHours === 3) {
             baseGamingPrice = pricing.threeHoursPrice;
-        } else if (hours === 2) {
+            if (hasHalfHour) baseGamingPrice += (pricing.threeHoursPrice * 0.5);
+        } else if (fullHours === 2) {
             baseGamingPrice = pricing.twoHoursPrice;
-        } else if (hours === 1) {
+            if (hasHalfHour) baseGamingPrice += (pricing.twoHoursPrice * 0.5);
+        } else if (fullHours === 1) {
             baseGamingPrice = pricing.oneHourPrice;
+            if (hasHalfHour) baseGamingPrice += (pricing.oneHourPrice * 0.5);
+        } else if (fullHours === 0 && hasHalfHour) {
+            baseGamingPrice = pricing.oneHourPrice * 0.5;
         }
 
         const totalGamingPrice = baseGamingPrice * selectedPcIds.length;
@@ -362,12 +369,25 @@ export default function ReservationPage() {
         const pricing = fixedPrices.find(p => p.pcType === pcPriceType);
         if (!pricing) return 0;
 
-        const hours = Math.ceil(durationHours);
+        const fullHours = Math.floor(durationHours);
+        const hasHalfHour = durationHours % 1 !== 0;
         let baseGamingPrice = 0;
-        if (hours >= 4) baseGamingPrice = pricing.oneHourPrice * hours;
-        else if (hours === 3) baseGamingPrice = pricing.threeHoursPrice;
-        else if (hours === 2) baseGamingPrice = pricing.twoHoursPrice;
-        else if (hours === 1) baseGamingPrice = pricing.oneHourPrice;
+
+        if (fullHours >= 4) {
+            baseGamingPrice = pricing.oneHourPrice * fullHours;
+            if (hasHalfHour) baseGamingPrice += (pricing.oneHourPrice * 0.5);
+        } else if (fullHours === 3) {
+            baseGamingPrice = pricing.threeHoursPrice;
+            if (hasHalfHour) baseGamingPrice += (pricing.threeHoursPrice * 0.5);
+        } else if (fullHours === 2) {
+            baseGamingPrice = pricing.twoHoursPrice;
+            if (hasHalfHour) baseGamingPrice += (pricing.twoHoursPrice * 0.5);
+        } else if (fullHours === 1) {
+            baseGamingPrice = pricing.oneHourPrice;
+            if (hasHalfHour) baseGamingPrice += (pricing.oneHourPrice * 0.5);
+        } else if (fullHours === 0 && hasHalfHour) {
+            baseGamingPrice = pricing.oneHourPrice * 0.5;
+        }
 
         const totalGamingPrice = baseGamingPrice * selectedPcIds.length;
         let coachingFee = 0;
