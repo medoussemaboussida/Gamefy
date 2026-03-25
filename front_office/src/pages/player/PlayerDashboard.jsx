@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import { Search, Bell, CircleDot } from 'lucide-react';
 import roomImg from '../../assets/images/room.png';
@@ -7,6 +8,7 @@ import { getUserId } from '../../utils/jwt';
 import { profileApi } from '../../api/profile';
 
 const PlayerDashboard = () => {
+    const navigate = useNavigate();
     const [user, setUser] = useState(null);
 
     useEffect(() => {
@@ -31,8 +33,11 @@ const PlayerDashboard = () => {
         "RGB Lighting"
     ];
 
-    const DashboardCard = ({ image, title, features, borderRadius = "50px" }) => (
-        <div className="flex flex-col w-full max-w-[540px] transform transition-all duration-300 hover:scale-[1.02]">
+    const DashboardCard = ({ image, title, features, borderRadius = "50px", onClick }) => (
+        <div 
+            onClick={onClick}
+            className="flex flex-col w-full max-w-[540px] transform transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+        >
             <img
                 src={image}
                 alt={title}
@@ -79,9 +84,9 @@ const PlayerDashboard = () => {
                     </header>
 
                     <div className="flex justify-center text-center w-full px-4">
-                        <h1 className="text-[32px] md:text-[64px] font-black font-['Inter'] leading-tight md:leading-none tracking-tight">
+                        <h1 className="text-[32px] md:text-[50px] font-black font-['Inter'] leading-tight md:leading-none tracking-tight">
                             <span className="bg-gradient-to-r from-white to-[#2BDFC8] bg-clip-text text-transparent uppercase">
-                                WELCOME BACK , <br className="md:hidden" /> {user ? user.firstName : "..."} !
+                                WELCOME BACK , <br className="md:hidden" /> {user ? `${user.firstName} ${user.lastName}` : "..."} !
                             </span>
                         </h1>
                     </div>
@@ -93,12 +98,14 @@ const PlayerDashboard = () => {
                             title="Discover Our Rooms !"
                             features={features}
                             borderRadius="50px"
+                            onClick={() => navigate('/player/rooms')}
                         />
                         <DashboardCard
                             image={eventImg}
                             title="Upcoming Events"
                             features={features}
                             borderRadius="36px"
+                            onClick={() => navigate('/events')}
                         />
                     </div>
                 </div>
