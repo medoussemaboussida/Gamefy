@@ -6,59 +6,51 @@ import toast from "react-hot-toast";
 import { profileApi } from "../api/profile";
 import { authApi } from "../api/auth";
 import { eventApi } from "../api/event";
-import { getUserId } from "../utils/jwt";
 import ProfileForm from "../modals/ProfileForm";
 import EventDescriptionModal from "../modals/EventDescriptionModal";
+import { useUser } from "../context/UserContext";
 
 const ProfilePage = () => {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const { user, setUser, isLoadingUser } = useUser();
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [participatedEvents, setParticipatedEvents] = useState([]);
     const [descriptionModal, setDescriptionModal] = useState({ open: false, title: "", description: "" });
     const fileInputRef = useRef(null);
 
-    const fetchProfile = async () => {
-        const userId = getUserId();
-        if (!userId) {
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            const data = await profileApi.getProfile(userId);
-            setUser(data);
-
-            // Fetch participated events
-            const [participations, allEvents] = await Promise.all([
-                eventApi.getMyParticipations(),
-                eventApi.getActiveEvents()
-            ]);
-            const participatedEventIds = participations.map(p => p.eventId);
-            const userEvents = allEvents.filter(e => participatedEventIds.includes(e.id));
-            setParticipatedEvents(userEvents);
-        } catch (error) {
-            toast.error("Failed to load profile", {
-                style: {
-                    border: '1px solid #DE3D3D',
-                    padding: '16px',
-                    color: '#DE3D3D',
-                    background: '#360200',
-                },
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
+    // Only fetch events (profile comes from context)
     useEffect(() => {
-        fetchProfile();
+        const fetchEvents = async () => {
+            try {
+                const [participations, allEvents] = await Promise.all([
+                    eventApi.getMyParticipations(),
+                    eventApi.getActiveEvents()
+                ]);
+                const participatedEventIds = participations.map(p => p.eventId);
+                const userEvents = allEvents.filter(e => participatedEventIds.includes(e.id));
+                setParticipatedEvents(userEvents);
+            } catch (error) {
+                toast.error("Failed to load events", {
+                    style: {
+                        border: '1px solid #DE3D3D',
+                        padding: '16px',
+                        color: '#DE3D3D',
+                        background: '#360200',
+                    },
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchEvents();
     }, []);
 
     const handleLogout = async () => {
         try {
             await authApi.logout();
+            // Clear the global user context immediately
+            setUser(null);
         } catch (error) {
             console.error("Logout failed", error);
         } finally {
@@ -163,7 +155,8 @@ const ProfilePage = () => {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
-    if (isLoading) {
+    // Wait for both the user profile AND the events to load
+    if (isLoadingUser || isLoading) {
         return (
             <div className="min-h-screen bg-[#24003E] flex items-center justify-center">
                 <Loader2 size={48} className="text-[#1CF3CA] animate-spin" />

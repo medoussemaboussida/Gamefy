@@ -15,14 +15,14 @@ import logoCollapsed from "../assets/images/logo_collapsed.png";
 import { authApi } from "../api/auth";
 import toast from "react-hot-toast";
 
-import { getUserId, getUserRole } from "../utils/jwt";
-import { profileApi } from "../api/profile";
+import { getUserRole } from "../utils/jwt";
+import { useUser } from "../context/UserContext";
 
 const Sidebar = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [user, setUser] = useState(null);
+  const { user, setUser } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -34,20 +34,7 @@ const Sidebar = () => {
       if (!mobile) setIsMobileOpen(false);
     };
 
-    const fetchUser = async () => {
-      const userId = getUserId();
-      if (userId) {
-        try {
-          const data = await profileApi.getProfile(userId);
-          setUser(data);
-        } catch (error) {
-          console.error("Sidebar user fetch failed", error);
-        }
-      }
-    };
-
     window.addEventListener("resize", handleResize);
-    fetchUser();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -74,6 +61,8 @@ const Sidebar = () => {
     });
     try {
       await authApi.logout();
+      // Clear global user context immediately
+      setUser(null);
       localStorage.removeItem("accessToken");
       localStorage.removeItem("userRole");
       localStorage.removeItem("userId");
