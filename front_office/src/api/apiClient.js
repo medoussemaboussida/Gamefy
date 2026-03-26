@@ -27,6 +27,21 @@ apiClient.interceptors.request.use(
     }
 );
 
+// State for handling concurrent token refreshes
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
 /**
  * Response Interceptor
  * Unwraps the response data and handles automatic token refresh on 401/403.
@@ -38,9 +53,25 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // If error is 401 or 403 (Unauthorized/Forbidden) and not a retry
+        // If error is 401 or 403 (Unauthorized/Forbidden) and it's not a retry
         if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+            
+            if (isRefreshing) {
+                // If a refresh is already in progress, queue this request
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then((token) => {
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        return apiClient(originalRequest);
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err);
+                    });
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
 
             try {
                 console.log("Access token expired, attempting refresh...");
@@ -49,24 +80,34 @@ apiClient.interceptors.response.use(
                     withCredentials: true
                 });
 
-                const { accessToken, role, userId } = refreshResponse.data;
+                const { accessToken } = refreshResponse.data;
                 console.log("Token refreshed successfully");
 
-                // Store the new tokens/info
+                // Store the new token
                 localStorage.setItem("accessToken", accessToken);
 
                 // Update the original request and retry
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                
+                // Process any queued requests with the new token
+                processQueue(null, accessToken);
+                
                 return apiClient(originalRequest);
 
             } catch (refreshError) {
                 console.error("Refresh token failed or expired", refreshError);
+                
+                // Reject everything in the queue
+                processQueue(refreshError, null);
+                
                 // If refresh fails, clear everything and redirect to login
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("userRole");
                 localStorage.removeItem("userId");
                 window.location.href = "/";
                 return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
             }
         }
 
