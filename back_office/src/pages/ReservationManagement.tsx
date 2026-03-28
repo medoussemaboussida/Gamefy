@@ -10,6 +10,7 @@ import {
     TableRow,
 } from "../components/ui/table";
 import { reservationApi, ReservationDto, Reservation_Status, Reservation_Type } from "../api/reservation";
+import { userApi, UserResponseDto } from "../api/user";
 import toast from "react-hot-toast";
 import Pagination from "../components/ui/pagination/Pagination";
 import Badge from "../components/ui/badge/Badge";
@@ -152,12 +153,19 @@ export default function ReservationManagement() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedType, setSelectedType] = useState<string>("ALL");
     const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+    const [selectedCoachId, setSelectedCoachId] = useState<string>("ALL");
+    const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+    const [searchKeyword, setSearchKeyword] = useState("");
+    const [coaches, setCoaches] = useState<UserResponseDto[]>([]);
     const [isTypeOpen, setIsTypeOpen] = useState(false);
     const [isStatusOpen, setIsStatusOpen] = useState(false);
+    const [isCoachOpen, setIsCoachOpen] = useState(false);
+    const [isSortOpen, setIsSortOpen] = useState(false);
+    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Delete modal
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [selectedRes, setSelectedRes] = useState<{id: number, playerName: string} | null>(null);
+    const [selectedRes, setSelectedRes] = useState<{ id: number, playerName: string } | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
     // Status change modal
@@ -192,19 +200,62 @@ export default function ReservationManagement() {
         }
     };
 
+    const fetchCoaches = async () => {
+        try {
+            const data = await userApi.getCoaches();
+            setCoaches(data);
+        } catch (error: any) {
+            console.error("Failed to fetch coaches", error);
+        }
+    };
+
     useEffect(() => {
         fetchReservations();
+        fetchCoaches();
     }, []);
+
+    // Debounced search effect
+    useEffect(() => {
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+        debounceTimer.current = setTimeout(async () => {
+            setLoading(true);
+            try {
+                if (searchKeyword.trim()) {
+                    const data = await reservationApi.searchReservations(searchKeyword.trim());
+                    setReservations(data);
+                } else {
+                    const data = await reservationApi.getAllReservations();
+                    setReservations(data);
+                }
+            } catch (error: any) {
+                toast.error(error.message || "Search failed");
+            } finally {
+                setLoading(false);
+            }
+        }, 300);
+
+        return () => {
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        };
+    }, [searchKeyword]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [selectedType, selectedStatus]);
+    }, [selectedType, selectedStatus, selectedCoachId, sortOrder, searchKeyword]);
 
-    const filteredReservations = (reservations || []).filter((res) => {
-        const typeMatch = selectedType === "ALL" || res.reservationType === selectedType;
-        const statusMatch = selectedStatus === "ALL" || res.status === selectedStatus;
-        return typeMatch && statusMatch;
-    });
+    const filteredReservations = (reservations || [])
+        .filter((res) => {
+            const typeMatch = selectedType === "ALL" || res.reservationType === selectedType;
+            const statusMatch = selectedStatus === "ALL" || res.status === selectedStatus;
+            const coachMatch = selectedCoachId === "ALL" || res.coachId === Number(selectedCoachId);
+            return typeMatch && statusMatch && coachMatch;
+        })
+        .sort((a, b) => {
+            const dateA = new Date(a.startTime).getTime();
+            const dateB = new Date(b.startTime).getTime();
+            return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+        });
 
     const totalItems = filteredReservations.length;
     const currentReservations = filteredReservations.slice(
@@ -300,6 +351,26 @@ export default function ReservationManagement() {
             <div className="space-y-6">
                 <ComponentCard title="All Reservations">
                     <div className="flex flex-wrap items-center gap-3 mb-6">
+                        {/* Search Input */}
+                        <div className="relative">
+                            <input
+                                id="reservation-search-input"
+                                type="text"
+                                placeholder="Search by player or coach name..."
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                className="h-[38px] w-72 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-800 placeholder-gray-400 shadow-sm outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-brand-500"
+                            />
+                            {searchKeyword && (
+                                <button
+                                    onClick={() => setSearchKeyword("")}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+
                         <div className="relative">
                             <Button
                                 onClick={() => setIsTypeOpen(!isTypeOpen)}
@@ -365,6 +436,91 @@ export default function ReservationManagement() {
                                         {option.label}
                                     </DropdownItem>
                                 ))}
+                            </Dropdown>
+                        </div>
+
+                        {/* Coach Filter */}
+                        <div className="relative">
+                            <Button
+                                onClick={() => setIsCoachOpen(!isCoachOpen)}
+                                variant="primary"
+                                size="sm"
+                                className="w-48 dropdown-toggle"
+                                endIcon={
+                                    <ChevronDownIcon
+                                        className={`w-5 h-5 transition-transform duration-200 ${isCoachOpen ? "rotate-180" : ""}`}
+                                    />
+                                }
+                            >
+                                {selectedCoachId === "ALL" ? "All Coaches" : coaches.find(c => String(c.id) === selectedCoachId)?.firstName + ' ' + coaches.find(c => String(c.id) === selectedCoachId)?.lastName}
+                            </Button>
+                            <Dropdown
+                                isOpen={isCoachOpen}
+                                onClose={() => setIsCoachOpen(false)}
+                                className="w-48 mt-2 max-h-64 overflow-y-auto"
+                            >
+                                <DropdownItem
+                                    onClick={() => {
+                                        setSelectedCoachId("ALL");
+                                        setIsCoachOpen(false);
+                                    }}
+                                    className={selectedCoachId === "ALL" ? "bg-brand-50 text-brand-500" : ""}
+                                >
+                                    All Coaches
+                                </DropdownItem>
+                                {coaches.map((coach) => (
+                                    <DropdownItem
+                                        key={coach.id}
+                                        onClick={() => {
+                                            setSelectedCoachId(String(coach.id));
+                                            setIsCoachOpen(false);
+                                        }}
+                                        className={selectedCoachId === String(coach.id) ? "bg-brand-50 text-brand-500" : ""}
+                                    >
+                                        {coach.firstName} {coach.lastName}
+                                    </DropdownItem>
+                                ))}
+                            </Dropdown>
+                        </div>
+
+                        {/* Sort Order */}
+                        <div className="relative">
+                            <Button
+                                onClick={() => setIsSortOpen(!isSortOpen)}
+                                variant="primary"
+                                size="sm"
+                                className="w-40 dropdown-toggle"
+                                endIcon={
+                                    <ChevronDownIcon
+                                        className={`w-5 h-5 transition-transform duration-200 ${isSortOpen ? "rotate-180" : ""}`}
+                                    />
+                                }
+                            >
+                                {sortOrder === "newest" ? "Newest " : "Oldest"}
+                            </Button>
+                            <Dropdown
+                                isOpen={isSortOpen}
+                                onClose={() => setIsSortOpen(false)}
+                                className="w-40 mt-2"
+                            >
+                                <DropdownItem
+                                    onClick={() => {
+                                        setSortOrder("newest");
+                                        setIsSortOpen(false);
+                                    }}
+                                    className={sortOrder === "newest" ? "bg-brand-50 text-brand-500" : ""}
+                                >
+                                    Newest First
+                                </DropdownItem>
+                                <DropdownItem
+                                    onClick={() => {
+                                        setSortOrder("oldest");
+                                        setIsSortOpen(false);
+                                    }}
+                                    className={sortOrder === "oldest" ? "bg-brand-50 text-brand-500" : ""}
+                                >
+                                    Oldest First
+                                </DropdownItem>
                             </Dropdown>
                         </div>
                     </div>

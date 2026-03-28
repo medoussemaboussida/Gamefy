@@ -73,6 +73,12 @@ public class ReservationController {
         return ResponseEntity.ok(service.getAllReservations());
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<List<ReservationDto>> searchReservations(@RequestParam String keyword) {
+        return ResponseEntity.ok(service.searchReservations(keyword));
+    }
+
     /**
      * Set cash payment type on a reservation (status stays PENDING).
      */

@@ -34,6 +34,18 @@ public class UserService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    public List<UserResponseDto> searchUsers(String keyword) {
+        return repository.searchByName(keyword).stream()
+                .map(this::mapToResponseDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public List<UserResponseDto> getCoaches() {
+        return repository.findByRole(Roles.COACH).stream()
+                .map(this::mapToResponseDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     public UserResponseDto createUser(CreateUserDto request) {
         // ... (body same as before but return mapToResponseDto)
         // Only ADMIN or WEB_MASTER can be created via this method

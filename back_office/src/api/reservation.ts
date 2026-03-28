@@ -33,6 +33,10 @@ export const reservationApi = {
         return apiClient.get("/gamefy/reservations");
     },
 
+    searchReservations: async (keyword: string): Promise<ReservationDto[]> => {
+        return apiClient.get("/gamefy/reservations/search", { params: { keyword } });
+    },
+
     deleteReservation: async (id: number): Promise<void> => {
         await apiClient.delete(`/gamefy/reservations/${id}`);
     },

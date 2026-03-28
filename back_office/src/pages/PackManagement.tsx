@@ -149,7 +149,7 @@ export default function PackManagement() {
                                     className="w-40 dropdown-toggle"
                                     endIcon={<ChevronDownIcon className={`w-5 h-5 transition-transform duration-200 ${isSortOrderOpen ? "rotate-180" : ""}`} />}
                                 >
-                                    Order: {sortOrder === "asc" ? "Ascending" : "Descending"}
+                                    {sortOrder === "asc" ? "Ascending" : "Descending"}
                                 </Button>
                                 <Dropdown isOpen={isSortOrderOpen} onClose={() => setIsSortOrderOpen(false)} className="w-40 mt-2">
                                     <DropdownItem

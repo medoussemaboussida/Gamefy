@@ -198,4 +198,31 @@ public class PaymentService {
                 })
                 .toList();
     }
+
+    public List<PaymentDtos.AllPaymentResponse> searchPayments(String keyword) {
+        return paymentRepository.searchByUserName(keyword).stream()
+                .map(payment -> {
+                    String userName = "Unknown";
+                    if (payment.getUser() != null) {
+                        userName = payment.getUser().getFirstName() + " " + payment.getUser().getLastName();
+                    }
+
+                    String paidFor = "Other";
+                    if (payment.getReservation() != null) {
+                        paidFor = "Reservation";
+                    } else if (payment.getPackGamefy() != null) {
+                        paidFor = "Pack Gamefy: " + payment.getPackGamefy().getName();
+                    } else if (payment.getPackCoaching() != null) {
+                        paidFor = "Pack Coaching: " + payment.getPackCoaching().getName();
+                    }
+
+                    return PaymentDtos.AllPaymentResponse.builder()
+                            .id(payment.getId())
+                            .userName(userName)
+                            .paidFor(paidFor)
+                            .totalPrice(payment.getTotalPrice())
+                            .build();
+                })
+                .toList();
+    }
 }

@@ -32,6 +32,12 @@ export const userApi = {
     getAllUsers: async (): Promise<UserResponseDto[]> => {
         return apiClient.get("/gamefy/users");
     },
+    searchUsers: async (keyword: string): Promise<UserResponseDto[]> => {
+        return apiClient.get("/gamefy/users/search", { params: { keyword } });
+    },
+    getCoaches: async (): Promise<UserResponseDto[]> => {
+        return apiClient.get("/gamefy/users/coaches");
+    },
     createUser: async (dto: CreateUserRequestDto): Promise<UserResponseDto> => {
         return apiClient.post("/gamefy/users", dto);
     },
