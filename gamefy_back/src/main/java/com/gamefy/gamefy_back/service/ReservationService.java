@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.service;
 
+import com.gamefy.gamefy_back.dto.CreateReservationDto;
 import com.gamefy.gamefy_back.dto.ReservationDto;
 import com.gamefy.gamefy_back.model.*;
 import com.gamefy.gamefy_back.model.enums.*;
@@ -39,7 +40,7 @@ public class ReservationService {
      * For each selected PC, a PcAvailability record is created to block that time slot.
      */
     @CacheEvict(value = "reservations", allEntries = true)
-    public ReservationDto createReservation(ReservationDto dto, Integer userId) {
+    public ReservationDto createReservation(CreateReservationDto dto, Integer userId) {
         User player = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -176,16 +177,7 @@ public class ReservationService {
         }
 
         // Return the DTO with the generated ID
-        return ReservationDto.builder()
-                .id(saved.getId())
-                .reservationType(saved.getReservationType())
-                .startTime(saved.getStartTime())
-                .endTime(saved.getEndTime())
-                .pcIds(dto.getPcIds())
-                .coachId(dto.getCoachId())
-                .game(dto.getGame())
-                .priceTime(saved.getPriceTime())
-                .build();
+        return mapToDto(saved);
     }
 
     /**
