@@ -10,6 +10,8 @@ import com.gamefy.gamefy_back.model.enums.UserStatus;
 import com.gamefy.gamefy_back.repository.SubscriptionRepository;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ public class UserService {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
     private static final SecureRandom random = new SecureRandom();
 
+    @Cacheable(value = "users")
     public List<UserResponseDto> getAllUsers() {
         return repository.findAll().stream()
                 .map(this::mapToResponseDto)
@@ -46,6 +49,7 @@ public class UserService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     public UserResponseDto createUser(CreateUserDto request) {
         // ... (body same as before but return mapToResponseDto)
         // Only ADMIN or WEB_MASTER can be created via this method
@@ -76,6 +80,7 @@ public class UserService {
         return mapToResponseDto(savedUser);
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     public void deleteUser(Integer id) {
         User user = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
@@ -87,6 +92,7 @@ public class UserService {
         repository.delete(user);
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     public UserResponseDto updateUserStatus(Long userId, Boolean enabled) {
         User user = repository.findById(userId.intValue())
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -111,6 +117,7 @@ public class UserService {
         return mapToResponseDto(user);
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     public UserResponseDto updateProfile(Integer userId, UpdateProfileDto request) {
         User user = repository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));

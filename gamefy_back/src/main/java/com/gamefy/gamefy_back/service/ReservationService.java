@@ -6,6 +6,8 @@ import com.gamefy.gamefy_back.model.enums.*;
 import com.gamefy.gamefy_back.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,7 @@ public class ReservationService {
      * Create a reservation with multiple PCs.
      * For each selected PC, a PcAvailability record is created to block that time slot.
      */
+    @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto createReservation(ReservationDto dto, Integer userId) {
         User player = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -189,6 +192,7 @@ public class ReservationService {
      * Confirm a reservation after card payment succeeds.
      * Sets paymentType to CARD_PAYMENT and status to CONFIRMED.
      */
+    @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto confirmCardPayment(Integer reservationId, Payment_Type paymentType, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
@@ -218,6 +222,7 @@ public class ReservationService {
      * Set payment type to CASH_PAYMENT but keep status as PENDING.
      * The player will pay at the location; admin confirms later.
      */
+    @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto setCashPaymentType(Integer reservationId, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
@@ -298,6 +303,7 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "reservations")
     public List<ReservationDto> getAllReservations() {
         return reservationRepository.findAll()
                 .stream()
@@ -313,6 +319,7 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "reservations", allEntries = true)
     public void deleteReservation(Integer id) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
@@ -342,6 +349,7 @@ public class ReservationService {
      * - PENDING / CANCELLED → just updates the status; scheduler auto-deletes
      *   PENDING/CANCELLED reservations whose createdAt is older than 24 hours.
      */
+    @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto updateStatus(Integer reservationId, String newStatus) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + reservationId));
@@ -438,6 +446,7 @@ public class ReservationService {
      * whose createdAt is older than 24 hours.
      */
     @Scheduled(fixedRate = 900000)
+    @CacheEvict(value = "reservations", allEntries = true)
     public void cleanupExpiredReservations() {
         LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
 

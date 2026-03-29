@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 public class PaymentDtos {
 
     @Data
@@ -26,7 +28,7 @@ public class PaymentDtos {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class AllPaymentResponse {
+    public static class AllPaymentResponse implements Serializable {
         private Integer id;
         private String userName;
         private String paidFor;
