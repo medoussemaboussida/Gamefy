@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer, Filter } from "lucide-react";
 
-import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment } from "../../api/reservation";
+import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment, activateGamefyPackForReservation } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
 import Pagination from "../../components/pagination/Pagination";
 import ReservationPaymentModal from "../../components/payment/ReservationPaymentModal";
 import CashPaymentModal from "../../modals/CashPaymentModal";
 import toast from "react-hot-toast";
+import { packGamefyApi } from "../../api/packGamefy";
+import { useUser } from "../../context/UserContext";
 
 // Live countdown for PENDING reservation expiry
 const CountdownTimer = ({ createdAt, onExpired }) => {
@@ -58,6 +60,7 @@ const CountdownTimer = ({ createdAt, onExpired }) => {
 
 const Rooms = () => {
     const navigate = useNavigate();
+    const { user, isLoadingUser } = useUser();
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState("newest");
@@ -65,6 +68,15 @@ const Rooms = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 3;
+
+    // Active Gamefy pack (used for "activate gamefy pack" button)
+    const [packGamefy, setPackGamefy] = useState(null);
+    const [packLoading, setPackLoading] = useState(false);
+
+    // Gamefy pack activation modal state
+    const [activateModalOpen, setActivateModalOpen] = useState(false);
+    const [activateReservation, setActivateReservation] = useState(null);
+    const [activateLoading, setActivateLoading] = useState(false);
 
     // Payment confirmation state
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -97,6 +109,26 @@ const Rooms = () => {
         return () => clearInterval(interval);
     }, [fetchReservations]);
 
+    useEffect(() => {
+        if (isLoadingUser) return;
+
+        const packId = user?.packGamefyId;
+        if (!packId) {
+            setPackGamefy(null);
+            return;
+        }
+
+        setPackLoading(true);
+        packGamefyApi.getPackById(packId)
+            .then((data) => setPackGamefy(data))
+            .catch((err) => {
+                console.error("Failed to load pack", err);
+                toast.error("Failed to load your Gamefy pack");
+                setPackGamefy(null);
+            })
+            .finally(() => setPackLoading(false));
+    }, [user?.packGamefyId, isLoadingUser]);
+
     const handleConfirmClick = (reservation) => {
         setSelectedReservation(reservation);
         setConfirmModalOpen(true);
@@ -119,6 +151,71 @@ const Rooms = () => {
 
     const shouldShowCountdown = (res) => (res.status === "PENDING" && !res.paymentType) || res.status === "CANCELLED";
     const needsConfirmation = (res) => res.status === "PENDING" && !res.paymentType;
+
+    const mapReservationTypeToBenefitType = (reservationType) => {
+        switch (reservationType) {
+            case "PC_ROOM":
+                return "PC";
+            case "VIP_ROOM":
+                return "VIP";
+            case "COACHING_ROOM":
+                return "COACH";
+            default:
+                return null;
+        }
+    };
+
+    const getBenefitCountsForReservationType = (reservationType) => {
+        if (!packGamefy?.benefits?.length) return { discountCount: 0, hoursCount: 0 };
+
+        const benefitType = mapReservationTypeToBenefitType(reservationType);
+        if (!benefitType) return { discountCount: 0, hoursCount: 0 };
+
+        const matching = packGamefy.benefits.filter((b) => b.benefitType === benefitType);
+        return {
+            discountCount: matching.filter((b) => b.rateRule === "DISCOUNT").length,
+            hoursCount: matching.filter((b) => b.rateRule === "HOURS").length,
+        };
+    };
+
+    const isActivatePackDisabled = (res) => {
+        if (!user?.packGamefyId) return true;
+        if (res?.gamefyPackActivated) return true;
+        if (res.status !== "PENDING") return true;
+        if (res.paymentType) return true; // only on pending reservations without payment choice
+        if (packLoading && !packGamefy) return true;
+
+        const { discountCount, hoursCount } = getBenefitCountsForReservationType(res.reservationType);
+        return discountCount + hoursCount <= 0;
+    };
+
+    const toIsoUTC = (isoString) => (isoString?.includes("Z") ? isoString : isoString + "Z");
+    const addHoursToIsoUTC = (isoString, hours) => {
+        const d = new Date(toIsoUTC(isoString));
+        return new Date(d.getTime() + hours * 60 * 60 * 1000).toISOString();
+    };
+
+    const handleActivatePackClick = (reservation) => {
+        if (isActivatePackDisabled(reservation)) return;
+        setActivateReservation(reservation);
+        setActivateModalOpen(true);
+    };
+
+    const handleConfirmActivatePack = async () => {
+        if (!activateReservation) return;
+        setActivateLoading(true);
+        try {
+            await activateGamefyPackForReservation(activateReservation.id);
+            toast.success("Gamefy pack activated");
+            setActivateModalOpen(false);
+            setActivateReservation(null);
+            await fetchReservations();
+        } catch (error) {
+            toast.error(error?.message || "Failed to activate pack");
+        } finally {
+            setActivateLoading(false);
+        }
+    };
 
     const handleCardPayment = async () => {
         if (!selectedReservation) return;
@@ -335,14 +432,25 @@ const Rooms = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 lg:px-8 py-5 text-right">
-                                                    {needsConfirmation(res) && (
+                                                    <div className="flex flex-col items-end gap-2">
                                                         <button
-                                                            onClick={() => handleConfirmClick(res)}
-                                                            className="px-4 py-2 bg-[#1CF3CA] text-black text-xs font-black uppercase tracking-wider rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_15px_rgba(28,243,202,0.2)]"
+                                                            onClick={() => handleActivatePackClick(res)}
+                                                            disabled={isActivatePackDisabled(res) || (activateLoading && activateReservation?.id === res.id)}
+                                                            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 shadow-[0_0_15px_rgba(28,243,202,0.2)] 
+                                                                ${isActivatePackDisabled(res) ? "bg-white/5 text-white/40 border border-white/10 cursor-not-allowed" : "bg-[#DD00B8] text-white hover:opacity-90 border border-[#DD00B8]/30"}`}
                                                         >
-                                                            Confirm
+                                                            {activateLoading && activateReservation?.id === res.id ? "Activating..." : "activate gamefy pack"}
                                                         </button>
-                                                    )}
+
+                                                        {needsConfirmation(res) && (
+                                                            <button
+                                                                onClick={() => handleConfirmClick(res)}
+                                                                className="px-4 py-2 bg-[#1CF3CA] text-black text-xs font-black uppercase tracking-wider rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_15px_rgba(28,243,202,0.2)]"
+                                                            >
+                                                                Confirm
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -401,7 +509,20 @@ const Rooms = () => {
                                             </span>
                                         </div>
 
-                                        {/* Confirm button for PENDING without paymentType */}
+                                        {/* Activate pack + Confirm (pending only) */}
+                                        <button
+                                            onClick={() => handleActivatePackClick(res)}
+                                            disabled={isActivatePackDisabled(res) || (activateLoading && activateReservation?.id === res.id)}
+                                            className={`w-full mt-2 py-2.5 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 shadow-[0_0_15px_rgba(28,243,202,0.2)]
+                                                ${isActivatePackDisabled(res)
+                                                    ? "bg-white/5 text-white/40 border border-white/10 cursor-not-allowed"
+                                                    : "bg-[#DD00B8] text-white hover:opacity-90 border border-[#DD00B8]/30"}`}
+                                        >
+                                            {activateLoading && activateReservation?.id === res.id
+                                                ? "Activating..."
+                                                : "activate gamefy pack"}
+                                        </button>
+
                                         {needsConfirmation(res) && (
                                             <button
                                                 onClick={() => handleConfirmClick(res)}
@@ -529,6 +650,107 @@ const Rooms = () => {
                                     </span>
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Gamefy Pack Activation Modal ─── */}
+            {activateModalOpen && activateReservation && (
+                <div
+                    className="fixed inset-0 z-[105] flex items-center justify-center p-4"
+                    style={{ background: "rgba(10, 0, 20, 0.85)", backdropFilter: "blur(12px)" }}
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setActivateModalOpen(false);
+                            setActivateReservation(null);
+                        }
+                    }}
+                >
+                    <div
+                        className="relative w-full max-w-md rounded-[32px] overflow-hidden"
+                        style={{
+                            background: "linear-gradient(145deg, #2a0045, #1a0030)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            boxShadow: "0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(28,243,202,0.05)",
+                        }}
+                    >
+                        <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #DD00B8, #1CF3CA)" }} />
+
+                        <div className="flex items-start justify-between px-8 pt-7 pb-3">
+                            <div>
+                                <p className="text-[10px] font-black tracking-[0.25em] uppercase text-[#DD00B8]/60 mb-1">
+                                    Activate Gamefy Pack
+                                </p>
+                                <h2 className="text-xl font-black uppercase italic tracking-tight text-white">
+                                    {activateReservation.reservationType.replace('_', ' ')}
+                                </h2>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setActivateModalOpen(false);
+                                    setActivateReservation(null);
+                                }}
+                                className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-all border border-white/10"
+                            >
+                                <X size={16} className="text-white/60" />
+                            </button>
+                        </div>
+
+                        <div className="px-8 pb-8 space-y-5">
+                            <div className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(221, 0, 184, 0.05)", border: "1px solid rgba(221, 0, 184, 0.12)" }}>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-black uppercase text-white/30">Date</span>
+                                    <span className="text-xs font-bold text-white">
+                                        {formatDate(activateReservation.startTime)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-black uppercase text-white/30">Time</span>
+                                    <span className="text-xs font-black text-white">
+                                        {formatTime(activateReservation.startTime)} → {formatTime(activateReservation.endTime)}
+                                        {getBenefitCountsForReservationType(activateReservation.reservationType).hoursCount > 0 && (
+                                            <>
+                                                {" "}
+                                                <span className="text-[#1CF3CA]">
+                                                    (new: {formatTime(
+                                                        addHoursToIsoUTC(
+                                                            activateReservation.endTime,
+                                                            getBenefitCountsForReservationType(activateReservation.reservationType).hoursCount
+                                                        )
+                                                    )})
+                                                </span>
+                                            </>
+                                        )}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between items-center pt-2 border-t border-dashed border-white/10">
+                                    <span className="text-[10px] font-black uppercase text-[#1CF3CA]">Total</span>
+                                    <span className="text-lg font-black text-[#DD00B8] italic">
+                                        {(() => {
+                                            const { discountCount } = getBenefitCountsForReservationType(activateReservation.reservationType);
+                                            const reduction = packGamefy?.price ? (packGamefy.price / 2) * discountCount : 0;
+                                            const newPrice = Math.max(0, (activateReservation.priceTime || 0) - reduction);
+                                            return `${newPrice.toFixed(3)} DT`;
+                                        })()}
+                                    </span>
+                                </div>
+
+                                {getBenefitCountsForReservationType(activateReservation.reservationType).discountCount > 0 && (
+                                    <div className="text-[11px] text-white/60 pt-2">
+                                        Discount applied from your pack benefits
+                                    </div>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={handleConfirmActivatePack}
+                                disabled={activateLoading}
+                                className="w-full py-4 rounded-2xl bg-[#DD00B8] text-white font-bold text-lg hover:bg-[#DD00B8]/90 transition-all shadow-[0_0_20px_rgba(255,0,184,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {activateLoading ? "Activating..." : "Confirm activation"}
+                            </button>
                         </div>
                     </div>
                 </div>

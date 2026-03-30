@@ -34,12 +34,6 @@ public class Reservation {
     @JoinColumn(name = "player_id", nullable = false)
     private User player;
 
-    @Column(name = "coach_location")
-    private String coachLocation;
-
-    @Column(name = "player_location")
-    private String playerLocation;
-
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
 
@@ -60,6 +54,12 @@ public class Reservation {
 
     @Column(name = "price_time")
     private Double priceTime;
+
+    /**
+     * Prevent applying the Gamefy pack benefits multiple times on the same reservation.
+     */
+    @Column(name = "gamefy_pack_activated")
+    private Boolean gamefyPackActivated = false;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -92,8 +92,6 @@ public class Reservation {
                 "id=" + id +
                 ", coach=" + coach +
                 ", player=" + player +
-                ", coachLocation='" + coachLocation + '\'' +
-                ", playerLocation='" + playerLocation + '\'' +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
                 ", paymentType=" + paymentType +

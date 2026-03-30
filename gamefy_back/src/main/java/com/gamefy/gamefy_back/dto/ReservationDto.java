@@ -26,6 +26,7 @@ public class ReservationDto implements Serializable {
     private String playerName;
     private Double priceTime;
     private Payment_Type paymentType;
+    private Boolean gamefyPackActivated;
     private LocalDateTime createdAt;
     private Integer coachId;
     private String coachName;

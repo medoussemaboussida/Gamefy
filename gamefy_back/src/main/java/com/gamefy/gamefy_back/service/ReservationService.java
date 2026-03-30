@@ -231,6 +231,137 @@ public class ReservationService {
     }
 
     /**
+     * Applies the player's active Gamefy pack benefits to a pending reservation.
+     * - HOURS: extends reservation endTime by +1 hour per matching benefit
+     * - DISCOUNT: reduces reservation priceTime by (pack.price/2) per matching benefit
+     *
+     * Note: This does not confirm the reservation; payment confirmation still happens later.
+     */
+    public ReservationDto activateGamefyPack(Integer reservationId, Integer userId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + reservationId));
+
+        if (!reservation.getPlayer().getId().equals(userId)) {
+            throw new RuntimeException("This reservation does not belong to you");
+        }
+
+        if (Boolean.TRUE.equals(reservation.getGamefyPackActivated())) {
+            throw new RuntimeException("Gamefy pack already activated for this reservation");
+        }
+
+        if (reservation.getStatus() != Reservation_Status.PENDING) {
+            throw new RuntimeException("Only PENDING reservations can be activated with a pack");
+        }
+
+        // UI constraint: pack activation is only allowed before paymentType is set.
+        if (reservation.getPaymentType() != null) {
+            throw new RuntimeException("Pack activation is allowed only before choosing a payment method");
+        }
+
+        User player = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
+        PackGamefy pack = player.getPackGamefy();
+        if (pack == null) {
+            throw new RuntimeException("No active Gamefy pack found for this player");
+        }
+
+        Benefit_type wantedBenefitType = mapReservationTypeToBenefitType(reservation.getReservationType());
+        if (wantedBenefitType == null) {
+            throw new RuntimeException("Unsupported reservation type: " + reservation.getReservationType());
+        }
+
+        List<GamefyPackBenefit> matchingBenefits = (pack.getBenefits() == null ? List.<GamefyPackBenefit>of() : pack.getBenefits())
+                .stream()
+                .filter(b -> b.getBenefitType() == wantedBenefitType)
+                .toList();
+
+        int discountCount = (int) matchingBenefits.stream()
+                .filter(b -> b.getRateRule() == Rate_Rule.DISCOUNT)
+                .count();
+        int hoursCount = (int) matchingBenefits.stream()
+                .filter(b -> b.getRateRule() == Rate_Rule.HOURS)
+                .count();
+
+        if (discountCount == 0 && hoursCount == 0) {
+            throw new RuntimeException("This pack has no matching benefits for the reservation type");
+        }
+
+        LocalDateTime newEndTime = reservation.getEndTime();
+
+        // HOURS benefits: extend reservation end time + update associated slot tables
+        if (hoursCount > 0) {
+            LocalDateTime originalEndTime = reservation.getEndTime();
+            newEndTime = originalEndTime.plusHours(hoursCount);
+
+            // Availability conflict check for all involved PCs
+            if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
+                Set<Integer> currentPcIds = reservation.getPcAvailabilities().stream()
+                        .map(pa -> pa.getPc().getId())
+                        .collect(Collectors.toSet());
+
+                List<PcAvailability> overlaps = pcAvailabilityRepository
+                        .findByStartTimeLessThanAndEndTimeGreaterThan(newEndTime, reservation.getStartTime());
+
+                boolean hasConflict = overlaps.stream()
+                        .filter(pa -> pa.getPc() != null && currentPcIds.contains(pa.getPc().getId()))
+                        .filter(pa -> pa.getReservation() != null && !pa.getReservation().getId().equals(reservationId))
+                        .findAny()
+                        .isPresent();
+
+                if (hasConflict) {
+                    throw new RuntimeException("Cannot activate pack: selected PCs are already booked for the extended time");
+                }
+            }
+
+            // Update end times on linked slot records
+            if (reservation.getPcAvailabilities() != null) {
+                for (PcAvailability pa : reservation.getPcAvailabilities()) {
+                    pa.setEndTime(newEndTime);
+                }
+            }
+
+            if (reservation.getCoachingSlots() != null) {
+                for (CoachingSlot slot : reservation.getCoachingSlots()) {
+                    slot.setEndTime(newEndTime);
+                }
+            }
+
+            reservation.setEndTime(newEndTime);
+
+            if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
+                pcAvailabilityRepository.saveAll(reservation.getPcAvailabilities());
+            }
+            if (reservation.getCoachingSlots() != null && !reservation.getCoachingSlots().isEmpty()) {
+                coachingSlotRepository.saveAll(reservation.getCoachingSlots());
+            }
+        }
+
+        // DISCOUNT benefits: reduce priceTime
+        if (discountCount > 0) {
+            Double currentPrice = reservation.getPriceTime();
+            if (currentPrice == null) currentPrice = 0.0;
+
+            double reduction = (pack.getPrice() / 2.0) * discountCount;
+            double updatedPrice = Math.max(0.0, currentPrice - reduction);
+            reservation.setPriceTime(updatedPrice);
+        }
+
+        reservation.setGamefyPackActivated(true);
+        Reservation saved = reservationRepository.save(reservation);
+        return mapToDto(saved);
+    }
+
+    private Benefit_type mapReservationTypeToBenefitType(Reservation_Type reservationType) {
+        return switch (reservationType) {
+            case PC_ROOM -> Benefit_type.PC;
+            case VIP_ROOM -> Benefit_type.VIP;
+            case COACHING_ROOM -> Benefit_type.COACH;
+            default -> null;
+        };
+    }
+
+    /**
      * Get all PCs of a given type with their availability status for a time range.
      * Returns a list of maps with PC info and whether they are available.
      */
@@ -390,6 +521,7 @@ public class ReservationService {
                 .status(reservation.getStatus())
                 .priceTime(reservation.getPriceTime())
                 .paymentType(reservation.getPaymentType())
+                .gamefyPackActivated(reservation.getGamefyPackActivated())
                 .createdAt(reservation.getCreatedAt())
                 .playerName(reservation.getPlayer().getFirstName() + " " + reservation.getPlayer().getLastName())
                 .pcNumbers(reservation.getPcAvailabilities().stream()

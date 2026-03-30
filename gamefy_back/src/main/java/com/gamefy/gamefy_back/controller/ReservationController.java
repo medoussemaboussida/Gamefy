@@ -92,6 +92,19 @@ public class ReservationController {
         return ResponseEntity.ok(service.setCashPaymentType(id, user.getId()));
     }
 
+    /**
+     * Player activates his active Gamefy pack benefits on a pending reservation.
+     * This modifies the reservation's end time and/or price according to matching pack benefits.
+     */
+    @PutMapping("/{id}/activate-gamefy-pack")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<ReservationDto> activateGamefyPack(
+            @PathVariable Integer id,
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(service.activateGamefyPack(id, user.getId()));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
     public ResponseEntity<Void> deleteReservation(@PathVariable Integer id) {
