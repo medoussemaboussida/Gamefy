@@ -38,6 +38,17 @@ public class UserController {
         return ResponseEntity.ok(service.getAllUsers());
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<List<UserResponseDto>> searchUsers(@RequestParam String keyword) {
+        return ResponseEntity.ok(service.searchUsers(keyword));
+    }
+
+    @GetMapping("/coaches")
+    public ResponseEntity<List<UserResponseDto>> getCoaches() {
+        return ResponseEntity.ok(service.getCoaches());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Integer id) {
         return ResponseEntity.ok(service.getUserById(id));

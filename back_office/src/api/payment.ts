@@ -14,4 +14,7 @@ export const paymentApi = {
     getAllPayments: async (): Promise<AllPaymentResponseDto[]> => {
         return apiClient.get("/gamefy/payments");
     },
+    searchPayments: async (keyword: string): Promise<AllPaymentResponseDto[]> => {
+        return apiClient.get("/gamefy/payments/search", { params: { keyword } });
+    },
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
 import ComponentCard from "../components/common/ComponentCard";
 import PageMeta from "../components/common/PageMeta";
@@ -38,8 +38,10 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [searchKeyword, setSearchKeyword] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isRoleOpen, setIsRoleOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
@@ -88,9 +90,35 @@ export default function UserManagement() {
     fetchUsers();
   }, []);
 
+  // Debounced search effect
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+    debounceTimer.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        if (searchKeyword.trim()) {
+          const data = (await userApi.searchUsers(searchKeyword.trim())) as any;
+          setUsers(data as User[]);
+        } else {
+          const data = (await userApi.getAllUsers()) as any;
+          setUsers(data as User[]);
+        }
+      } catch (error: any) {
+        toast.error(error.message || "Search failed");
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [searchKeyword]);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedRole, selectedStatus]);
+  }, [selectedRole, selectedStatus, searchKeyword]);
 
   const filteredUsers = users.filter((user) => {
     const roleMatch = selectedRole === "ALL" || user.role === selectedRole;
@@ -178,6 +206,26 @@ export default function UserManagement() {
       <div className="space-y-6">
         <ComponentCard title="Platform Users">
           <div className="flex flex-wrap items-center gap-3 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <input
+                id="user-search-input"
+                type="text"
+                placeholder="Search by name..."
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                className="h-[38px] w-64 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-800 placeholder-gray-400 shadow-sm outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-brand-500"
+              />
+              {searchKeyword && (
+                <button
+                  onClick={() => setSearchKeyword("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             <div className="relative">
               <Button
                 onClick={() => setIsRoleOpen(!isRoleOpen)}

@@ -7,9 +7,11 @@ import wallpaper from "../../assets/images/Auth_second_wallpaper.png";
 import google_icon from "../../assets/icons/google.png";
 import { authApi } from "../../api/auth";
 import toast from "react-hot-toast";
+import { useUser } from "../../context/UserContext";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const { refreshUser } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +46,6 @@ const SignIn = () => {
       [name]: value,
     }));
     validateField(name, value);
-    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -91,6 +92,9 @@ const SignIn = () => {
 
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("userId", response.userId);
+
+      // Refresh the global user context immediately after login
+      refreshUser();
 
       toast.success("Welcome back!", {
         id: loadingToast,
@@ -161,6 +165,9 @@ const SignIn = () => {
         // Send access_token to backend
         const response = await authApi.googleLogin({ idToken: tokenResponse.access_token });
         localStorage.setItem("accessToken", response.accessToken);
+        
+        // Refresh the global user context
+        refreshUser();
 
         toast.success("Signed in with Google!", {
           id: loadingToast,

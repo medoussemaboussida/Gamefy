@@ -21,7 +21,7 @@ public class Subscription {
     private User player;
 
     @Column(name = "total_hours", nullable = false)
-    private Integer totalHours;
+    private Double totalHours;
 
     @Override
     public String toString() {

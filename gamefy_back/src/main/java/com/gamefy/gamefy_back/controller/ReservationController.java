@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.controller;
 
+import com.gamefy.gamefy_back.dto.CreateReservationDto;
 import com.gamefy.gamefy_back.dto.ReservationDto;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.enums.Payment_Type;
@@ -25,7 +26,7 @@ public class ReservationController {
     @PostMapping
     @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
     public ResponseEntity<ReservationDto> createReservation(
-            @RequestBody ReservationDto dto,
+            @RequestBody CreateReservationDto dto,
             Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         return ResponseEntity.ok(service.createReservation(dto, user.getId()));
@@ -71,6 +72,12 @@ public class ReservationController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
     public ResponseEntity<List<ReservationDto>> getAllReservations() {
         return ResponseEntity.ok(service.getAllReservations());
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<List<ReservationDto>> searchReservations(@RequestParam String keyword) {
+        return ResponseEntity.ok(service.searchReservations(keyword));
     }
 
     /**

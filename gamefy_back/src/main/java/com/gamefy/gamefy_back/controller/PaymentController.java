@@ -131,4 +131,10 @@ public class PaymentController {
     public ResponseEntity<List<PaymentDtos.AllPaymentResponse>> getAllPayments() {
         return ResponseEntity.ok(paymentService.getAllPayments());
     }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<List<PaymentDtos.AllPaymentResponse>> searchPayments(@RequestParam String keyword) {
+        return ResponseEntity.ok(paymentService.searchPayments(keyword));
+    }
 }

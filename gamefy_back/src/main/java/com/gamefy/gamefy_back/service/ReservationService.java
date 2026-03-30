@@ -1,11 +1,14 @@
 package com.gamefy.gamefy_back.service;
 
+import com.gamefy.gamefy_back.dto.CreateReservationDto;
 import com.gamefy.gamefy_back.dto.ReservationDto;
 import com.gamefy.gamefy_back.model.*;
 import com.gamefy.gamefy_back.model.enums.*;
 import com.gamefy.gamefy_back.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,12 +33,14 @@ public class ReservationService {
     private final CoachingSessionRepository coachingSessionRepository;
     private final CoachProfileRepository coachProfileRepository;
     private final PaymentRepository paymentRepository;
+    private final SubscriptionService subscriptionService;
 
     /**
      * Create a reservation with multiple PCs.
      * For each selected PC, a PcAvailability record is created to block that time slot.
      */
-    public ReservationDto createReservation(ReservationDto dto, Integer userId) {
+    @CacheEvict(value = "reservations", allEntries = true)
+    public ReservationDto createReservation(CreateReservationDto dto, Integer userId) {
         User player = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -172,22 +177,14 @@ public class ReservationService {
         }
 
         // Return the DTO with the generated ID
-        return ReservationDto.builder()
-                .id(saved.getId())
-                .reservationType(saved.getReservationType())
-                .startTime(saved.getStartTime())
-                .endTime(saved.getEndTime())
-                .pcIds(dto.getPcIds())
-                .coachId(dto.getCoachId())
-                .game(dto.getGame())
-                .priceTime(saved.getPriceTime())
-                .build();
+        return mapToDto(saved);
     }
 
     /**
      * Confirm a reservation after card payment succeeds.
      * Sets paymentType to CARD_PAYMENT and status to CONFIRMED.
      */
+    @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto confirmCardPayment(Integer reservationId, Payment_Type paymentType, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
@@ -200,9 +197,15 @@ public class ReservationService {
             throw new RuntimeException("Only PENDING reservations can be confirmed");
         }
 
+        Reservation_Status oldStatus = reservation.getStatus();
         reservation.setPaymentType(paymentType);
         reservation.setStatus(Reservation_Status.CONFIRMED);
         Reservation saved = reservationRepository.save(reservation);
+
+        // Transition: Not Confirmed -> Confirmed
+        if (oldStatus != Reservation_Status.CONFIRMED) {
+            subscriptionService.addHoursForConfirmedReservation(saved);
+        }
 
         return mapToDto(saved);
     }
@@ -211,6 +214,7 @@ public class ReservationService {
      * Set payment type to CASH_PAYMENT but keep status as PENDING.
      * The player will pay at the location; admin confirms later.
      */
+    @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto setCashPaymentType(Integer reservationId, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
@@ -291,6 +295,7 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "reservations")
     public List<ReservationDto> getAllReservations() {
         return reservationRepository.findAll()
                 .stream()
@@ -299,12 +304,25 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
+    public List<ReservationDto> searchReservations(String keyword) {
+        return reservationRepository.searchByCoachOrPlayerName(keyword)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @CacheEvict(value = "reservations", allEntries = true)
     public void deleteReservation(Integer id) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
 
         log.info("Admin deleting reservation ID={}", id);
         
+        // If it was confirmed, remove the hours from subscription
+        if (reservation.getStatus() == Reservation_Status.CONFIRMED) {
+            subscriptionService.removeHoursForConfirmedReservation(reservation);
+        }
+
         // Cleanup associated data
         if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
             pcAvailabilityRepository.deleteAll(reservation.getPcAvailabilities());
@@ -323,10 +341,12 @@ public class ReservationService {
      * - PENDING / CANCELLED → just updates the status; scheduler auto-deletes
      *   PENDING/CANCELLED reservations whose createdAt is older than 24 hours.
      */
+    @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto updateStatus(Integer reservationId, String newStatus) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + reservationId));
 
+        Reservation_Status oldStatus = reservation.getStatus();
         Reservation_Status status;
         try {
             status = Reservation_Status.valueOf(newStatus.toUpperCase());
@@ -337,7 +357,8 @@ public class ReservationService {
         reservation.setStatus(status);
         Reservation saved = reservationRepository.save(reservation);
 
-        if (status == Reservation_Status.CONFIRMED) {
+        // Transition: Not Confirmed -> Confirmed
+        if (oldStatus != Reservation_Status.CONFIRMED && status == Reservation_Status.CONFIRMED) {
             // Check if a payment record already exists for this reservation
             boolean alreadyPaid = !saved.getPayments().isEmpty();
             if (!alreadyPaid) {
@@ -348,6 +369,12 @@ public class ReservationService {
                 paymentRepository.save(payment);
                 log.info("Payment record created for confirmed reservation ID={}", reservationId);
             }
+            // Update / create the player's subscription hours
+            subscriptionService.addHoursForConfirmedReservation(saved);
+        }
+        // Transition: Confirmed -> Not Confirmed
+        else if (oldStatus == Reservation_Status.CONFIRMED && status != Reservation_Status.CONFIRMED) {
+            subscriptionService.removeHoursForConfirmedReservation(saved);
         }
 
         log.info("Admin updated reservation ID={} status to {}", reservationId, status);
@@ -411,6 +438,7 @@ public class ReservationService {
      * whose createdAt is older than 24 hours.
      */
     @Scheduled(fixedRate = 900000)
+    @CacheEvict(value = "reservations", allEntries = true)
     public void cleanupExpiredReservations() {
         LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
 
