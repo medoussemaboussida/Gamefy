@@ -4,13 +4,15 @@ import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertT
 
 import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment, activateGamefyPackForReservation } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
-import Pagination from "../../components/pagination/Pagination";
 import ReservationPaymentModal from "../../components/payment/ReservationPaymentModal";
 import CashPaymentModal from "../../modals/CashPaymentModal";
 import ActivateGamefyPackModal from "../../modals/ActivateGamefyPackModal";
 import toast from "react-hot-toast";
 import { packGamefyApi } from "../../api/packGamefy";
 import { useUser } from "../../context/UserContext";
+import gamingRoomImg from "../../assets/images/room.png";
+import coachingImg from "../../assets/images/coaching.png";
+import vipImg from "../../assets/images/vip.png";
 
 // Live countdown for PENDING reservation expiry
 const CountdownTimer = ({ createdAt, onExpired }) => {
@@ -66,9 +68,6 @@ const Rooms = () => {
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState("newest");
     const [isSortOpen, setIsSortOpen] = useState(false);
-
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 3;
 
     // Active Gamefy pack (used for "activate gamefy pack" button)
     const [packGamefy, setPackGamefy] = useState(null);
@@ -261,8 +260,8 @@ const Rooms = () => {
             return 0;
         });
 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const filteredReservations = allFilteredReservations.slice(startIndex, startIndex + itemsPerPage);
+    // Removed pagination: show all reservations in the scrollable card list.
+    const filteredReservations = allFilteredReservations;
 
     const formatTime = (isoString) => {
         const date = new Date(isoString.includes('Z') ? isoString : isoString + 'Z');
@@ -274,11 +273,27 @@ const Rooms = () => {
         return date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
     };
 
-    const roomIcon = (type) => (
-        <div className={`w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br ${type === 'VIP_ROOM' ? 'from-[#FF89EB] to-[#DD00B8]' : 'from-[#2BDFC8] to-blue-500'} shadow-lg shadow-black/20`}>
-            <Monitor size={20} className="text-white" />
-        </div>
-    );
+    const getRoomPhoto = (reservationType) => {
+        switch (reservationType) {
+            case "COACHING_ROOM":
+                return coachingImg;
+            case "VIP_ROOM":
+                return vipImg;
+            case "PC_ROOM":
+            default:
+                return gamingRoomImg;
+        }
+    };
+
+    const getCoachDisplayName = (reservation) => {
+        if (!reservation) return null;
+        if (reservation.coachFullName) return reservation.coachFullName;
+        if (reservation.coachName) return reservation.coachName;
+        if (reservation.coachLastName && reservation.coachFirstName) {
+            return `${reservation.coachLastName} ${reservation.coachFirstName}`;
+        }
+        return null;
+    };
 
     return (
         <div className="flex min-h-screen bg-[#24003E] text-white">
@@ -328,7 +343,6 @@ const Rooms = () => {
                                                         onClick={() => {
                                                             setSortBy(option.value);
                                                             setIsSortOpen(false);
-                                                            setCurrentPage(1);
                                                         }}
                                                         className={`w-full flex items-center px-5 py-3 rounded-2xl text-[14px] font-medium transition-all ${sortBy === option.value
                                                             ? "bg-[#1CF3CA] text-black"
@@ -356,8 +370,6 @@ const Rooms = () => {
                     </div>
 
                     {/* ─── Content ─── */}
-                    <div className="bg-[#320141]/40 border border-white/5 rounded-[28px] sm:rounded-[32px] overflow-hidden shadow-2xl backdrop-blur-xl">
-
                         {/* Loading */}
                         {loading ? (
                             <div className="py-20 text-center">
@@ -367,106 +379,28 @@ const Rooms = () => {
 
                         ) : filteredReservations.length > 0 ? (<>
 
-                            {/* ── Desktop table (md+) ── */}
-                            <div className="hidden md:block overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-white/5 bg-white/[0.02]">
-                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Details</th>
-                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Schedule</th>
-                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Hardware</th>
-                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase">Price</th>
-                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase text-right">Status</th>
-                                            <th className="px-6 lg:px-8 py-5 text-[10px] font-black tracking-[0.2em] text-[#1CF3CA]/60 uppercase text-right">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/[0.03]">
-                                        {filteredReservations.map((res) => (
-                                            <tr key={res.id} className="hover:bg-white/[0.015] transition-colors">
-                                                <td className="px-6 lg:px-8 py-5">
-                                                    <div className="flex items-center gap-3">
-                                                        {roomIcon(res.reservationType)}
-                                                        <span className="font-bold uppercase text-base tracking-tight text-[#1CF3CA]">
-                                                            {res.reservationType.replace('_', ' ')}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 lg:px-8 py-5">
-                                                    <div className="flex items-center gap-2 text-white/70 mb-1">
-                                                        <Tag size={13} className="text-[#FF89EB] shrink-0" />
-                                                        <span className="text-sm font-bold">{formatDate(res.startTime)}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-white/40">
-                                                        <Clock size={13} className="text-[#1CF3CA] shrink-0" />
-                                                        <span className="text-xs font-black">{formatTime(res.startTime)} → {formatTime(res.endTime)}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 lg:px-8 py-5">
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {res.pcNumbers.map(num => (
-                                                            <span key={num} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black text-white/60">
-                                                                PC #{num}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 lg:px-8 py-5">
-                                                    <span className="text-sm font-black text-[#1CF3CA]">
-                                                        {res.priceTime ? `${res.priceTime.toFixed(3)} DT` : "—"}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 lg:px-8 py-5 text-right">
-                                                    <div className="flex flex-col items-end gap-1">
-                                                        <span className={`inline-flex items-center px-5 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
-                                                            {res.status}
-                                                        </span>
-                                                        {paymentBadge(res)}
-                                                        {shouldShowCountdown(res) && res.createdAt && (
-                                                            <CountdownTimer createdAt={res.createdAt} onExpired={fetchReservations} />
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 lg:px-8 py-5 text-right">
-                                                    <div className="flex flex-col items-end gap-2">
-                                                        <button
-                                                            onClick={() => handleActivatePackClick(res)}
-                                                            disabled={isActivatePackDisabled(res) || (activateLoading && activateReservation?.id === res.id)}
-                                                            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 shadow-[0_0_15px_rgba(28,243,202,0.2)] 
-                                                                ${isActivatePackDisabled(res) ? "bg-white/5 text-white/40 border border-white/10 cursor-not-allowed" : "bg-[#DD00B8] text-white hover:opacity-90 border border-[#DD00B8]/30"}`}
-                                                        >
-                                                            {activateLoading && activateReservation?.id === res.id ? "Activating..." : "activate gamefy pack"}
-                                                        </button>
-
-                                                        {needsConfirmation(res) && (
-                                                            <button
-                                                                onClick={() => handleConfirmClick(res)}
-                                                                className="px-4 py-2 bg-[#1CF3CA] text-black text-xs font-black uppercase tracking-wider rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_15px_rgba(28,243,202,0.2)]"
-                                                            >
-                                                                Confirm
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* ── Mobile cards (< md) ── */}
-                            <div className="md:hidden divide-y divide-white/[0.04]">
+                            {/* ── Reservation cards (scrollable) ── */}
+                            <div className="flex overflow-x-auto gap-8 py-6 px-4 pb-16 snap-x no-scrollbar custom-scrollbar-h -mx-4">
                                 {filteredReservations.map((res) => (
-                                    <div key={res.id} className="p-4 sm:p-5 space-y-3">
-                                        {/* Top row: icon + type + status badge */}
-                                        <div className="flex items-center justify-between gap-3">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                {roomIcon(res.reservationType)}
-                                                <span className="font-black italic uppercase text-sm tracking-tight text-[#1CF3CA] truncate">
-                                                    {res.reservationType.replace('_', ' ')}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-1">
-                                                <span className={`shrink-0 inline-flex items-center px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
+                                    <div
+                                        key={res.id}
+                                        className="flex-shrink-0 w-full max-w-[450px] snap-center relative group bg-[#320141]/40 border border-white/5 rounded-[50px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:bg-[#320141]/60 hover:border-[#1CF3CA]/30 flex flex-col h-full shadow-2xl backdrop-blur-xl"
+                                    >
+                                        {/* Hover Light Effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[#1CF3CA]/0 via-[#1CF3CA]/5 to-[#FF89EB]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                                        {/* Image Section */}
+                                        <div className="relative h-[250px] overflow-hidden">
+                                            <img
+                                                src={getRoomPhoto(res.reservationType)}
+                                                alt={res.reservationType.replace('_', ' ')}
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            />
+
+                                            {/* Status / badges */}
+                                            <div className="absolute top-6 right-6 flex flex-col items-end gap-1">
+                                                <span
+                                                    className={`px-4 py-1.5 rounded-full text-[10px] font-black font-[inter] uppercase tracking-widest border backdrop-blur-md ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}
+                                                >
                                                     {res.status}
                                                 </span>
                                                 {paymentBadge(res)}
@@ -476,66 +410,78 @@ const Rooms = () => {
                                             </div>
                                         </div>
 
-                                        {/* Date & time */}
-                                        <div className="flex flex-wrap gap-x-4 gap-y-1">
-                                            <div className="flex items-center gap-1.5 text-white/70">
-                                                <Tag size={12} className="text-[#FF89EB]" />
-                                                <span className="text-xs font-bold">{formatDate(res.startTime)}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 text-white/40">
-                                                <Clock size={12} className="text-[#1CF3CA]" />
-                                                <span className="text-xs font-black">{formatTime(res.startTime)} → {formatTime(res.endTime)}</span>
-                                            </div>
-                                        </div>
+                                        {/* Content Section */}
+                                        <div className="p-8 flex flex-col flex-grow bg-gradient-to-b from-transparent to-black/30">
+                                            <div className="flex-grow space-y-4">
+                                                <h3 className="text-xl md:text-xl font-black font-[inter] uppercase tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
+                                                    {res.reservationType === "COACHING_ROOM" && getCoachDisplayName(res)
+                                                        ? `${res.reservationType.replace('_', ' ')} with ${getCoachDisplayName(res)}`
+                                                        : res.reservationType.replace('_', ' ')}
+                                                </h3>
 
-                                        {/* PCs + Price */}
-                                        <div className="flex items-center justify-between">
-                                            {res.pcNumbers.length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {res.pcNumbers.map(num => (
-                                                        <span key={num} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black text-white/60">
-                                                            PC #{num}
-                                                        </span>
-                                                    ))}
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-3 text-white/70 font-medium">
+                                                        <Tag size={18} className="text-[#FF89EB]" />
+                                                        <span className="text-sm">{formatDate(res.startTime)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-white/70 font-medium">
+                                                        <Clock size={18} className="text-[#1CF3CA]" />
+                                                        <span className="text-sm font-black">{formatTime(res.startTime)} → {formatTime(res.endTime)}</span>
+                                                    </div>
                                                 </div>
-                                            )}
-                                            <span className="text-sm font-black text-[#1CF3CA]">
-                                                {res.priceTime ? `${res.priceTime.toFixed(3)} DT` : ""}
-                                            </span>
+
+                                                <div className="pt-3 space-y-3 border-t border-white/5">
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {res.pcNumbers?.length > 0 ? (
+                                                            res.pcNumbers.map((num) => (
+                                                                <span key={num} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black text-white/60">
+                                                                    PC #{num}
+                                                                </span>
+                                                            ))
+                                                        ) : (
+                                                            <span className="text-[10px] font-black text-white/30 uppercase">
+                                                                No PCs
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Price</span>
+                                                        <span className="text-sm font-black text-[#1CF3CA]">
+                                                            {res.priceTime ? `${res.priceTime.toFixed(3)} DT` : "—"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="pt-8 w-full">
+                                                <div className="w-full space-y-3">
+                                                    <button
+                                                        onClick={() => handleActivatePackClick(res)}
+                                                        disabled={isActivatePackDisabled(res) || (activateLoading && activateReservation?.id === res.id)}
+                                                        className={`w-full px-8 py-4 bg-[#DD00B8] hover:bg-opacity-90 text-white font-black uppercase tracking-widest rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(28,243,202,0.2)] border border-[#DD00B8]/30
+                                                            ${isActivatePackDisabled(res) ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                    >
+                                                        {activateLoading && activateReservation?.id === res.id
+                                                            ? "Activating..."
+                                                            : "activate gamefy pack"}
+                                                    </button>
+
+                                                    {needsConfirmation(res) && (
+                                                        <button
+                                                            onClick={() => handleConfirmClick(res)}
+                                                            className="w-full px-8 py-4 bg-[#1CF3CA] hover:bg-[#19d4b0] text-black font-black uppercase tracking-widest rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(28,243,202,0.2)]"
+                                                        >
+                                                            Confirm Reservation
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-
-                                        {/* Activate pack + Confirm (pending only) */}
-                                        <button
-                                            onClick={() => handleActivatePackClick(res)}
-                                            disabled={isActivatePackDisabled(res) || (activateLoading && activateReservation?.id === res.id)}
-                                            className={`w-full mt-2 py-2.5 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 shadow-[0_0_15px_rgba(28,243,202,0.2)]
-                                                ${isActivatePackDisabled(res)
-                                                    ? "bg-white/5 text-white/40 border border-white/10 cursor-not-allowed"
-                                                    : "bg-[#DD00B8] text-white hover:opacity-90 border border-[#DD00B8]/30"}`}
-                                        >
-                                            {activateLoading && activateReservation?.id === res.id
-                                                ? "Activating..."
-                                                : "activate gamefy pack"}
-                                        </button>
-
-                                        {needsConfirmation(res) && (
-                                            <button
-                                                onClick={() => handleConfirmClick(res)}
-                                                className="w-full mt-2 py-2.5 bg-[#1CF3CA] text-black text-xs font-black uppercase tracking-wider rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_15px_rgba(28,243,202,0.2)]"
-                                            >
-                                                Confirm Reservation
-                                            </button>
-                                        )}
                                     </div>
                                 ))}
                             </div>
-
-                            <Pagination
-                                currentPage={currentPage}
-                                totalItems={allFilteredReservations.length}
-                                itemsPerPage={itemsPerPage}
-                                onPageChange={setCurrentPage}
-                            />
 
                         </>) : (
                             /* Empty state */
@@ -553,7 +499,6 @@ const Rooms = () => {
                                 </button>
                             </div>
                         )}
-                    </div>
                 </div>
             </main>
 
@@ -681,6 +626,32 @@ const Rooms = () => {
                 onClose={() => { setCashModalOpen(false); setSelectedReservation(null); }}
                 reservation={selectedReservation}
             />
+
+            <style jsx>{`
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .no-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+                .custom-scrollbar-h::-webkit-scrollbar {
+                    height: 8px;
+                }
+                .custom-scrollbar-h::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.02);
+                    border-radius: 10px;
+                    margin: 0 40px;
+                }
+                .custom-scrollbar-h::-webkit-scrollbar-thumb {
+                    background: rgba(28, 243, 202, 0.2);
+                    border-radius: 10px;
+                    border: 2px solid #24003E;
+                }
+                .custom-scrollbar-h::-webkit-scrollbar-thumb:hover {
+                    background: rgba(28, 243, 202, 0.4);
+                }
+            `}</style>
         </div>
     );
 };

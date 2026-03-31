@@ -4,9 +4,9 @@ import { getWorkSchedule, getAvailablePCs, createReservation, getAvailableGames,
 import TimeSelectionModal from "../../modals/TimeSelectionModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Monitor, Gamepad2, Check, ArrowRight, Info, Percent } from "lucide-react";
-import streamingImg from "../../assets/images/streaming.png";
-import gamingRoomImg from "../../assets/images/gaming_room.jpg";
-import coachingRoomImg from "../../assets/images/event.png"; // Using event.png for coaching for now
+import streamingImg from "../../assets/images/vip.png";
+import gamingRoomImg from "../../assets/images/room.png";
+import coachingRoomImg from "../../assets/images/coaching.png"; // Using event.png for coaching for now
 
 const MONTHS = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
 const DAY_NAMES = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
