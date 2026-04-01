@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 @Configuration
 @EnableCaching
+@Slf4j
 public class RedisConfig {
 
     /**
@@ -47,6 +49,7 @@ public class RedisConfig {
      */
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        log.info("Initializing Redis Cache Manager with per-cache TTLs: users(10m), reservations(2m), payments(10m)");
         RedisCacheConfiguration defaultConfig = buildCacheConfig(Duration.ofMinutes(10));
 
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();

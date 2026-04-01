@@ -237,6 +237,7 @@ public class ReservationService {
      *
      * Note: This does not confirm the reservation; payment confirmation still happens later.
      */
+    @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto activateGamefyPack(Integer reservationId, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + reservationId));
