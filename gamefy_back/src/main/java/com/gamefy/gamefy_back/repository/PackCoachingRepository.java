@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PackCoachingRepository extends JpaRepository<PackCoaching, Integer> {
+    java.util.List<PackCoaching> findByCoachId(Integer coachId);
 }

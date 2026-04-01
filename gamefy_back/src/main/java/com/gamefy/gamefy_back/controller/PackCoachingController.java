@@ -1,14 +1,52 @@
 package com.gamefy.gamefy_back.controller;
 
+import com.gamefy.gamefy_back.dto.PackCoachingDto;
+import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.service.PackCoachingService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/gamefy/pack-coachings")
+@RequiredArgsConstructor
 public class PackCoachingController {
 
-    private PackCoachingService service;
+    private final PackCoachingService service;
 
+    @GetMapping("/my-packs")
+    @PreAuthorize("hasAuthority('COACH')")
+    public ResponseEntity<List<PackCoachingDto>> getMyPacks(@AuthenticationPrincipal User coach) {
+        return ResponseEntity.ok(service.getPacksByCoachId(coach.getId()));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('COACH')")
+    public ResponseEntity<PackCoachingDto> getPackById(@PathVariable Integer id, @AuthenticationPrincipal User coach) {
+        return ResponseEntity.ok(service.getPackById(id, coach));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('COACH')")
+    public ResponseEntity<PackCoachingDto> createPack(@Valid @RequestBody PackCoachingDto dto, @AuthenticationPrincipal User coach) {
+        return ResponseEntity.ok(service.createPack(dto, coach));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('COACH')")
+    public ResponseEntity<PackCoachingDto> updatePack(@PathVariable Integer id, @Valid @RequestBody PackCoachingDto dto, @AuthenticationPrincipal User coach) {
+        return ResponseEntity.ok(service.updatePack(id, dto, coach));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('COACH')")
+    public ResponseEntity<Void> deletePack(@PathVariable Integer id, @AuthenticationPrincipal User coach) {
+        service.deletePack(id, coach);
+        return ResponseEntity.noContent().build();
+    }
 }

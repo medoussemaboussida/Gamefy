@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,12 +25,21 @@ public class PackCoaching {
     @Column(nullable = false)
     private LocalTime hours;
 
+    @Column(columnDefinition = "text")
+    private String description;
+
     @Column(nullable = false)
     private Double price;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coach_id")
+    private User coach;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "packCoaching")
     private java.util.List<User> users = new java.util.ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "packCoaching")
     private java.util.List<Payment> payments = new java.util.ArrayList<>();
 
