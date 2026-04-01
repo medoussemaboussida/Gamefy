@@ -9,6 +9,7 @@ import {
   LogOut,
   Menu as MenuIcon,
   X as CloseIcon,
+  Package,
 } from "lucide-react";
 import logo from "../assets/images/auth_logo.png";
 import logoCollapsed from "../assets/images/logo_collapsed.png";
@@ -44,6 +45,7 @@ const Sidebar = () => {
     { name: "Rooms", icon: Monitor, path: role === "COACH" ? "/coach/coachRoom" : "/player/rooms" },
     { name: "Events", icon: Calendar, path: "/events" },
     ...(role === "PLAYER" ? [{ name: "Packs", icon: Gift, path: "/player/packs" }] : []),
+    ...(role === "COACH" ? [{ name: "Packs", icon: Package, path: "/coach/packs" }] : []),
   ];
 
   const handleItemClick = (path) => {

@@ -17,6 +17,7 @@ import ProfilePage from "./pages/profile";
 import EventsPage from "./pages/event";
 import PlayerPacks from "./pages/player/Packs";
 import ReservationPage from "./pages/player/ReservationPage";
+import CoachPacks from "./pages/coach/CoachPacks";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
         <Route path="/player/reservation" element={<ReservationPage />} />
         <Route path="/coach/dashboard" element={<CoachDashboard />} />
         <Route path="/coach/coachRoom" element={<CoachRoom />} />
+        <Route path="/coach/packs" element={<CoachPacks />} />
 
 
         {/* Add more routes as needed */}
