@@ -15,6 +15,7 @@ export default function ActivateGamefyPackModal({
     packGamefy,
     discountCount = 0,
     hoursCount = 0,
+    maxApplicableHours = null,
     formatDate,
     formatTime,
     onConfirm,
@@ -24,7 +25,11 @@ export default function ActivateGamefyPackModal({
 
     const reduction = packGamefy?.price ? (packGamefy.price / 2) * discountCount : 0;
     const newPrice = Math.max(0, (reservation.priceTime || 0) - reduction);
-    const newEndTimeIso = hoursCount > 0 ? addHoursToIsoUTC(reservation.endTime, hoursCount) : null;
+    const effectiveHours = hoursCount > 0 && Number.isFinite(maxApplicableHours)
+        ? Math.max(0, Math.min(hoursCount, maxApplicableHours))
+        : hoursCount;
+    const newEndTimeIso = effectiveHours > 0 ? addHoursToIsoUTC(reservation.endTime, effectiveHours) : null;
+    const disableActivation = hoursCount > 0 && Number.isFinite(maxApplicableHours) && maxApplicableHours <= 0;
 
     return (
         <div
@@ -75,11 +80,11 @@ export default function ActivateGamefyPackModal({
                             <span className="text-[10px] font-black uppercase text-white/30">Time</span>
                             <span className="text-xs font-black text-white">
                                 {formatTime ? `${formatTime(reservation.startTime)} → ${formatTime(reservation.endTime)}` : ""}
-                                {hoursCount > 0 && (
+                                {hoursCount > 0 && effectiveHours > 0 && (
                                     <>
                                         {" "}
                                         <span className="text-[#1CF3CA]">
-                                            (new: {formatTime ? formatTime(newEndTimeIso) : ""})
+                                            (up to: {formatTime ? formatTime(newEndTimeIso) : ""})
                                         </span>
                                     </>
                                 )}
@@ -101,17 +106,37 @@ export default function ActivateGamefyPackModal({
 
                         {hoursCount > 0 && (
                             <div className="text-[11px] text-white/60">
-                                Extra time applied from your pack benefits
+                                Extra time from your pack is limited by platform closing time.
+                            </div>
+                        )}
+
+                        {hoursCount > 0 && (
+                            <div
+                                className="rounded-xl p-3 mt-2 text-[11px] leading-relaxed text-white/75"
+                                style={{ background: "rgba(28, 243, 202, 0.06)", border: "1px solid rgba(28, 243, 202, 0.18)" }}
+                            >
+                                If your reservation would pass the work schedule end time, only the hours that fit are applied.
+                                <br />
+                                Example: close at 05:00, booking 03:00 → 04:00, pack has 3 hours: only 1 hour is applied.
+                            </div>
+                        )}
+
+                        {disableActivation && (
+                            <div
+                                className="rounded-xl p-3 mt-2 text-[11px] leading-relaxed text-red-300"
+                                style={{ background: "rgba(220, 38, 38, 0.10)", border: "1px solid rgba(220, 38, 38, 0.30)" }}
+                            >
+                                You are in the last working hour. No extra pack hours can be applied for this reservation.
                             </div>
                         )}
                     </div>
 
                     <button
                         onClick={() => onConfirm?.()}
-                        disabled={loading}
+                        disabled={loading || disableActivation}
                         className="w-full py-4 rounded-2xl bg-[#DD00B8] text-white font-bold text-lg hover:bg-[#DD00B8]/90 transition-all shadow-[0_0_20px_rgba(255,0,184,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? "Activating..." : "Confirm activation"}
+                        {loading ? "Activating..." : disableActivation ? "Cannot activate for this time slot" : "Confirm activation"}
                     </button>
                 </div>
             </div>

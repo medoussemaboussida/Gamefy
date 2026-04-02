@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -33,6 +34,7 @@ public class ReservationService {
     private final CoachingSessionRepository coachingSessionRepository;
     private final CoachProfileRepository coachProfileRepository;
     private final PaymentRepository paymentRepository;
+    private final WorkDaysScheduleRepository workDaysScheduleRepository;
     private final SubscriptionService subscriptionService;
 
     /**
@@ -52,7 +54,8 @@ public class ReservationService {
             throw new RuntimeException("Start time and end time are required");
         }
 
-        if (!dto.getEndTime().isAfter(dto.getStartTime())) {
+        LocalDateTime normalizedEndTime = normalizeEndTime(dto.getStartTime(), dto.getEndTime());
+        if (!normalizedEndTime.isAfter(dto.getStartTime())) {
             throw new RuntimeException("End time must be after start time");
         }
 
@@ -61,7 +64,7 @@ public class ReservationService {
 
         // Validate all selected PCs
         List<PC> selectedPCs = new ArrayList<>();
-        Set<Integer> bookedPcIds = getBookedPcIds(dto.getStartTime(), dto.getEndTime());
+        Set<Integer> bookedPcIds = getBookedPcIds(dto.getStartTime(), normalizedEndTime);
 
         for (Integer pcId : dto.getPcIds()) {
             PC pc = pcRepository.findById(pcId)
@@ -105,7 +108,7 @@ public class ReservationService {
         Reservation reservation = new Reservation();
         reservation.setPlayer(player);
         reservation.setStartTime(dto.getStartTime());
-        reservation.setEndTime(dto.getEndTime());
+        reservation.setEndTime(normalizedEndTime);
         reservation.setReservationType(dto.getReservationType());
         reservation.setStatus(Reservation_Status.PENDING);
         reservation.setPriceTime(dto.getPriceTime());
@@ -121,7 +124,7 @@ public class ReservationService {
             availability.setPc(pc);
             availability.setReservation(saved);
             availability.setStartTime(dto.getStartTime());
-            availability.setEndTime(dto.getEndTime());
+            availability.setEndTime(normalizedEndTime);
             pcAvailabilityRepository.save(availability);
         }
 
@@ -290,51 +293,54 @@ public class ReservationService {
 
         LocalDateTime newEndTime = reservation.getEndTime();
 
-        // HOURS benefits: extend reservation end time + update associated slot tables
+        // HOURS benefits: extend reservation end time up to the work-day closing boundary.
         if (hoursCount > 0) {
             LocalDateTime originalEndTime = reservation.getEndTime();
-            newEndTime = originalEndTime.plusHours(hoursCount);
+            int appliedHours = getApplicablePackHoursWithinSchedule(reservation, hoursCount);
+            newEndTime = originalEndTime.plusHours(appliedHours);
 
-            // Availability conflict check for all involved PCs
-            if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
-                Set<Integer> currentPcIds = reservation.getPcAvailabilities().stream()
-                        .map(pa -> pa.getPc().getId())
-                        .collect(Collectors.toSet());
+            if (appliedHours > 0) {
+                // Availability conflict check for all involved PCs
+                if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
+                    Set<Integer> currentPcIds = reservation.getPcAvailabilities().stream()
+                            .map(pa -> pa.getPc().getId())
+                            .collect(Collectors.toSet());
 
-                List<PcAvailability> overlaps = pcAvailabilityRepository
-                        .findByStartTimeLessThanAndEndTimeGreaterThan(newEndTime, reservation.getStartTime());
+                    List<PcAvailability> overlaps = pcAvailabilityRepository
+                            .findByStartTimeLessThanAndEndTimeGreaterThan(newEndTime, reservation.getStartTime());
 
-                boolean hasConflict = overlaps.stream()
-                        .filter(pa -> pa.getPc() != null && currentPcIds.contains(pa.getPc().getId()))
-                        .filter(pa -> pa.getReservation() != null && !pa.getReservation().getId().equals(reservationId))
-                        .findAny()
-                        .isPresent();
+                    boolean hasConflict = overlaps.stream()
+                            .filter(pa -> pa.getPc() != null && currentPcIds.contains(pa.getPc().getId()))
+                            .filter(pa -> pa.getReservation() != null && !pa.getReservation().getId().equals(reservationId))
+                            .findAny()
+                            .isPresent();
 
-                if (hasConflict) {
-                    throw new RuntimeException("Cannot activate pack: selected PCs are already booked for the extended time");
+                    if (hasConflict) {
+                        throw new RuntimeException("Cannot activate pack: selected PCs are already booked for the extended time");
+                    }
                 }
-            }
 
-            // Update end times on linked slot records
-            if (reservation.getPcAvailabilities() != null) {
-                for (PcAvailability pa : reservation.getPcAvailabilities()) {
-                    pa.setEndTime(newEndTime);
+                // Update end times on linked slot records
+                if (reservation.getPcAvailabilities() != null) {
+                    for (PcAvailability pa : reservation.getPcAvailabilities()) {
+                        pa.setEndTime(newEndTime);
+                    }
                 }
-            }
 
-            if (reservation.getCoachingSlots() != null) {
-                for (CoachingSlot slot : reservation.getCoachingSlots()) {
-                    slot.setEndTime(newEndTime);
+                if (reservation.getCoachingSlots() != null) {
+                    for (CoachingSlot slot : reservation.getCoachingSlots()) {
+                        slot.setEndTime(newEndTime);
+                    }
                 }
-            }
 
-            reservation.setEndTime(newEndTime);
+                reservation.setEndTime(newEndTime);
 
-            if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
-                pcAvailabilityRepository.saveAll(reservation.getPcAvailabilities());
-            }
-            if (reservation.getCoachingSlots() != null && !reservation.getCoachingSlots().isEmpty()) {
-                coachingSlotRepository.saveAll(reservation.getCoachingSlots());
+                if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
+                    pcAvailabilityRepository.saveAll(reservation.getPcAvailabilities());
+                }
+                if (reservation.getCoachingSlots() != null && !reservation.getCoachingSlots().isEmpty()) {
+                    coachingSlotRepository.saveAll(reservation.getCoachingSlots());
+                }
             }
         }
 
@@ -360,6 +366,44 @@ public class ReservationService {
             case COACHING_ROOM -> Benefit_type.COACH;
             default -> null;
         };
+    }
+
+    private int getApplicablePackHoursWithinSchedule(Reservation reservation, int requestedHours) {
+        if (requestedHours <= 0) return 0;
+
+        LocalDateTime scheduleEndDateTime = getScheduleEndDateTimeForReservation(reservation);
+        if (scheduleEndDateTime == null) return 0;
+
+        long remainingMinutes = Duration.between(reservation.getEndTime(), scheduleEndDateTime).toMinutes();
+        if (remainingMinutes <= 0) return 0;
+
+        int maxWholeHoursBeforeClose = (int) (remainingMinutes / 60);
+        return Math.min(requestedHours, Math.max(0, maxWholeHoursBeforeClose));
+    }
+
+    private LocalDateTime getScheduleEndDateTimeForReservation(Reservation reservation) {
+        DayOfWeek dayOfWeek = DayOfWeek.valueOf(reservation.getStartTime().getDayOfWeek().name());
+        String month = reservation.getStartTime().getMonth().name();
+        String year = String.valueOf(reservation.getStartTime().getYear());
+
+        Optional<WorkDaysSchedule> scheduleOpt = workDaysScheduleRepository.findByDayAndMonthAndYear(dayOfWeek, month, year);
+        if (scheduleOpt.isEmpty()) return null;
+
+        WorkDaysSchedule schedule = scheduleOpt.get();
+        if (schedule.getStatus() != WorkDayStatus.OPEN) return null;
+
+        LocalDateTime reservationEnd = reservation.getEndTime();
+        LocalDateTime sameDayEnd = LocalDateTime.of(reservationEnd.toLocalDate(), schedule.getEndTime());
+
+        // Wrap-around day (e.g., 10:00 -> 05:00 next day): pick the correct closing datetime.
+        if (schedule.getStartTime().isAfter(schedule.getEndTime())) {
+            if (!reservationEnd.toLocalTime().isBefore(schedule.getStartTime())) {
+                return sameDayEnd.plusDays(1);
+            }
+            return sameDayEnd;
+        }
+
+        return sameDayEnd;
     }
 
     /**
@@ -411,6 +455,22 @@ public class ReservationService {
                 .stream()
                 .map(pa -> pa.getPc().getId())
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Supports overnight reservations when frontend sends start/end on the same date
+     * with an end hour that is earlier than the start hour (e.g. 23:00 -> 01:00).
+     */
+    private LocalDateTime normalizeEndTime(LocalDateTime startTime, LocalDateTime endTime) {
+        if (endTime.isAfter(startTime)) {
+            return endTime;
+        }
+
+        if (endTime.toLocalDate().isEqual(startTime.toLocalDate()) && endTime.toLocalTime().isBefore(startTime.toLocalTime())) {
+            return endTime.plusDays(1);
+        }
+
+        return endTime;
     }
 
     public List<ReservationDto> getReservationsByPlayer(Integer userId) {

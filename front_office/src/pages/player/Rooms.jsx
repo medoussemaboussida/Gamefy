@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer, Filter } from "lucide-react";
 
-import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment, activateGamefyPackForReservation } from "../../api/reservation";
+import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment, activateGamefyPackForReservation, getWorkSchedule } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
 import ReservationPaymentModal from "../../components/payment/ReservationPaymentModal";
 import CashPaymentModal from "../../modals/CashPaymentModal";
@@ -77,6 +77,7 @@ const Rooms = () => {
     const [activateModalOpen, setActivateModalOpen] = useState(false);
     const [activateReservation, setActivateReservation] = useState(null);
     const [activateLoading, setActivateLoading] = useState(false);
+    const [maxApplicablePackHours, setMaxApplicablePackHours] = useState(null);
 
     // Payment confirmation state
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -210,6 +211,75 @@ const Rooms = () => {
             setActivateLoading(false);
         }
     };
+
+    const getUtcDate = (isoString) => new Date(isoString.includes("Z") ? isoString : `${isoString}Z`);
+
+    const computeMaxApplicableHoursBeforeClose = (reservation, schedule) => {
+        if (!reservation || !schedule || schedule.status !== "OPEN") return 0;
+
+        const parseHm = (timeValue) => {
+            const [h = "0", m = "0"] = String(timeValue || "0:0").split(":");
+            return { h: Number(h), m: Number(m) };
+        };
+
+        const { h: startH, m: startM } = parseHm(schedule.startTime);
+        const { h: endH, m: endM } = parseHm(schedule.endTime);
+        const scheduleStartMinutes = startH * 60 + startM;
+        const endTimeMinutes = endH * 60 + endM;
+
+        const reservationEnd = getUtcDate(reservation.endTime);
+        const reservationEndMinutes = reservationEnd.getUTCHours() * 60 + reservationEnd.getUTCMinutes();
+
+        const scheduleEndDate = new Date(Date.UTC(
+            reservationEnd.getUTCFullYear(),
+            reservationEnd.getUTCMonth(),
+            reservationEnd.getUTCDate(),
+            endH,
+            endM,
+            0
+        ));
+
+        const wrapsAfterMidnight = scheduleStartMinutes > endTimeMinutes;
+        if (wrapsAfterMidnight && reservationEndMinutes >= scheduleStartMinutes) {
+            scheduleEndDate.setUTCDate(scheduleEndDate.getUTCDate() + 1);
+        }
+
+        const remainingMs = scheduleEndDate.getTime() - reservationEnd.getTime();
+        if (remainingMs <= 0) return 0;
+        return Math.floor(remainingMs / (60 * 60 * 1000));
+    };
+
+    useEffect(() => {
+        const run = async () => {
+            if (!activateModalOpen || !activateReservation) {
+                setMaxApplicablePackHours(null);
+                return;
+            }
+
+            const startDate = getUtcDate(activateReservation.startTime);
+            const monthNames = [
+                "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+                "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+            ];
+            const dayNames = [
+                "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
+            ];
+            const month = monthNames[startDate.getUTCMonth()];
+            const year = String(startDate.getUTCFullYear());
+            const day = dayNames[startDate.getUTCDay()];
+
+            try {
+                const schedules = await getWorkSchedule(month, year);
+                const daySchedule = schedules.find((s) => s.day === day) || null;
+                setMaxApplicablePackHours(computeMaxApplicableHoursBeforeClose(activateReservation, daySchedule));
+            } catch (error) {
+                console.error("Failed to load work schedule for activation modal", error);
+                setMaxApplicablePackHours(null);
+            }
+        };
+
+        run();
+    }, [activateModalOpen, activateReservation]);
 
     const handleCardPayment = async () => {
         if (!selectedReservation) return;
@@ -600,11 +670,13 @@ const Rooms = () => {
                 onClose={() => {
                     setActivateModalOpen(false);
                     setActivateReservation(null);
+                    setMaxApplicablePackHours(null);
                 }}
                 reservation={activateReservation}
                 packGamefy={packGamefy}
                 discountCount={activateReservation ? getBenefitCountsForReservationType(activateReservation.reservationType).discountCount : 0}
                 hoursCount={activateReservation ? getBenefitCountsForReservationType(activateReservation.reservationType).hoursCount : 0}
+                maxApplicableHours={maxApplicablePackHours}
                 formatDate={formatDate}
                 formatTime={formatTime}
                 onConfirm={handleConfirmActivatePack}
