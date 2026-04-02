@@ -64,6 +64,11 @@ const navItems: NavItem[] = [
     path: "/packs",
   },
   {
+    icon: <BoxCubeIcon />,
+    name: "Coaching Packs",
+    path: "/coaching-packs",
+  },
+  {
     icon: <CreditCard />,
     name: "Payment History",
     path: "/payments",

@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.service;
 
+import com.gamefy.gamefy_back.dto.PackCoachingAdminDto;
 import com.gamefy.gamefy_back.dto.PackCoachingDto;
 import com.gamefy.gamefy_back.model.PackCoaching;
 import com.gamefy.gamefy_back.model.User;
@@ -21,6 +22,12 @@ public class PackCoachingService {
     public List<PackCoachingDto> getPacksByCoachId(Integer coachId) {
         return repository.findByCoachId(coachId).stream()
                 .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<PackCoachingAdminDto> getAllPacks() {
+        return repository.findAll().stream()
+                .map(this::mapToAdminDto)
                 .collect(Collectors.toList());
     }
 
@@ -71,6 +78,12 @@ public class PackCoachingService {
         repository.delete(existing);
     }
 
+    public void deletePackAdmin(Integer id) {
+        PackCoaching existing = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pack not found"));
+        repository.delete(existing);
+    }
+
     private PackCoachingDto mapToDto(PackCoaching pack) {
         return PackCoachingDto.builder()
                 .id(pack.getId())
@@ -79,6 +92,19 @@ public class PackCoachingService {
                 .price(pack.getPrice())
                 .description(pack.getDescription())
                 .coachId(pack.getCoach() != null ? pack.getCoach().getId() : null)
+                .build();
+    }
+
+    private PackCoachingAdminDto mapToAdminDto(PackCoaching pack) {
+        return PackCoachingAdminDto.builder()
+                .id(pack.getId())
+                .name(pack.getName())
+                .hours(pack.getHours())
+                .price(pack.getPrice())
+                .description(pack.getDescription())
+                .coachId(pack.getCoach() != null ? pack.getCoach().getId() : null)
+                .coachName(pack.getCoach() != null ? 
+                        pack.getCoach().getFirstName() + " " + pack.getCoach().getLastName() : "Unknown")
                 .build();
     }
 

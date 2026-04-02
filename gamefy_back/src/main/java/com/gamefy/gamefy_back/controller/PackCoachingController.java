@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.controller;
 
+import com.gamefy.gamefy_back.dto.PackCoachingAdminDto;
 import com.gamefy.gamefy_back.dto.PackCoachingDto;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.service.PackCoachingService;
@@ -41,6 +42,19 @@ public class PackCoachingController {
     @PreAuthorize("hasAuthority('COACH')")
     public ResponseEntity<PackCoachingDto> updatePack(@PathVariable Integer id, @Valid @RequestBody PackCoachingDto dto, @AuthenticationPrincipal User coach) {
         return ResponseEntity.ok(service.updatePack(id, dto, coach));
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<List<PackCoachingAdminDto>> getAllPacks() {
+        return ResponseEntity.ok(service.getAllPacks());
+    }
+
+    @DeleteMapping("/admin/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> deletePackAdmin(@PathVariable Integer id) {
+        service.deletePackAdmin(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")

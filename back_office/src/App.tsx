@@ -29,6 +29,7 @@ import OfferManagement from "./pages/OfferManagement";
 import PackManagement from "./pages/PackManagement";
 import PaymentManagement from "./pages/PaymentManagement";
 import ReservationManagement from "./pages/ReservationManagement";
+import CoachingPackManagement from "./pages/CoachingPackManagement";
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="/packs" element={<PackManagement />} />
             <Route path="/payments" element={<PaymentManagement />} />
             <Route path="/reservations" element={<ReservationManagement />} />
+            <Route path="/coaching-packs" element={<CoachingPackManagement />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
