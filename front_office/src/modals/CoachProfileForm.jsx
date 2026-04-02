@@ -12,8 +12,21 @@ const CoachProfileForm = ({ profile, onClose, onSave }) => {
         hourlyPrice: profile?.hourlyPrice ? profile.hourlyPrice.toFixed(3) : "",
         bio: profile?.bio || "",
     });
+    const [availableGames, setAvailableGames] = useState([]);
 
     const isEditing = !!profile;
+
+    useEffect(() => {
+        const fetchGames = async () => {
+            try {
+                const games = await coachProfileApi.getAvailableGames();
+                setAvailableGames(games);
+            } catch (error) {
+                console.error("Failed to fetch games:", error);
+            }
+        };
+        fetchGames();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -168,10 +181,11 @@ const CoachProfileForm = ({ profile, onClose, onSave }) => {
                                 style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%231CF3CA\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\' /%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.5rem center', backgroundSize: '1.2em' }}
                             >
                                 <option value="" disabled className="bg-[#24003E]">Select a game</option>
-                                <option value="FC26" className="bg-[#24003E]">FC26</option>
-                                <option value="VALORANT" className="bg-[#24003E]">VALORANT</option>
-                                <option value="CS_GO" className="bg-[#24003E]">CS_GO</option>
-                                <option value="LEAGUE_OF_LEGENDS" className="bg-[#24003E]">LEAGUE OF LEGENDS</option>
+                                {availableGames.map(game => (
+                                    <option key={game} value={game} className="bg-[#24003E]">
+                                        {game.replace(/_/g, " ")}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 

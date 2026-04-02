@@ -475,7 +475,11 @@ export default function ReservationPage() {
                             isSelected ? "bg-[#1CF3CA]/20 text-[#1CF3CA]" : "bg-white/5 text-white/40"
                         }`}>
                             <Gamepad2 size={12} />
-                            <span className="truncate">{pc.games?.split(',')[0] || "All Games"}</span>
+                            <span className="truncate">
+                                {Array.isArray(pc.games) 
+                                    ? (pc.games.length > 0 ? pc.games.join(", ").replace(/_/g, " ") : "All Games")
+                                    : (pc.games?.replace(/_/g, " ") || "All Games")}
+                            </span>
                         </div>
                     </div>
                 </div>

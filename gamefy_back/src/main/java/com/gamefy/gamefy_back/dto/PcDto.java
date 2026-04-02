@@ -11,6 +11,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -27,7 +29,7 @@ public class PcDto {
     private PC_Status status;
 
     @NotNull(message = "Games is required")
-    private PC_Games games;
+    private List<PC_Games> games;
 
     @NotNull(message = "PC Type is required")
     private PC_Type pcType;

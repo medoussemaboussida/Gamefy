@@ -4,7 +4,7 @@ export interface PCDto {
     id?: number;
     pcNumber: number;
     status: string;       // PC_Status enum as string, e.g. "AVAILABLE", "IN_USE", "MAINTENANCE"
-    games: string;        // PC_Games enum as string, e.g. "FORTNITE", "VALORANT", "ALL_GAMES"
+    games: string[];      // List of PC_Games enums as strings, e.g. ["FORTNITE", "VALORANT"]
     pcType: string;       // PC_Type enum as string, e.g. "HIGH_END", "MID_RANGE", "BASIC"
     pcLocation?: string;  // Location enum as string or null/undefined, e.g. "ZONE_A", "ZONE_B"
 }
@@ -15,6 +15,12 @@ export const pcApi = {
      */
     getAllPCs: async (): Promise<PCDto[]> => {
         return apiClient.get("/gamefy/pcs");
+    },
+    /**
+     * Get all PC games (from enum)
+     */
+    getAllPCGames: async (): Promise<string[]> => {
+        return apiClient.get("/gamefy/pcs/games");
     },
 
     /**

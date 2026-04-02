@@ -51,6 +51,13 @@ export const coachProfileApi = {
      */
     deleteProfile: async () => {
         return apiClient.delete("/gamefy/coaches/profile/me");
+    },
+    /**
+     * Get all PC games (from enum)
+     * @returns {Promise<string[]>}
+     */
+    getAvailableGames: async () => {
+        return apiClient.get("/gamefy/pcs/games");
     }
 };
 

@@ -21,6 +21,11 @@ public class PCController {
     public ResponseEntity<List<PcDto>> getAllPCs() {
         return ResponseEntity.ok(service.getAllPCs());
     }
+    @GetMapping("/games")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'COACH')")
+    public ResponseEntity<List<String>> getAllPCGames() {
+        return ResponseEntity.ok(service.getAllGamesEnums());
+    }
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
     public ResponseEntity<PcDto> getPCById(@PathVariable Integer id) {

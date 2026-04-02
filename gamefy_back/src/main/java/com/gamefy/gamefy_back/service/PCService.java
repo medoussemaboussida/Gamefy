@@ -2,11 +2,13 @@ package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.PcDto;
 import com.gamefy.gamefy_back.model.PC;
+import com.gamefy.gamefy_back.model.enums.PC_Games;
 import com.gamefy.gamefy_back.repository.PCRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +21,11 @@ public class PCService {
     public List<PcDto> getAllPCs() {
         return repository.findAll().stream()
                 .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+    public List<String> getAllGamesEnums() {
+        return Arrays.stream(PC_Games.values())
+                .map(Enum::name)
                 .collect(Collectors.toList());
     }
 

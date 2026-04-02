@@ -25,7 +25,7 @@ import { apiClient } from "./apiClient";
  * @property {number} id
  * @property {number} pcNumber
  * @property {string} pcType
- * @property {string} games
+ * @property {string[]} games
  * @property {string|null} pcLocation
  * @property {boolean} available
  */

@@ -4,5 +4,7 @@ public enum PC_Games {
     FC26,
     VALORANT,
     CS_GO,
-    LEAGUE_OF_LEGENDS
+    LEAGUE_OF_LEGENDS,
+    FORTNITE,
+    COD
 }

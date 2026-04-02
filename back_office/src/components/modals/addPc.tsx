@@ -6,6 +6,7 @@ import Select from "../form/Select";
 import Label from "../form/Label";
 import { pcApi } from "../../api/pc";
 import toast from "react-hot-toast";
+import MultiSelect from "../form/MultiSelect";
 
 interface PCModalProps {
   isOpen: boolean;
@@ -16,23 +17,31 @@ interface PCModalProps {
 
 const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData }) => {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    pcNumber: number;
+    status: string;
+    games: string[];
+    pcType: string;
+    pcLocation: string;
+  }>({
     pcNumber: 0,
     status: "AVAILABLE",
-    games: "FC26",
+    games: [],
     pcType: "GAMING",
     pcLocation: "SOUKRA",
   });
+  const [availableGames, setAvailableGames] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{ pcNumber?: string }>({});
 
   const isEdit = !!pcData;
 
   useEffect(() => {
+    fetchGames();
     if (pcData) {
       setFormData({
         pcNumber: pcData.pcNumber,
         status: pcData.status,
-        games: pcData.games,
+        games: pcData.games || [],
         pcType: pcData.pcType,
         pcLocation: pcData.pcLocation || "SOUKRA",
       });
@@ -40,13 +49,22 @@ const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData })
       setFormData({
         pcNumber: 0,
         status: "AVAILABLE",
-        games: "FC26",
+        games: [],
         pcType: "GAMING",
         pcLocation: "SOUKRA",
       });
     }
     setFieldErrors({});
   }, [pcData]);
+
+  const fetchGames = async () => {
+    try {
+      const data = await pcApi.getAllPCGames();
+      setAvailableGames(data);
+    } catch (error: any) {
+      console.error("Failed to fetch games:", error);
+    }
+  };
 
   const validateField = (name: string, value: any) => {
     let errorMsg = "";
@@ -68,12 +86,10 @@ const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData })
     { value: "MAINTENANCE", label: "Maintenance" },
   ];
 
-  const gamesOptions = [
-    { value: "FC26", label: "FC 26" },
-    { value: "VALORANT", label: "Valorant" },
-    { value: "CS_GO", label: "CS:GO" },
-    { value: "LEAGUE_OF_LEGENDS", label: "League of Legends" },
-  ];
+  const gamesOptions = availableGames.map((game) => ({
+    value: game,
+    text: game.replace(/_/g, " "),
+  }));
 
   const typeOptions = [
     { value: "GAMING", label: "Gaming" },
@@ -169,11 +185,12 @@ const PCModal: React.FC<PCModalProps> = ({ isOpen, onClose, onSuccess, pcData })
           </div>
 
           <div>
-            <Label>Games</Label>
-            <Select
+            <MultiSelect
+              label="Games"
               options={gamesOptions}
-              defaultValue={formData.games}
-              onChange={handleSelect("games")}
+              value={formData.games}
+              onChange={(selected) => setFormData((prev) => ({ ...prev, games: selected }))}
+              placeholder="Select games"
             />
           </div>
 

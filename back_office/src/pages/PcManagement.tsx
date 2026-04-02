@@ -25,7 +25,7 @@ interface PC {
   id: number;
   pcNumber: number;
   status: string;
-  games: string;
+  games: string[];
   pcType: string;
   pcLocation: string;
 }
@@ -36,6 +36,7 @@ export default function PCManagement() {
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
   const [selectedGame, setSelectedGame] = useState<string>("ALL");
+  const [availableGames, setAvailableGames] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
@@ -73,10 +74,10 @@ export default function PCManagement() {
 
   const gameOptions = [
     { value: "ALL", label: "All Games" },
-    { value: "FC26", label: "FC 26" },
-    { value: "VALORANT", label: "Valorant" },
-    { value: "CS_GO", label: "CS:GO" },
-    { value: "LEAGUE_OF_LEGENDS", label: "League of Legends" },
+    ...availableGames.map((game) => ({
+      value: game,
+      label: game.replace(/_/g, " "),
+    })),
   ];
 
 
@@ -93,7 +94,17 @@ export default function PCManagement() {
 
   useEffect(() => {
     fetchPCs();
+    fetchGames();
   }, []);
+
+  const fetchGames = async () => {
+    try {
+      const data = await pcApi.getAllPCGames();
+      setAvailableGames(data);
+    } catch (error: any) {
+      console.error("Failed to fetch games:", error);
+    }
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -103,7 +114,7 @@ export default function PCManagement() {
   const filteredPCs = pcs.filter((pc) => {
     const statusMatch = selectedStatus === "ALL" || pc.status === selectedStatus;
     const typeMatch = selectedType === "ALL" || pc.pcType === selectedType;
-    const gameMatch = selectedGame === "ALL" || pc.games === selectedGame;
+    const gameMatch = selectedGame === "ALL" || (Array.isArray(pc.games) && pc.games.includes(selectedGame));
     return statusMatch && typeMatch && gameMatch;
   });
 
@@ -435,7 +446,19 @@ export default function PCManagement() {
                         )}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {getGameLabel(pc.games)}
+                        <div className="flex flex-wrap gap-1">
+                          {Array.isArray(pc.games) ? (
+                            pc.games.map((game) => (
+                              <Badge key={game} size="sm" color="light">
+                                {getGameLabel(game)}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge size="sm" color="light">
+                              {getGameLabel(pc.games)}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
 
                       <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">

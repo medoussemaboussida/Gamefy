@@ -30,9 +30,11 @@ public class PC {
     @Column(nullable = false)
     private PC_Status status;
 
+    @ElementCollection(targetClass = PC_Games.class)
+    @CollectionTable(name = "pc_games", joinColumns = @JoinColumn(name = "pc_id"))
+    @Column(name = "game")
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PC_Games games;
+    private List<PC_Games> games;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "pc_type", nullable = false)
