@@ -11,6 +11,7 @@ import {
 } from "../components/ui/table";
 import Badge from "../components/ui/badge/Badge";
 import { userApi } from "../api/user";
+import { packGamefyApi } from "../api/packGamefy";
 import { getUserId, getUserRole } from "../utils/jwt";
 import toast from "react-hot-toast";
 import Button from "../components/ui/button/Button";
@@ -31,6 +32,7 @@ interface User {
   role: string;
   status: string;
   packGamefyId?: number;
+  packGamefyName?: string | null;
 }
 
 export default function UserManagement() {
@@ -56,6 +58,9 @@ export default function UserManagement() {
   const [selectedCoach, setSelectedCoach] = useState<User | null>(null);
   const [isAssignPackModalOpen, setIsAssignPackModalOpen] = useState(false);
   const [userForPack, setUserForPack] = useState<User | null>(null);
+  const [isRemovePackModalOpen, setIsRemovePackModalOpen] = useState(false);
+  const [userToRemovePack, setUserToRemovePack] = useState<User | null>(null);
+  const [removePackLoading, setRemovePackLoading] = useState(false);
 
   const currentUserRole = getUserRole();
   const currentUserId = getUserId();
@@ -151,6 +156,22 @@ export default function UserManagement() {
       toast.error(error.message || "Failed to delete user");
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  const handleConfirmRemovePack = async () => {
+    if (!userToRemovePack) return;
+    setRemovePackLoading(true);
+    try {
+      await packGamefyApi.removePackFromPlayer(userToRemovePack.id);
+      toast.success("Pack assignment removed.");
+      await fetchUsers();
+      setIsRemovePackModalOpen(false);
+      setUserToRemovePack(null);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to remove pack assignment");
+    } finally {
+      setRemovePackLoading(false);
     }
   };
 
@@ -465,19 +486,50 @@ export default function UserManagement() {
                                   <span>Profile</span>
                                 </button>
                               )}
-                              {user.role === "PLAYER" && (
-                                <button
-                                  onClick={() => {
-                                    setUserForPack(user);
-                                    setIsAssignPackModalOpen(true);
-                                  }}
-                                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white transition-all group"
-                                  title="Manage Gaming Packs"
-                                >
-                                  <BoxIcon width="16" height="16" />
-                                  <span>Packs</span>
-                                </button>
-                              )}
+                              {user.role === "PLAYER" &&
+                                (user.packGamefyId != null ? (
+                                  <div className="flex flex-col items-start gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setUserToRemovePack(user);
+                                        setIsRemovePackModalOpen(true);
+                                      }}
+                                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-error-500/10 text-error-600 dark:text-error-400 hover:bg-error-500 hover:text-white transition-all group"
+                                      title="Remove Gamefy pack assignment"
+                                    >
+                                      <TrashBinIcon className="w-4 h-4" />
+                                      <span>Remove pack</span>
+                                    </button>
+                                    <span
+                                      className="inline-block max-w-[10rem]"
+                                      title={
+                                        user.packGamefyName?.trim() ||
+                                        `Pack #${user.packGamefyId}`
+                                      }
+                                    >
+                                      <Badge size="sm" variant="light" color="primary">
+                                        <span className="truncate inline-block max-w-[10rem] align-bottom">
+                                          {user.packGamefyName?.trim() ||
+                                            `Pack #${user.packGamefyId}`}
+                                        </span>
+                                      </Badge>
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setUserForPack(user);
+                                      setIsAssignPackModalOpen(true);
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white transition-all group"
+                                    title="Assign a Gamefy pack"
+                                  >
+                                    <BoxIcon width="16" height="16" />
+                                    <span>Assign pack</span>
+                                  </button>
+                                ))}
                               {user.role !== "COACH" && user.role !== "PLAYER" && (
                                 <span className="text-gray-400 italic text-xs">N/A</span>
                               )}
@@ -538,6 +590,28 @@ export default function UserManagement() {
         loading={deleteLoading}
       />
 
+      <DeleteConfirmationModal
+        isOpen={isRemovePackModalOpen}
+        onClose={() => {
+          setIsRemovePackModalOpen(false);
+          setUserToRemovePack(null);
+        }}
+        onConfirm={handleConfirmRemovePack}
+        userName={
+          userToRemovePack
+            ? `${userToRemovePack.firstName} ${userToRemovePack.lastName}`
+            : ""
+        }
+        loading={removePackLoading}
+        title="Remove pack assignment"
+        description={
+          userToRemovePack
+            ? `Remove the Gamefy pack from ${userToRemovePack.firstName} ${userToRemovePack.lastName}? They will no longer have pack benefits until a new pack is assigned.`
+            : undefined
+        }
+        confirmLabel="Remove"
+      />
+
       {selectedCoach && (
         <CoachProfileModal
           isOpen={isCoachModalOpen}
@@ -560,7 +634,6 @@ export default function UserManagement() {
           }}
           userId={userForPack.id}
           userName={`${userForPack.firstName} ${userForPack.lastName}`}
-          currentPackId={userForPack.packGamefyId}
           onSuccess={fetchUsers}
         />
       )}

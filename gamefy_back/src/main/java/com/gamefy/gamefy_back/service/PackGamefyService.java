@@ -13,6 +13,7 @@ import com.gamefy.gamefy_back.repository.PaymentRepository;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,6 +124,7 @@ public class PackGamefyService {
     }
 
     @Transactional
+    @CacheEvict(value = {"users", "payments"}, allEntries = true)
     public void assignPackToUser(Integer packId, Integer userId) {
         log.info("Service: Assigning packId {} to userId {}", packId, userId);
         PackGamefy pack = repository.findById(packId)
@@ -142,6 +144,7 @@ public class PackGamefyService {
     }
 
     @Transactional
+    @CacheEvict(value = {"users", "payments"}, allEntries = true)
     public void removePackFromUser(Integer userId) {
         log.info("Service: Removing pack from userId {}", userId);
         User user = userRepository.findById(userId)

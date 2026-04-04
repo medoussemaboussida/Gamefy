@@ -9,6 +9,10 @@ interface DeleteConfirmationModalProps {
     onConfirm: () => void;
     userName: string;
     loading?: boolean;
+    /** Override default delete-user copy (e.g. pack removal) */
+    title?: string;
+    description?: string;
+    confirmLabel?: string;
 }
 
 const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
@@ -17,7 +21,16 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
     onConfirm,
     userName,
     loading = false,
+    title = "Delete this item",
+    description,
+    confirmLabel = "Delete",
 }) => {
+    const defaultDescription = (
+        <>
+            Are you sure you want to delete <strong>{userName}</strong>? This action cannot be undone and will notify the user via email.
+        </>
+    );
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} className="max-w-[400px] p-6 sm:p-8">
             <div className="flex flex-col items-center text-center">
@@ -25,10 +38,10 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                     <TrashBinIcon className="w-6 h-6 text-error-500" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                    Delete this item
+                    {title}
                 </h3>
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Are you sure you want to delete <strong>{userName}</strong>? This action cannot be undone and will notify the user via email.
+                    {description ?? defaultDescription}
                 </p>
 
                 <div className="flex items-center justify-center w-full gap-3 mt-8">
@@ -36,7 +49,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                         Cancel
                     </Button>
                     <Button variant="primary" onClick={onConfirm} loading={loading} className="flex-1 bg-error-500 hover:bg-error-600 border-error-500">
-                        Delete
+                        {confirmLabel}
                     </Button>
                 </div>
             </div>
