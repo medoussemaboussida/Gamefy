@@ -124,7 +124,7 @@ public class PackGamefyService {
     }
 
     @Transactional
-    @CacheEvict(value = {"users", "payments"}, allEntries = true)
+    @CacheEvict(value = {"users"}, allEntries = true)
     public void assignPackToUser(Integer packId, Integer userId) {
         log.info("Service: Assigning packId {} to userId {}", packId, userId);
         PackGamefy pack = repository.findById(packId)
@@ -151,11 +151,11 @@ public class PackGamefyService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
         PackGamefy currentPack = user.getPackGamefy();
-        if (currentPack != null) {
+       /* if (currentPack != null) {
             // Remove from payment history
             paymentRepository.findByUserAndPackGamefy(user, currentPack)
                     .ifPresent(paymentRepository::delete);
-        }
+        }*/
 
         user.setPackGamefy(null);
         userRepository.save(user);

@@ -23,7 +23,6 @@ public class UserResponseDto implements Serializable {
     private UserStatus status;
     private String profilePhoto;
     private Integer packGamefyId;
-    /** Display name of the assigned Gamefy pack (null if none). */
     private String packGamefyName;
     private boolean twoFaActivated;
     private LocalDateTime createdAt;

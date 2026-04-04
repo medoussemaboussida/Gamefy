@@ -252,8 +252,8 @@ export default function ReservationManagement() {
             return typeMatch && statusMatch && coachMatch;
         })
         .sort((a, b) => {
-            const dateA = new Date(a.startTime).getTime();
-            const dateB = new Date(b.startTime).getTime();
+            const dateA = new Date(a.startTime.endsWith("Z") ? a.startTime : a.startTime + "Z").getTime();
+            const dateB = new Date(b.startTime.endsWith("Z") ? b.startTime : b.startTime + "Z").getTime();
             return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
         });
 
@@ -330,7 +330,7 @@ export default function ReservationManagement() {
     };
 
     const formatDateTime = (dateStr: string) => {
-        const date = new Date(dateStr);
+        const date = new Date(dateStr.endsWith("Z") ? dateStr : dateStr + "Z");
         return date.toLocaleString('en-US', {
             month: 'short',
             day: 'numeric',

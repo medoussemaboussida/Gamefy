@@ -94,7 +94,7 @@ public class PaymentService {
      * Creates Payment record and confirms the reservation.
      */
     @Transactional
-    @CacheEvict(value = {"payments", "reservations"}, allEntries = true)
+    @CacheEvict(value = "reservations", allEntries = true)
     public void fulfillReservationPayment(Integer reservationId, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
@@ -117,7 +117,6 @@ public class PaymentService {
      * Fulfill the order after successful payment
      */
     @Transactional
-    @CacheEvict(value = "payments", allEntries = true)
     public void handlePackPaymentSucceeded(PaymentIntent intent) {
         String packIdStr = intent.getMetadata().get("packId");
         String userIdStr = intent.getMetadata().get("userId");
@@ -145,7 +144,7 @@ public class PaymentService {
     }
 
     @Transactional
-    @CacheEvict(value = {"payments", "users"}, allEntries = true)
+    @CacheEvict(value = "users", allEntries = true)
     public void fulfillPackPurchase(Integer packId, Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
@@ -177,7 +176,6 @@ public class PaymentService {
         return List.of();
     }
 
-    @Cacheable(value = "payments")
     public List<PaymentDtos.AllPaymentResponse> getAllPayments() {
         return paymentRepository.findAll().stream()
                 .map(payment -> {
