@@ -22,7 +22,9 @@ import AddUserModal from "../components/modals/addUser";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
 import CoachProfileModal from "../components/modals/CoachProfileModal";
 import AssignPackModal from "../components/modals/AssignPackModal";
+import AssignCoachingPackModal from "../components/modals/AssignCoachingPackModal";
 import Pagination from "../components/ui/pagination/Pagination";
+import { packCoachingApi } from "../api/packCoaching";
 
 interface User {
   id: number;
@@ -33,6 +35,8 @@ interface User {
   status: string;
   packGamefyId?: number;
   packGamefyName?: string | null;
+  packCoachingId?: number;
+  packCoachingName?: string | null;
 }
 
 export default function UserManagement() {
@@ -61,6 +65,11 @@ export default function UserManagement() {
   const [isRemovePackModalOpen, setIsRemovePackModalOpen] = useState(false);
   const [userToRemovePack, setUserToRemovePack] = useState<User | null>(null);
   const [removePackLoading, setRemovePackLoading] = useState(false);
+  const [isAssignCoachingPackModalOpen, setIsAssignCoachingPackModalOpen] = useState(false);
+  const [userForCoachingPack, setUserForCoachingPack] = useState<User | null>(null);
+  const [isRemoveCoachingPackModalOpen, setIsRemoveCoachingPackModalOpen] = useState(false);
+  const [userToRemoveCoachingPack, setUserToRemoveCoachingPack] = useState<User | null>(null);
+  const [removeCoachingPackLoading, setRemoveCoachingPackLoading] = useState(false);
 
   const currentUserRole = getUserRole();
   const currentUserId = getUserId();
@@ -172,6 +181,22 @@ export default function UserManagement() {
       toast.error(error.message || "Failed to remove pack assignment");
     } finally {
       setRemovePackLoading(false);
+    }
+  };
+
+  const handleConfirmRemoveCoachingPack = async () => {
+    if (!userToRemoveCoachingPack) return;
+    setRemoveCoachingPackLoading(true);
+    try {
+      await packCoachingApi.removePackFromPlayer(userToRemoveCoachingPack.id);
+      toast.success("Coaching pack assignment removed.");
+      await fetchUsers();
+      setIsRemoveCoachingPackModalOpen(false);
+      setUserToRemoveCoachingPack(null);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to remove coaching pack assignment");
+    } finally {
+      setRemoveCoachingPackLoading(false);
     }
   };
 
@@ -367,7 +392,15 @@ export default function UserManagement() {
                         isHeader
                         className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                       >
-                        Profile & Packs
+                        Profile & Gamefy Pack
+                      </TableCell>
+                    )}
+                    {(isAdmin || currentUserRole === "WEB_MASTER") && (
+                      <TableCell
+                        isHeader
+                        className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                      >
+                        Coaching Pack
                       </TableCell>
                     )}
                     {isAdmin && (
@@ -536,6 +569,59 @@ export default function UserManagement() {
                             </div>
                           </TableCell>
                         )}
+                        {(isAdmin || currentUserRole === "WEB_MASTER") && (
+                          <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                            <div className="flex items-center gap-2">
+                              {user.role === "PLAYER" &&
+                                (user.packCoachingId != null ? (
+                                  <div className="flex flex-col items-start gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setUserToRemoveCoachingPack(user);
+                                        setIsRemoveCoachingPackModalOpen(true);
+                                      }}
+                                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-error-500/10 text-error-600 dark:text-error-400 hover:bg-error-500 hover:text-white transition-all group"
+                                      title="Remove Coaching pack assignment"
+                                    >
+                                      <TrashBinIcon className="w-4 h-4" />
+                                      <span>Remove pack</span>
+                                    </button>
+                                    <span
+                                      className="inline-block max-w-[10rem]"
+                                      title={
+                                        user.packCoachingName?.trim() ||
+                                        `Pack #${user.packCoachingId}`
+                                      }
+                                    >
+                                      <Badge size="sm" variant="light" color="warning">
+                                        <span className="truncate inline-block max-w-[10rem] align-bottom">
+                                          {user.packCoachingName?.trim() ||
+                                            `Pack #${user.packCoachingId}`}
+                                        </span>
+                                      </Badge>
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setUserForCoachingPack(user);
+                                      setIsAssignCoachingPackModalOpen(true);
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white transition-all group"
+                                    title="Assign a Coaching pack"
+                                  >
+                                    <BoxIcon width="16" height="16" />
+                                    <span>Assign pack</span>
+                                  </button>
+                                ))}
+                              {user.role !== "PLAYER" && (
+                                <span className="text-gray-400 italic text-xs">N/A</span>
+                              )}
+                            </div>
+                          </TableCell>
+                        )}
                         {isAdmin && (
                           <TableCell className="px-5 py-4 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                             {currentUserId !== null &&
@@ -637,6 +723,41 @@ export default function UserManagement() {
           onSuccess={fetchUsers}
         />
       )}
+
+      {userForCoachingPack && (
+        <AssignCoachingPackModal
+          isOpen={isAssignCoachingPackModalOpen}
+          onClose={() => {
+            setIsAssignCoachingPackModalOpen(false);
+            setUserForCoachingPack(null);
+          }}
+          userId={userForCoachingPack.id}
+          userName={`${userForCoachingPack.firstName} ${userForCoachingPack.lastName}`}
+          onSuccess={fetchUsers}
+        />
+      )}
+
+      <DeleteConfirmationModal
+        isOpen={isRemoveCoachingPackModalOpen}
+        onClose={() => {
+          setIsRemoveCoachingPackModalOpen(false);
+          setUserToRemoveCoachingPack(null);
+        }}
+        onConfirm={handleConfirmRemoveCoachingPack}
+        userName={
+          userToRemoveCoachingPack
+            ? `${userToRemoveCoachingPack.firstName} ${userToRemoveCoachingPack.lastName}`
+            : ""
+        }
+        loading={removeCoachingPackLoading}
+        title="Remove coaching pack assignment"
+        description={
+          userToRemoveCoachingPack
+            ? `Remove the Coaching pack from ${userToRemoveCoachingPack.firstName} ${userToRemoveCoachingPack.lastName}? They will no longer have pack benefits until a new pack is assigned.`
+            : undefined
+        }
+        confirmLabel="Remove"
+      />
     </>
   );
 }

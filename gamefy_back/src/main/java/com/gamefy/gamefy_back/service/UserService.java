@@ -152,6 +152,8 @@ public class UserService {
                 .profilePhoto(user.getProfilePhoto())
                 .packGamefyId(user.getPackGamefy() != null ? user.getPackGamefy().getId() : null)
                 .packGamefyName(user.getPackGamefy() != null ? user.getPackGamefy().getName() : null)
+                .packCoachingId(user.getPackCoaching() != null ? user.getPackCoaching().getId() : null)
+                .packCoachingName(user.getPackCoaching() != null ? user.getPackCoaching().getName() : null)
                 .twoFaActivated(user.isTwoFaActivated())
                 .createdAt(user.getCreatedAt())
                 .totalHours(totalHours)

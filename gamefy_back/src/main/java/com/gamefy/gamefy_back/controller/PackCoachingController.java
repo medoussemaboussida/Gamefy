@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.controller;
 
+import com.gamefy.gamefy_back.dto.AssignPackDto;
 import com.gamefy.gamefy_back.dto.PackCoachingAdminDto;
 import com.gamefy.gamefy_back.dto.PackCoachingDto;
 import com.gamefy.gamefy_back.model.User;
@@ -55,6 +56,20 @@ public class PackCoachingController {
     public ResponseEntity<Void> deletePackAdmin(@PathVariable Integer id) {
         service.deletePackAdmin(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/assign-to-player")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<String> assignCoachingPackToPlayer(@RequestBody AssignPackDto request) {
+        service.assignPackToPlayer(request.getPackId(), request.getUserId());
+        return ResponseEntity.ok("Coaching pack assigned successfully to player");
+    }
+
+    @PostMapping("/remove-from-player/{userId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<String> removeCoachingPackFromPlayer(@PathVariable Integer userId) {
+        service.removePackFromPlayer(userId);
+        return ResponseEntity.ok("Coaching pack removed successfully from player");
     }
 
     @DeleteMapping("/{id}")

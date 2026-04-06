@@ -17,6 +17,8 @@ export interface UserResponseDto {
     profilePhoto: string | null;
     packGamefyId?: number;
     packGamefyName?: string | null;
+    packCoachingId?: number;
+    packCoachingName?: string | null;
 }
 
 export interface CoachProfileDto {

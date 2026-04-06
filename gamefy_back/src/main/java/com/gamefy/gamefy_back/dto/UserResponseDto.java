@@ -24,6 +24,8 @@ public class UserResponseDto implements Serializable {
     private String profilePhoto;
     private Integer packGamefyId;
     private String packGamefyName;
+    private Integer packCoachingId;
+    private String packCoachingName;
     private boolean twoFaActivated;
     private LocalDateTime createdAt;
     private Double totalHours;
