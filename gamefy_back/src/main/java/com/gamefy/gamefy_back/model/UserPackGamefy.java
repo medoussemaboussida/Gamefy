@@ -36,6 +36,21 @@ public class UserPackGamefy {
     @Column(name = "remaining_pc_hours")
     private Double remainingPcHours;
 
+    @Column(name = "remaining_vip_hours")
+    private Double remainingVipHours;
+
+    @Column(name = "remaining_coaching_hours")
+    private Double remainingCoachingHours;
+
+    @Column(name = "remaining_pc_discounts")
+    private Integer remainingPcDiscounts;
+
+    @Column(name = "remaining_vip_discounts")
+    private Integer remainingVipDiscounts;
+
+    @Column(name = "remaining_coaching_discounts")
+    private Integer remainingCoachingDiscounts;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserPackStatus status;
@@ -57,6 +72,11 @@ public class UserPackGamefy {
                 ", activatedAt=" + activatedAt +
                 ", expiresAt=" + expiresAt +
                 ", remainingPcHours=" + remainingPcHours +
+                ", remainingVipHours=" + remainingVipHours +
+                ", remainingCoachingHours=" + remainingCoachingHours +
+                ", remainingPcDiscounts=" + remainingPcDiscounts +
+                ", remainingVipDiscounts=" + remainingVipDiscounts +
+                ", remainingCoachingDiscounts=" + remainingCoachingDiscounts +
                 ", status=" + status +
                 '}';
     }

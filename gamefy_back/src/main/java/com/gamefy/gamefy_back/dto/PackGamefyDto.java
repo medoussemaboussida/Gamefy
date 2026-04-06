@@ -26,5 +26,7 @@ public class PackGamefyDto {
         private Integer id;
         private String benefitType;
         private String rateRule;
+        private String discountType;
+        private Double discountValue;
     }
 }

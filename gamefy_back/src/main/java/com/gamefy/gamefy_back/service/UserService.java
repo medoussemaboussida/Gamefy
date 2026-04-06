@@ -167,6 +167,11 @@ public class UserService {
                 .createdAt(user.getCreatedAt())
                 .totalHours(totalHours)
                 .remainingPcHours(activePack != null ? activePack.getRemainingPcHours() : 0.0)
+                .remainingVipHours(activePack != null ? activePack.getRemainingVipHours() : 0.0)
+                .remainingCoachingHours(activePack != null ? activePack.getRemainingCoachingHours() : 0.0)
+                .remainingPcDiscounts(activePack != null ? activePack.getRemainingPcDiscounts() : 0)
+                .remainingVipDiscounts(activePack != null ? activePack.getRemainingVipDiscounts() : 0)
+                .remainingCoachingDiscounts(activePack != null ? activePack.getRemainingCoachingDiscounts() : 0)
                 .build();
     }
 

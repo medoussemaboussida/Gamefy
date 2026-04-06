@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.model;
 
 import com.gamefy.gamefy_back.model.enums.Benefit_type;
+import com.gamefy.gamefy_back.model.enums.DiscountType;
 import com.gamefy.gamefy_back.model.enums.Rate_Rule;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,13 @@ public class GamefyPackBenefit {
     @Enumerated(EnumType.STRING)
     @Column(name = "rate_rule", nullable = false)
     private Rate_Rule rateRule;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "discount_type")
+    private DiscountType discountType;
+
+    @Column(name = "discount_value")
+    private Double discountValue;
 
     @Override
     public String toString() {

@@ -4,6 +4,8 @@ export interface PackBenefitDto {
     id?: number;
     benefitType: string;
     rateRule: string;
+    discountType?: string;
+    discountValue?: number;
 }
 
 export interface PackGamefyDto {
@@ -23,6 +25,8 @@ export interface CreatePackGamefyDto {
     benefits: {
         benefitType: string;
         rateRule: string;
+        discountType?: string;
+        discountValue?: number;
     }[];
 }
 

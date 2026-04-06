@@ -22,5 +22,7 @@ public class CreatePackGamefyDto {
     public static class BenefitRequest {
         private String benefitType;
         private String rateRule;
+        private String discountType;  // "PERCENTAGE" or "FIXED_AMOUNT", only when rateRule=DISCOUNT
+        private Double discountValue; // e.g. 20 (for 20%) or 5.0 (for 5 TND)
     }
 }

@@ -26,6 +26,11 @@ const RATE_RULES = [
     { value: "DISCOUNT", label: "Discount Based" },
 ];
 
+const DISCOUNT_TYPES = [
+    { value: "PERCENTAGE", label: "Percentage (%)" },
+    { value: "FIXED_AMOUNT", label: "Fixed Amount (TND)" },
+];
+
 const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack }) => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<CreatePackGamefyDto>({
@@ -44,7 +49,9 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                 durationMonths: pack.durationMonths,
                 benefits: pack.benefits.map(b => ({
                     benefitType: b.benefitType,
-                    rateRule: b.rateRule
+                    rateRule: b.rateRule,
+                    discountType: b.discountType,
+                    discountValue: b.discountValue,
                 })),
             });
         } else {
@@ -68,7 +75,7 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
     const addBenefit = () => {
         setFormData(prev => ({
             ...prev,
-            benefits: [...prev.benefits, { benefitType: "PC", rateRule: "HOURS" }]
+            benefits: [...prev.benefits, { benefitType: "PC", rateRule: "HOURS", discountType: undefined, discountValue: undefined }]
         }));
     };
 
@@ -186,30 +193,67 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                 </p>
                             ) : (
                                 formData.benefits.map((benefit, index) => (
-                                    <div key={index} className="flex items-end gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5">
-                                        <div className="flex-1">
-                                            <Label className="text-[10px] mb-1">Type</Label>
-                                            <Select
-                                                options={BENEFIT_TYPES}
-                                                defaultValue={benefit.benefitType}
-                                                onChange={(val) => updateBenefit(index, "benefitType", val)}
-                                            />
+                                    <div key={index} className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5">
+                                        <div className="flex items-end gap-3">
+                                            <div className="flex-1">
+                                                <Label className="text-[10px] mb-1">Type</Label>
+                                                <Select
+                                                    options={BENEFIT_TYPES}
+                                                    defaultValue={benefit.benefitType}
+                                                    onChange={(val) => updateBenefit(index, "benefitType", val)}
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <Label className="text-[10px] mb-1">Rule</Label>
+                                                <Select
+                                                    options={RATE_RULES}
+                                                    defaultValue={benefit.rateRule}
+                                                    onChange={(val) => {
+                                                        updateBenefit(index, "rateRule", val);
+                                                        if (val === "HOURS") {
+                                                            // Clear discount fields when switching to HOURS
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                benefits: prev.benefits.map((b, i) => i === index
+                                                                    ? { ...b, rateRule: val, discountType: undefined, discountValue: undefined }
+                                                                    : b)
+                                                            }));
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeBenefit(index)}
+                                                className="p-2.5 text-gray-400 hover:text-error-500 transition-colors"
+                                            >
+                                                <TrashBinIcon className="w-5 h-5" />
+                                            </button>
                                         </div>
-                                        <div className="flex-1">
-                                            <Label className="text-[10px] mb-1">Rule</Label>
-                                            <Select
-                                                options={RATE_RULES}
-                                                defaultValue={benefit.rateRule}
-                                                onChange={(val) => updateBenefit(index, "rateRule", val)}
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeBenefit(index)}
-                                            className="p-2.5 text-gray-400 hover:text-error-500 transition-colors"
-                                        >
-                                            <TrashBinIcon className="w-5 h-5" />
-                                        </button>
+                                        {benefit.rateRule === "DISCOUNT" && (
+                                            <div className="flex items-end gap-3 pt-1 pl-2 border-l-2 border-brand-300 dark:border-brand-600 ml-1">
+                                                <div className="flex-1">
+                                                    <Label className="text-[10px] mb-1">Discount Type</Label>
+                                                    <Select
+                                                        options={DISCOUNT_TYPES}
+                                                        defaultValue={benefit.discountType || "PERCENTAGE"}
+                                                        onChange={(val) => updateBenefit(index, "discountType", val)}
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <Label className="text-[10px] mb-1">Value</Label>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder={benefit.discountType === "FIXED_AMOUNT" ? "e.g. 5 TND" : "e.g. 20%"}
+                                                        value={benefit.discountValue ?? ""}
+                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                            updateBenefit(index, "discountValue", e.target.value)
+                                                        }
+                                                        min={"0"}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}

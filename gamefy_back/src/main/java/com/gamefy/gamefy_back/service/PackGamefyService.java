@@ -7,6 +7,7 @@ import com.gamefy.gamefy_back.model.PackGamefy;
 import com.gamefy.gamefy_back.model.Payment;
 import com.gamefy.gamefy_back.model.UserPackGamefy;
 import com.gamefy.gamefy_back.model.enums.Benefit_type;
+import com.gamefy.gamefy_back.model.enums.DiscountType;
 import com.gamefy.gamefy_back.model.enums.Rate_Rule;
 import com.gamefy.gamefy_back.model.enums.UserPackStatus;
 import com.gamefy.gamefy_back.model.User;
@@ -60,6 +61,10 @@ public class PackGamefyService {
                         GamefyPackBenefit benefit = new GamefyPackBenefit();
                         benefit.setBenefitType(Benefit_type.valueOf(b.getBenefitType()));
                         benefit.setRateRule(Rate_Rule.valueOf(b.getRateRule()));
+                        if (b.getDiscountType() != null) {
+                            benefit.setDiscountType(DiscountType.valueOf(b.getDiscountType()));
+                        }
+                        benefit.setDiscountValue(b.getDiscountValue());
                         benefit.setPackGamefy(pack);
                         return benefit;
                     }).collect(Collectors.toList());
@@ -89,6 +94,10 @@ public class PackGamefyService {
                         GamefyPackBenefit benefit = new GamefyPackBenefit();
                         benefit.setBenefitType(Benefit_type.valueOf(b.getBenefitType()));
                         benefit.setRateRule(Rate_Rule.valueOf(b.getRateRule()));
+                        if (b.getDiscountType() != null) {
+                            benefit.setDiscountType(DiscountType.valueOf(b.getDiscountType()));
+                        }
+                        benefit.setDiscountValue(b.getDiscountValue());
                         benefit.setPackGamefy(pack);
                         return benefit;
                     }).collect(Collectors.toList());
@@ -112,11 +121,15 @@ public class PackGamefyService {
 
     private PackGamefyDto mapToDto(PackGamefy pack) {
         List<PackGamefyDto.PackBenefitDto> benefitsDto = pack.getBenefits().stream()
-                .map(b -> new PackGamefyDto.PackBenefitDto(
-                        b.getId(),
-                        b.getBenefitType().name(),
-                        b.getRateRule().name()
-                )).collect(Collectors.toList());
+                .map(b -> {
+                    PackGamefyDto.PackBenefitDto dto = new PackGamefyDto.PackBenefitDto();
+                    dto.setId(b.getId());
+                    dto.setBenefitType(b.getBenefitType().name());
+                    dto.setRateRule(b.getRateRule().name());
+                    dto.setDiscountType(b.getDiscountType() != null ? b.getDiscountType().name() : null);
+                    dto.setDiscountValue(b.getDiscountValue());
+                    return dto;
+                }).collect(Collectors.toList());
 
         return PackGamefyDto.builder()
                 .id(pack.getId())
@@ -143,7 +156,12 @@ public class PackGamefyService {
         userPack.setPackGamefy(pack);
         userPack.setActivatedAt(LocalDateTime.now());
         userPack.setExpiresAt(LocalDateTime.now().plusMonths(pack.getDurationMonths()));
-        userPack.setRemainingPcHours(calculatePcHours(pack));
+        userPack.setRemainingPcHours(calculateHours(pack, Benefit_type.PC));
+        userPack.setRemainingVipHours(calculateHours(pack, Benefit_type.VIP));
+        userPack.setRemainingCoachingHours(calculateHours(pack, Benefit_type.COACH));
+        userPack.setRemainingPcDiscounts(calculateDiscounts(pack, Benefit_type.PC));
+        userPack.setRemainingVipDiscounts(calculateDiscounts(pack, Benefit_type.VIP));
+        userPack.setRemainingCoachingDiscounts(calculateDiscounts(pack, Benefit_type.COACH));
         userPack.setStatus(UserPackStatus.ACTIVE);
         userPackGamefyRepository.save(userPack);
 
@@ -168,13 +186,24 @@ public class PackGamefyService {
     }
 
     /**
-     * Count the number of PC + HOURS benefits in the pack.
-     * Each such benefit = 1 PC hour.
+     * Count the number of benefits of a given type with rateRule=HOURS.
+     * Each such benefit = 1 hour.
      */
-    private double calculatePcHours(PackGamefy pack) {
+    private double calculateHours(PackGamefy pack, Benefit_type type) {
         if (pack.getBenefits() == null) return 0.0;
         return pack.getBenefits().stream()
-                .filter(b -> b.getBenefitType() == Benefit_type.PC && b.getRateRule() == Rate_Rule.HOURS)
+                .filter(b -> b.getBenefitType() == type && b.getRateRule() == Rate_Rule.HOURS)
+                .count();
+    }
+
+    /**
+     * Count the number of benefits of a given type with rateRule=DISCOUNT.
+     * Each such benefit = 1 discount use.
+     */
+    private int calculateDiscounts(PackGamefy pack, Benefit_type type) {
+        if (pack.getBenefits() == null) return 0;
+        return (int) pack.getBenefits().stream()
+                .filter(b -> b.getBenefitType() == type && b.getRateRule() == Rate_Rule.DISCOUNT)
                 .count();
     }
 }

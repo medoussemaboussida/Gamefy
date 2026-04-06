@@ -30,4 +30,9 @@ public class UserResponseDto implements Serializable {
     private LocalDateTime createdAt;
     private Double totalHours;
     private Double remainingPcHours;
+    private Double remainingVipHours;
+    private Double remainingCoachingHours;
+    private Integer remainingPcDiscounts;
+    private Integer remainingVipDiscounts;
+    private Integer remainingCoachingDiscounts;
 }
