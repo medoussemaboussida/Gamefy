@@ -157,11 +157,3 @@ export const getActiveOffer = () => {
     return apiClient.get("/gamefy/offers/active");
 };
 
-/**
- * Apply the currently active player's Gamefy pack benefits to a pending reservation.
- * @param {number} reservationId
- * @returns {Promise<ReservationDto>}
- */
-export const activateGamefyPackForReservation = (reservationId) => {
-    return apiClient.put(`/gamefy/reservations/${reservationId}/activate-gamefy-pack`);
-};

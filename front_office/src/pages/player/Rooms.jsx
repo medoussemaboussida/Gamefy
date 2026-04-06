@@ -2,11 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer, Filter } from "lucide-react";
 
-import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment, activateGamefyPackForReservation, getWorkSchedule } from "../../api/reservation";
+import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment, getWorkSchedule } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
 import ReservationPaymentModal from "../../components/payment/ReservationPaymentModal";
 import CashPaymentModal from "../../modals/CashPaymentModal";
-import ActivateGamefyPackModal from "../../modals/ActivateGamefyPackModal";
 import toast from "react-hot-toast";
 import { packGamefyApi } from "../../api/packGamefy";
 import { useUser } from "../../context/UserContext";
@@ -69,15 +68,8 @@ const Rooms = () => {
     const [sortBy, setSortBy] = useState("newest");
     const [isSortOpen, setIsSortOpen] = useState(false);
 
-    // Active Gamefy pack (used for "activate gamefy pack" button)
     const [packGamefy, setPackGamefy] = useState(null);
     const [packLoading, setPackLoading] = useState(false);
-
-    // Gamefy pack activation modal state
-    const [activateModalOpen, setActivateModalOpen] = useState(false);
-    const [activateReservation, setActivateReservation] = useState(null);
-    const [activateLoading, setActivateLoading] = useState(false);
-    const [maxApplicablePackHours, setMaxApplicablePackHours] = useState(null);
 
     // Payment confirmation state
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -153,133 +145,9 @@ const Rooms = () => {
     const shouldShowCountdown = (res) => (res.status === "PENDING" && !res.paymentType) || res.status === "CANCELLED";
     const needsConfirmation = (res) => res.status === "PENDING" && !res.paymentType;
 
-    const mapReservationTypeToBenefitType = (reservationType) => {
-        switch (reservationType) {
-            case "PC_ROOM":
-                return "PC";
-            case "VIP_ROOM":
-                return "VIP";
-            case "COACHING_ROOM":
-                return "COACH";
-            default:
-                return null;
-        }
-    };
-
-    const getBenefitCountsForReservationType = (reservationType) => {
-        if (!packGamefy?.benefits?.length) return { discountCount: 0, hoursCount: 0 };
-
-        const benefitType = mapReservationTypeToBenefitType(reservationType);
-        if (!benefitType) return { discountCount: 0, hoursCount: 0 };
-
-        const matching = packGamefy.benefits.filter((b) => b.benefitType === benefitType);
-        return {
-            discountCount: matching.filter((b) => b.rateRule === "DISCOUNT").length,
-            hoursCount: matching.filter((b) => b.rateRule === "HOURS").length,
-        };
-    };
-
-    const isActivatePackDisabled = (res) => {
-        if (!user?.packGamefyId) return true;
-        if (res?.gamefyPackActivated) return true;
-        if (res.status !== "PENDING") return true;
-        if (res.paymentType) return true; // only on pending reservations without payment choice
-        if (packLoading && !packGamefy) return true;
-
-        const { discountCount, hoursCount } = getBenefitCountsForReservationType(res.reservationType);
-        return discountCount + hoursCount <= 0;
-    };
-
-    const handleActivatePackClick = (reservation) => {
-        if (isActivatePackDisabled(reservation)) return;
-        setActivateReservation(reservation);
-        setActivateModalOpen(true);
-    };
-
-    const handleConfirmActivatePack = async () => {
-        if (!activateReservation) return;
-        setActivateLoading(true);
-        try {
-            await activateGamefyPackForReservation(activateReservation.id);
-            toast.success("Gamefy pack activated");
-            setActivateModalOpen(false);
-            setActivateReservation(null);
-            await fetchReservations();
-        } catch (error) {
-            toast.error(error?.message || "Failed to activate pack");
-        } finally {
-            setActivateLoading(false);
-        }
-    };
 
     const getUtcDate = (isoString) => new Date(isoString.includes("Z") ? isoString : `${isoString}Z`);
 
-    const computeMaxApplicableHoursBeforeClose = (reservation, schedule) => {
-        if (!reservation || !schedule || schedule.status !== "OPEN") return 0;
-
-        const parseHm = (timeValue) => {
-            const [h = "0", m = "0"] = String(timeValue || "0:0").split(":");
-            return { h: Number(h), m: Number(m) };
-        };
-
-        const { h: startH, m: startM } = parseHm(schedule.startTime);
-        const { h: endH, m: endM } = parseHm(schedule.endTime);
-        const scheduleStartMinutes = startH * 60 + startM;
-        const endTimeMinutes = endH * 60 + endM;
-
-        const reservationEnd = getUtcDate(reservation.endTime);
-        const reservationEndMinutes = reservationEnd.getUTCHours() * 60 + reservationEnd.getUTCMinutes();
-
-        const scheduleEndDate = new Date(Date.UTC(
-            reservationEnd.getUTCFullYear(),
-            reservationEnd.getUTCMonth(),
-            reservationEnd.getUTCDate(),
-            endH,
-            endM,
-            0
-        ));
-
-        const wrapsAfterMidnight = scheduleStartMinutes > endTimeMinutes;
-        if (wrapsAfterMidnight && reservationEndMinutes >= scheduleStartMinutes) {
-            scheduleEndDate.setUTCDate(scheduleEndDate.getUTCDate() + 1);
-        }
-
-        const remainingMs = scheduleEndDate.getTime() - reservationEnd.getTime();
-        if (remainingMs <= 0) return 0;
-        return Math.floor(remainingMs / (60 * 60 * 1000));
-    };
-
-    useEffect(() => {
-        const run = async () => {
-            if (!activateModalOpen || !activateReservation) {
-                setMaxApplicablePackHours(null);
-                return;
-            }
-
-            const startDate = getUtcDate(activateReservation.startTime);
-            const monthNames = [
-                "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
-                "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
-            ];
-            const dayNames = [
-                "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
-            ];
-            const month = monthNames[startDate.getUTCMonth()];
-            const year = String(startDate.getUTCFullYear());
-            const day = dayNames[startDate.getUTCDay()];
-
-            try {
-                const schedules = await getWorkSchedule(month, year);
-                const daySchedule = schedules.find((s) => s.day === day) || null;
-                setMaxApplicablePackHours(computeMaxApplicableHoursBeforeClose(activateReservation, daySchedule));
-            } catch (error) {
-                console.error("Failed to load work schedule for activation modal", error);
-                setMaxApplicablePackHours(null);
-            }
-        };
-
-        run();
-    }, [activateModalOpen, activateReservation]);
 
     const handleCardPayment = async () => {
         if (!selectedReservation) return;
@@ -527,17 +395,6 @@ const Rooms = () => {
                                             {/* Actions */}
                                             <div className="pt-8 w-full">
                                                 <div className="w-full space-y-3">
-                                                    <button
-                                                        onClick={() => handleActivatePackClick(res)}
-                                                        disabled={isActivatePackDisabled(res) || (activateLoading && activateReservation?.id === res.id)}
-                                                        className={`w-full px-8 py-4 bg-[#DD00B8] hover:bg-opacity-90 text-white font-black uppercase tracking-widest rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(28,243,202,0.2)] border border-[#DD00B8]/30
-                                                            ${isActivatePackDisabled(res) ? "opacity-50 cursor-not-allowed" : ""}`}
-                                                    >
-                                                        {activateLoading && activateReservation?.id === res.id
-                                                            ? "Activating..."
-                                                            : "activate gamefy pack"}
-                                                    </button>
-
                                                     {needsConfirmation(res) && (
                                                         <button
                                                             onClick={() => handleConfirmClick(res)}
@@ -665,23 +522,6 @@ const Rooms = () => {
                 </div>
             )}
 
-            <ActivateGamefyPackModal
-                isOpen={activateModalOpen}
-                onClose={() => {
-                    setActivateModalOpen(false);
-                    setActivateReservation(null);
-                    setMaxApplicablePackHours(null);
-                }}
-                reservation={activateReservation}
-                packGamefy={packGamefy}
-                discountCount={activateReservation ? getBenefitCountsForReservationType(activateReservation.reservationType).discountCount : 0}
-                hoursCount={activateReservation ? getBenefitCountsForReservationType(activateReservation.reservationType).hoursCount : 0}
-                maxApplicableHours={maxApplicablePackHours}
-                formatDate={formatDate}
-                formatTime={formatTime}
-                onConfirm={handleConfirmActivatePack}
-                loading={activateLoading}
-            />
 
             {/* ─── Stripe Payment Modal ─── */}
             <ReservationPaymentModal

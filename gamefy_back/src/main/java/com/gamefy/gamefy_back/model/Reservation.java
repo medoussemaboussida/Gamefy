@@ -55,12 +55,6 @@ public class Reservation {
     @Column(name = "price_time")
     private Double priceTime;
 
-    /**
-     * Prevent applying the Gamefy pack benefits multiple times on the same reservation.
-     */
-    @Column(name = "gamefy_pack_activated")
-    private Boolean gamefyPackActivated = false;
-
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
