@@ -11,6 +11,7 @@ export interface PackGamefyDto {
     name: string;
     price: number;
     description: string;
+    durationMonths: number;
     benefits: PackBenefitDto[];
 }
 
@@ -18,6 +19,7 @@ export interface CreatePackGamefyDto {
     name: string;
     price: number;
     description: string;
+    durationMonths?: number;
     benefits: {
         benefitType: string;
         rateRule: string;

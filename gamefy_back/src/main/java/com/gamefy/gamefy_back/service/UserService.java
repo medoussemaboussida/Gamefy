@@ -5,9 +5,12 @@ import com.gamefy.gamefy_back.dto.UserResponseDto;
 import com.gamefy.gamefy_back.dto.UpdateProfileDto;
 import com.gamefy.gamefy_back.emailManager.EmailService;
 import com.gamefy.gamefy_back.model.User;
+import com.gamefy.gamefy_back.model.UserPackGamefy;
 import com.gamefy.gamefy_back.model.enums.Roles;
+import com.gamefy.gamefy_back.model.enums.UserPackStatus;
 import com.gamefy.gamefy_back.model.enums.UserStatus;
 import com.gamefy.gamefy_back.repository.SubscriptionRepository;
+import com.gamefy.gamefy_back.repository.UserPackGamefyRepository;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -26,6 +29,7 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final SubscriptionRepository subscriptionRepository;
+    private final UserPackGamefyRepository userPackGamefyRepository;
 
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
     private static final SecureRandom random = new SecureRandom();
@@ -142,6 +146,11 @@ public class UserService {
         double totalHours = subscriptionRepository.findByPlayerId(user.getId())
                 .map(s -> s.getTotalHours())
                 .orElse(0.0);
+
+        // Query junction table for active pack
+        List<UserPackGamefy> activeRecords = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        UserPackGamefy activePack = activeRecords.isEmpty() ? null : activeRecords.get(0);
+
         return UserResponseDto.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
@@ -150,13 +159,14 @@ public class UserService {
                 .role(user.getRole())
                 .status(user.getStatus())
                 .profilePhoto(user.getProfilePhoto())
-                .packGamefyId(user.getPackGamefy() != null ? user.getPackGamefy().getId() : null)
-                .packGamefyName(user.getPackGamefy() != null ? user.getPackGamefy().getName() : null)
+                .packGamefyId(activePack != null ? activePack.getPackGamefy().getId() : null)
+                .packGamefyName(activePack != null ? activePack.getPackGamefy().getName() : null)
                 .packCoachingId(user.getPackCoaching() != null ? user.getPackCoaching().getId() : null)
                 .packCoachingName(user.getPackCoaching() != null ? user.getPackCoaching().getName() : null)
                 .twoFaActivated(user.isTwoFaActivated())
                 .createdAt(user.getCreatedAt())
                 .totalHours(totalHours)
+                .remainingPcHours(activePack != null ? activePack.getRemainingPcHours() : 0.0)
                 .build();
     }
 

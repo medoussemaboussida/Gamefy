@@ -5,23 +5,29 @@ import com.gamefy.gamefy_back.model.PackGamefy;
 import com.gamefy.gamefy_back.model.Payment;
 import com.gamefy.gamefy_back.model.Reservation;
 import com.gamefy.gamefy_back.model.User;
+import com.gamefy.gamefy_back.model.UserPackGamefy;
+import com.gamefy.gamefy_back.model.enums.Benefit_type;
 import com.gamefy.gamefy_back.model.enums.Payment_Type;
+import com.gamefy.gamefy_back.model.enums.Rate_Rule;
+import com.gamefy.gamefy_back.model.enums.UserPackStatus;
 import com.gamefy.gamefy_back.repository.PackGamefyRepository;
 import com.gamefy.gamefy_back.repository.PaymentRepository;
 import com.gamefy.gamefy_back.repository.ReservationRepository;
+import com.gamefy.gamefy_back.repository.UserPackGamefyRepository;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +39,7 @@ public class PaymentService {
     private final ReservationRepository reservationRepository;
     private final ReservationService reservationService;
     private final StripeService stripeService;
+    private final UserPackGamefyRepository userPackGamefyRepository;
 
     @Value("${stripe.publishable.key}")
     private String stripePublishableKey;
@@ -133,8 +140,15 @@ public class PaymentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setPackGamefy(pack);
-        userRepository.save(user);
+        // Create junction record
+        UserPackGamefy userPack = new UserPackGamefy();
+        userPack.setUser(user);
+        userPack.setPackGamefy(pack);
+        userPack.setActivatedAt(LocalDateTime.now());
+        userPack.setExpiresAt(LocalDateTime.now().plusMonths(pack.getDurationMonths()));
+        userPack.setRemainingPcHours(calculatePcHours(pack));
+        userPack.setStatus(UserPackStatus.ACTIVE);
+        userPackGamefyRepository.save(userPack);
 
         Payment payment = new Payment();
         payment.setPackGamefy(pack);
@@ -149,15 +163,26 @@ public class PaymentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
 
-        if (user.getPackGamefy() != null && user.getPackGamefy().getId().equals(packId)) {
-            throw new RuntimeException("You already hold this pack as your active pack");
-        }
-
+        // Check if user already has an active record for this pack
         PackGamefy pack = packGamefyRepository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Pack not found: " + packId));
 
-        user.setPackGamefy(pack);
-        userRepository.save(user);
+        List<UserPackGamefy> existing = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        boolean alreadyHasPack = existing.stream()
+                .anyMatch(r -> r.getPackGamefy().getId().equals(packId));
+        if (alreadyHasPack) {
+            throw new RuntimeException("You already hold this pack as your active pack");
+        }
+
+        // Create junction record
+        UserPackGamefy userPack = new UserPackGamefy();
+        userPack.setUser(user);
+        userPack.setPackGamefy(pack);
+        userPack.setActivatedAt(LocalDateTime.now());
+        userPack.setExpiresAt(LocalDateTime.now().plusMonths(pack.getDurationMonths()));
+        userPack.setRemainingPcHours(calculatePcHours(pack));
+        userPack.setStatus(UserPackStatus.ACTIVE);
+        userPackGamefyRepository.save(userPack);
 
         Payment payment = new Payment();
         payment.setPackGamefy(pack);
@@ -169,11 +194,11 @@ public class PaymentService {
     public List<Integer> getPurchasedPackIds(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
-        
-        if (user.getPackGamefy() != null) {
-            return List.of(user.getPackGamefy().getId());
-        }
-        return List.of();
+
+        List<UserPackGamefy> activeRecords = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        return activeRecords.stream()
+                .map(r -> r.getPackGamefy().getId())
+                .collect(Collectors.toList());
     }
 
     public List<PaymentDtos.AllPaymentResponse> getAllPayments() {
@@ -228,5 +253,16 @@ public class PaymentService {
                             .build();
                 })
                 .toList();
+    }
+
+    /**
+     * Count the number of PC + HOURS benefits in the pack.
+     * Each such benefit = 1 PC hour.
+     */
+    private double calculatePcHours(PackGamefy pack) {
+        if (pack.getBenefits() == null) return 0.0;
+        return pack.getBenefits().stream()
+                .filter(b -> b.getBenefitType() == Benefit_type.PC && b.getRateRule() == Rate_Rule.HOURS)
+                .count();
     }
 }

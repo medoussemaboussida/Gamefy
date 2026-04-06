@@ -1,7 +1,6 @@
 package com.gamefy.gamefy_back.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gamefy.gamefy_back.model.enums.Roles;
 import com.gamefy.gamefy_back.model.enums.UserStatus;
 import jakarta.persistence.*;
@@ -58,10 +57,7 @@ public class User implements UserDetails {
     @JoinColumn(name = "pack_coaching_id")
     private PackCoaching packCoaching;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pack_player_id")
-    private PackGamefy packGamefy;
+
 
     @Column(name = "reset_pwd_token")
     private String resetPwdToken;
@@ -130,10 +126,7 @@ public class User implements UserDetails {
         return status == UserStatus.ACTIVE;
     }
 
-    @JsonProperty("packGamefyId")
-    public Integer getPackGamefyId() {
-        return packGamefy != null ? packGamefy.getId() : null;
-    }
+
 
     @Override
     public String toString() {

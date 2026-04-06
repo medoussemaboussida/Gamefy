@@ -7,8 +7,7 @@ import Sidebar from "../../components/Sidebar";
 import ReservationPaymentModal from "../../components/payment/ReservationPaymentModal";
 import CashPaymentModal from "../../modals/CashPaymentModal";
 import toast from "react-hot-toast";
-import { packGamefyApi } from "../../api/packGamefy";
-import { useUser } from "../../context/UserContext";
+
 import gamingRoomImg from "../../assets/images/room.png";
 import coachingImg from "../../assets/images/coaching.png";
 import vipImg from "../../assets/images/vip.png";
@@ -62,14 +61,12 @@ const CountdownTimer = ({ createdAt, onExpired }) => {
 
 const Rooms = () => {
     const navigate = useNavigate();
-    const { user, isLoadingUser } = useUser();
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState("newest");
     const [isSortOpen, setIsSortOpen] = useState(false);
 
-    const [packGamefy, setPackGamefy] = useState(null);
-    const [packLoading, setPackLoading] = useState(false);
+
 
     // Payment confirmation state
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -102,25 +99,7 @@ const Rooms = () => {
         return () => clearInterval(interval);
     }, [fetchReservations]);
 
-    useEffect(() => {
-        if (isLoadingUser) return;
 
-        const packId = user?.packGamefyId;
-        if (!packId) {
-            setPackGamefy(null);
-            return;
-        }
-
-        setPackLoading(true);
-        packGamefyApi.getPackById(packId)
-            .then((data) => setPackGamefy(data))
-            .catch((err) => {
-                console.error("Failed to load pack", err);
-                toast.error("Failed to load your Gamefy pack");
-                setPackGamefy(null);
-            })
-            .finally(() => setPackLoading(false));
-    }, [user?.packGamefyId, isLoadingUser]);
 
     const handleConfirmClick = (reservation) => {
         setSelectedReservation(reservation);

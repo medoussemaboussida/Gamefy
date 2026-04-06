@@ -29,4 +29,5 @@ public class UserResponseDto implements Serializable {
     private boolean twoFaActivated;
     private LocalDateTime createdAt;
     private Double totalHours;
+    private Double remainingPcHours;
 }

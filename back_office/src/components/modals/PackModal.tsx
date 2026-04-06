@@ -41,6 +41,7 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                 name: pack.name,
                 price: pack.price,
                 description: pack.description || "",
+                durationMonths: pack.durationMonths,
                 benefits: pack.benefits.map(b => ({
                     benefitType: b.benefitType,
                     rateRule: b.rateRule
@@ -58,7 +59,10 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: name === "price" ? parseFloat(value) : value }));
+        setFormData((prev) => ({
+            ...prev,
+            [name]: name === "price" ? parseFloat(value) : name === "durationMonths" ? parseInt(value) : value
+        }));
     };
 
     const addBenefit = () => {
@@ -137,6 +141,20 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                 required
                             />
                         </div>
+                    </div>
+
+                    <div>
+                        <Label>Duration (Months)</Label>
+                        <Input
+                            type="number"
+                            name="durationMonths"
+                            placeholder="6"
+                            value={formData.durationMonths}
+                            onChange={handleChange}
+                            min={"1"}
+                            max={"36"}
+                            required
+                        />
                     </div>
 
                     <div>

@@ -16,6 +16,7 @@ public class PackGamefyDto {
     private String name;
     private Double price;
     private String description;
+    private Integer durationMonths;
     private List<PackBenefitDto> benefits;
 
     @Data

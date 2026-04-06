@@ -29,12 +29,11 @@ public class PackGamefy {
     @Column(columnDefinition = "text")
     private String description;
 
+    @Column(name = "duration_months")
+    private Integer durationMonths;
+
     @OneToMany(mappedBy = "packGamefy", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GamefyPackBenefit> benefits = new ArrayList<>();
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "packGamefy")
-    private List<User> users = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "packGamefy", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -47,6 +46,7 @@ public class PackGamefy {
                 ", name='" + name + '\'' +
                 ", price=" + price +
                 ", description='" + description + '\'' +
+                ", durationMonths=" + durationMonths +
                 '}';
     }
 }

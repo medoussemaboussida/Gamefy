@@ -5,11 +5,14 @@ import com.gamefy.gamefy_back.dto.PackGamefyDto;
 import com.gamefy.gamefy_back.model.GamefyPackBenefit;
 import com.gamefy.gamefy_back.model.PackGamefy;
 import com.gamefy.gamefy_back.model.Payment;
+import com.gamefy.gamefy_back.model.UserPackGamefy;
 import com.gamefy.gamefy_back.model.enums.Benefit_type;
 import com.gamefy.gamefy_back.model.enums.Rate_Rule;
+import com.gamefy.gamefy_back.model.enums.UserPackStatus;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.repository.PackGamefyRepository;
 import com.gamefy.gamefy_back.repository.PaymentRepository;
+import com.gamefy.gamefy_back.repository.UserPackGamefyRepository;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +20,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +32,7 @@ public class PackGamefyService {
     private final PackGamefyRepository repository;
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
+    private final UserPackGamefyRepository userPackGamefyRepository;
 
     public List<PackGamefyDto> getAllPacks() {
         return repository.findAll().stream()
@@ -47,6 +52,7 @@ public class PackGamefyService {
         pack.setName(dto.getName());
         pack.setPrice(dto.getPrice());
         pack.setDescription(dto.getDescription());
+        pack.setDurationMonths(dto.getDurationMonths());
 
         if (dto.getBenefits() != null) {
             List<GamefyPackBenefit> benefits = dto.getBenefits().stream()
@@ -71,6 +77,9 @@ public class PackGamefyService {
         pack.setName(dto.getName());
         pack.setPrice(dto.getPrice());
         pack.setDescription(dto.getDescription());
+        if (dto.getDurationMonths() != null) {
+            pack.setDurationMonths(dto.getDurationMonths());
+        }
 
         // Update benefits
         pack.getBenefits().clear();
@@ -94,14 +103,9 @@ public class PackGamefyService {
         PackGamefy pack = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pack not found with id: " + id));
 
-        // Unassign pack from all users
-        for (User user : pack.getUsers()) {
-            user.setPackGamefy(null);
-            userRepository.save(user);
-        }
-
-        // Clear the users list to prevent JPA from trying to maintain the relationship
-        pack.getUsers().clear();
+        // Remove all junction records for this pack
+        List<UserPackGamefy> junctionRecords = userPackGamefyRepository.findByPackGamefy(pack);
+        userPackGamefyRepository.deleteAll(junctionRecords);
 
         repository.delete(pack);
     }
@@ -119,6 +123,7 @@ public class PackGamefyService {
                 .name(pack.getName())
                 .price(pack.getPrice())
                 .description(pack.getDescription())
+                .durationMonths(pack.getDurationMonths())
                 .benefits(benefitsDto)
                 .build();
     }
@@ -132,8 +137,15 @@ public class PackGamefyService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        user.setPackGamefy(pack);
-        userRepository.save(user);
+        // Create junction record
+        UserPackGamefy userPack = new UserPackGamefy();
+        userPack.setUser(user);
+        userPack.setPackGamefy(pack);
+        userPack.setActivatedAt(LocalDateTime.now());
+        userPack.setExpiresAt(LocalDateTime.now().plusMonths(pack.getDurationMonths()));
+        userPack.setRemainingPcHours(calculatePcHours(pack));
+        userPack.setStatus(UserPackStatus.ACTIVE);
+        userPackGamefyRepository.save(userPack);
 
         // Add to payment history
         Payment payment = new Payment();
@@ -150,14 +162,19 @@ public class PackGamefyService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        PackGamefy currentPack = user.getPackGamefy();
-       /* if (currentPack != null) {
-            // Remove from payment history
-            paymentRepository.findByUserAndPackGamefy(user, currentPack)
-                    .ifPresent(paymentRepository::delete);
-        }*/
+        // Find and delete active junction records for this user
+        List<UserPackGamefy> activeRecords = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        userPackGamefyRepository.deleteAll(activeRecords);
+    }
 
-        user.setPackGamefy(null);
-        userRepository.save(user);
+    /**
+     * Count the number of PC + HOURS benefits in the pack.
+     * Each such benefit = 1 PC hour.
+     */
+    private double calculatePcHours(PackGamefy pack) {
+        if (pack.getBenefits() == null) return 0.0;
+        return pack.getBenefits().stream()
+                .filter(b -> b.getBenefitType() == Benefit_type.PC && b.getRateRule() == Rate_Rule.HOURS)
+                .count();
     }
 }

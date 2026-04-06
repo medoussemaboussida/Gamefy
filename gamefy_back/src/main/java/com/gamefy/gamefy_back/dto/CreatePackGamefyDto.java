@@ -13,6 +13,7 @@ public class CreatePackGamefyDto {
     private String name;
     private Double price;
     private String description;
+    private Integer durationMonths;
     private List<BenefitRequest> benefits;
 
     @Data
