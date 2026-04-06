@@ -3,9 +3,7 @@ package com.gamefy.gamefy_back.service;
 import com.gamefy.gamefy_back.model.Reservation;
 import com.gamefy.gamefy_back.model.Subscription;
 import com.gamefy.gamefy_back.model.User;
-import com.gamefy.gamefy_back.model.enums.UserPackStatus;
 import com.gamefy.gamefy_back.repository.SubscriptionRepository;
-import com.gamefy.gamefy_back.repository.UserPackGamefyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,7 +18,6 @@ import java.time.Duration;
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
-    private final UserPackGamefyRepository userPackGamefyRepository;
 
     /**
      * Called whenever a reservation is confirmed (by admin or card payment).
@@ -55,20 +52,6 @@ public class SubscriptionService {
             log.info("Updated subscription for player ID={}: +{} hour(s) → total {} hour(s) (reservation ID={})",
                     player.getId(), hours, subscription.getTotalHours(), reservation.getId());
         }
-
-        // --- NEW: Decrement remaining PC hours from active PackGamefy ---
-        userPackGamefyRepository.findByUserAndStatus(player, UserPackStatus.ACTIVE)
-                .stream()
-                .findFirst()
-                .ifPresent(userPack -> {
-                    if (userPack.getRemainingPcHours() != null && userPack.getRemainingPcHours() > 0) {
-                        double remaining = Math.max(0.0, userPack.getRemainingPcHours() - hours);
-                        userPack.setRemainingPcHours(remaining);
-                        userPackGamefyRepository.save(userPack);
-                        log.info("Decremented remainingPcHours for player ID={} (Active Pack: {}): -{} hour(s) → left {} hour(s)",
-                                player.getId(), userPack.getPackGamefy().getName(), hours, remaining);
-                    }
-                });
     }
 
     /**
@@ -89,21 +72,5 @@ public class SubscriptionService {
             log.info("Decremented subscription for player ID={}: -{} hour(s) → total {} hour(s) (reservation ID={})",
                     player.getId(), hours, subscription.getTotalHours(), reservation.getId());
         }
-
-        // --- NEW: Restore remaining PC hours to active PackGamefy ---
-        userPackGamefyRepository.findByUserAndStatus(player, UserPackStatus.ACTIVE)
-                .stream()
-                .findFirst()
-                .ifPresent(userPack -> {
-                    // Logic to restore hours if it was a pack-based reservation
-                    // We assume for now that if they have an active pack, we restore it
-                    if (userPack.getRemainingPcHours() != null) {
-                        double restored = userPack.getRemainingPcHours() + hours;
-                        userPack.setRemainingPcHours(restored);
-                        userPackGamefyRepository.save(userPack);
-                        log.info("Restored remainingPcHours for player ID={} (Active Pack: {}): +{} hour(s) → total {} hour(s)",
-                                player.getId(), userPack.getPackGamefy().getName(), hours, restored);
-                    }
-                });
     }
 }
