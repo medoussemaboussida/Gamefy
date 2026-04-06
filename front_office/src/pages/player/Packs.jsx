@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
 import { packGamefyApi } from "../../api/packGamefy";
-import { Gift, Info, X, Check, CreditCard } from "lucide-react";
+import { packCoachingApi } from "../../api/packCoaching";
+import { Gift, Info, Check, CreditCard, Clock, User } from "lucide-react";
 import toast from "react-hot-toast";
 import PaymentModal from "../../components/payment/PaymentModal";
+import PackDescriptionModal from "../../modals/PackDescriptionModal";
+import CoachingPackDescriptionModal from "../../modals/CoachingPackDescriptionModal";
 
 const Packs = () => {
     const [packs, setPacks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedPack, setSelectedPack] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Coaching packs
+    const [coachingPacks, setCoachingPacks] = useState([]);
+    const [coachingLoading, setCoachingLoading] = useState(true);
+    const [selectedCoachingPack, setSelectedCoachingPack] = useState(null);
+    const [isCoachingModalOpen, setIsCoachingModalOpen] = useState(false);
 
     // Payment states
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -41,7 +50,19 @@ const Packs = () => {
             }
         };
 
+        const fetchCoachingPacks = async () => {
+            try {
+                const data = await packCoachingApi.getAllPacks();
+                setCoachingPacks(data);
+            } catch (error) {
+                console.error("Failed to fetch coaching packs", error);
+            } finally {
+                setCoachingLoading(false);
+            }
+        };
+
         fetchData();
+        fetchCoachingPacks();
     }, []);
 
     const openDescription = (pack) => {
@@ -79,7 +100,7 @@ const Packs = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-[#24003E] text-white font-['Inter']">
+        <div className="flex h-screen overflow-hidden bg-[#24003E] text-white font-['Inter']">
             <Sidebar />
 
             <main className="flex-1 overflow-y-auto">
@@ -124,16 +145,41 @@ const Packs = () => {
                                 <h3 className="text-xl font-bold mb-4 group-hover:text-[#FF89EB] transition-colors">{pack.name}</h3>
 
                                 <div className="flex-grow space-y-3 mb-6">
-                                    {pack.benefits?.length > 0 ? (
-                                        pack.benefits.map((benefit, index) => (
-                                            <div key={index} className="flex items-center gap-3 text-sm text-gray-300">
-                                                <div className="w-5 h-5 rounded-full bg-[#1CF3CA]/20 flex items-center justify-center flex-shrink-0">
-                                                    <Check size={12} className="text-[#1CF3CA]" />
-                                                </div>
-                                                <span>{benefit.benefitType} - {benefit.rateRule}</span>
-                                            </div>
-                                        ))
-                                    ) : (
+                                    {pack.benefits?.length > 0 ? (() => {
+                                        const pcHoursCount = pack.benefits.filter(
+                                            b => b.benefitType === "PC" && b.rateRule === "HOURS"
+                                        ).length;
+                                        const otherBenefits = pack.benefits.filter(
+                                            b => !(b.benefitType === "PC" && b.rateRule === "HOURS")
+                                        );
+                                        return (
+                                            <>
+                                                {pcHoursCount > 0 && (
+                                                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                                                        <div className="w-5 h-5 rounded-full bg-[#1CF3CA]/20 flex items-center justify-center flex-shrink-0">
+                                                            <Check size={12} className="text-[#1CF3CA]" />
+                                                        </div>
+                                                        <span>
+                                                            PC - HOURS
+                                                            {pcHoursCount > 1 && (
+                                                                <span className="ml-1 text-[#1CF3CA] font-semibold">
+                                                                    × {pcHoursCount}
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {otherBenefits.map((benefit, index) => (
+                                                    <div key={index} className="flex items-center gap-3 text-sm text-gray-300">
+                                                        <div className="w-5 h-5 rounded-full bg-[#1CF3CA]/20 flex items-center justify-center flex-shrink-0">
+                                                            <Check size={12} className="text-[#1CF3CA]" />
+                                                        </div>
+                                                        <span>{benefit.benefitType} - {benefit.rateRule}</span>
+                                                    </div>
+                                                ))}
+                                            </>
+                                        );
+                                    })() : (
                                         <p className="text-sm text-gray-500 italic">No specific benefits listed.</p>
                                     )}
                                 </div>
@@ -172,6 +218,84 @@ const Packs = () => {
                         ))}
                     </div>
                 )}
+
+                {/* ── Coaching Packs Section ── */}
+                <div className="mb-12">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                        <div className="pl-16 md:pl-0">
+                            <h1 className="text-3xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#FF89EB]">
+                                Coaching Packs
+                            </h1>
+                            <p className="text-gray-400">Level up your skills with personal coaching sessions.</p>
+                        </div>
+                    </div>
+
+                    {coachingLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF89EB]"></div>
+                        </div>
+                    ) : coachingPacks.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center text-gray-500 bg-white/5 rounded-3xl border border-white/5 py-16">
+                            <Clock size={52} className="mb-4 opacity-20" />
+                            <p className="text-xl">No coaching packs available at the moment.</p>
+                        </div>
+                    ) : (
+                        <div className="flex gap-5 overflow-x-auto pb-4 coaching-scrollbar snap-x snap-mandatory px-1">
+                            {coachingPacks.map((pack) => (
+                                <div
+                                    key={pack.id}
+                                    className="group flex-shrink-0 w-72 snap-start bg-[#24003E]/40 border border-white/5 rounded-3xl p-6 flex flex-col transition-all duration-300 hover:border-[#FF89EB]/30 hover:bg-[#24003E]/60 hover:shadow-[0_0_30px_rgba(255,137,235,0.1)]"
+                                >
+                                    {/* Icon + Price */}
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="p-3 rounded-2xl bg-[#FF89EB]/10 text-[#FF89EB]">
+                                            <Clock size={24} />
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="block text-2xl font-bold text-[#FF89EB]">{Number(pack.price).toFixed(3)} DT</span>
+                                            <span className="text-xs text-gray-500 uppercase tracking-wider">Per Pack</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Pack Name */}
+                                    <h3 className="text-xl font-bold mb-2 group-hover:text-[#1CF3CA] transition-colors">{pack.name}</h3>
+
+                                    {/* Hours */}
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-5 h-5 rounded-full bg-[#FF89EB]/20 flex items-center justify-center flex-shrink-0">
+                                            <Clock size={11} className="text-[#FF89EB]" />
+                                        </div>
+                                        <span className="text-sm text-gray-300">{pack.hours} hours of coaching</span>
+                                    </div>
+
+                                    {/* Coach */}
+                                    {pack.coachName && (
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <div className="w-5 h-5 rounded-full bg-[#1CF3CA]/20 flex items-center justify-center flex-shrink-0">
+                                                <User size={11} className="text-[#1CF3CA]" />
+                                            </div>
+                                            <span className="text-sm text-gray-400">
+                                                by <span className="text-[#1CF3CA] font-semibold">{pack.coachName}</span>
+                                            </span>
+                                        </div>
+                                    )}
+                                    {/* Show Description button */}
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCoachingPack(pack);
+                                            setIsCoachingModalOpen(true);
+                                        }}
+                                        className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white font-semibold transition-all hover:bg-[#FF89EB]/10 hover:border-[#FF89EB]/30 flex items-center justify-center gap-2"
+                                    >
+                                        <Info size={18} />
+                                        Show Description
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 </div>
             </main>
 
@@ -184,39 +308,18 @@ const Packs = () => {
                 onPaymentSuccess={handlePaymentSuccess}
             />
 
-            {/* Description Modal */}
-            {isModalOpen && selectedPack && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                    <div className="bg-[#1a0135] border border-white/10 rounded-[32px] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-                        <div className="p-6 md:p-8 flex flex-col h-full max-h-[80vh]">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-[#1CF3CA]">{selectedPack.name}</h2>
-                                <button
-                                    onClick={closeModal}
-                                    className="p-2 rounded-full hover:bg-white/5 text-gray-400 hover:text-white transition-all"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
+            <PackDescriptionModal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                packName={selectedPack?.name}
+                description={selectedPack?.description}
+            />
 
-                            <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar mb-6">
-                                <div className="bg-white/5 border border-white/5 rounded-2xl p-6">
-                                    <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                                        {selectedPack.description || "No description provided."}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={closeModal}
-                                className="w-full py-4 rounded-2xl bg-[#FF89EB] text-black font-bold text-lg hover:bg-[#FF89EB]/90 transition-all shadow-[0_0_20px_rgba(255,137,235,0.3)]"
-                            >
-                                Got it
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <CoachingPackDescriptionModal
+                isOpen={isCoachingModalOpen}
+                onClose={() => { setIsCoachingModalOpen(false); setSelectedCoachingPack(null); }}
+                pack={selectedCoachingPack}
+            />
 
             <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
@@ -232,6 +335,20 @@ const Packs = () => {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(28, 243, 202, 0.4);
+        }
+        .coaching-scrollbar::-webkit-scrollbar {
+          height: 6px;
+        }
+        .coaching-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.02);
+          border-radius: 10px;
+        }
+        .coaching-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 137, 235, 0.25);
+          border-radius: 10px;
+        }
+        .coaching-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 137, 235, 0.5);
         }
       `}</style>
         </div>

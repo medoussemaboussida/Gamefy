@@ -46,7 +46,7 @@ public class PackCoachingController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'PLAYER')")
     public ResponseEntity<List<PackCoachingAdminDto>> getAllPacks() {
         return ResponseEntity.ok(service.getAllPacks());
     }

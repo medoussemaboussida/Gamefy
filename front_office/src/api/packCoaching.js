@@ -11,6 +11,19 @@ import { apiClient } from "./apiClient";
 
 export const packCoachingApi = {
     /**
+     * Fetch all coaching packs (Admin / WebMaster / Player)
+     * @returns {Promise<PackCoachingDto[]>} List of all packs
+     */
+    getAllPacks: async () => {
+        try {
+            const response = await apiClient.get("/gamefy/pack-coachings/all");
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    /**
      * Fetch all coaching packs belonging to the current coach
      * @returns {Promise<PackCoachingDto[]>} List of packs
      */
