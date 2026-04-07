@@ -6,31 +6,50 @@ import { ChevronDown } from "lucide-react";
 const NavDropdown = ({ title, items }) => {
     const [isOpen, setIsOpen] = useState(false);
     const timeoutRef = useRef(null);
+    const containerRef = useRef(null);
 
     const handleMouseEnter = () => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        setIsOpen(true);
+        if (window.matchMedia("(hover: hover)").matches) {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setIsOpen(true);
+        }
     };
 
     const handleMouseLeave = () => {
-        timeoutRef.current = setTimeout(() => {
-            setIsOpen(false);
-        }, 150);
+        if (window.matchMedia("(hover: hover)").matches) {
+            timeoutRef.current = setTimeout(() => {
+                setIsOpen(false);
+            }, 150);
+        }
+    };
+
+    const toggleDropdown = () => {
+        setIsOpen(!isOpen);
     };
 
     useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
 
     return (
         <div 
+            ref={containerRef}
             className="relative"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
             <button 
+                onClick={toggleDropdown}
                 className={`flex items-center gap-2 text-[16px] font-['Inter'] font-medium tracking-widest transition-colors ${isOpen ? 'text-[#1CF3CA]' : 'text-white hover:text-[#1CF3CA]'}`}
             >
                 {title}

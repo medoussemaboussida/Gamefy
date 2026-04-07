@@ -6,31 +6,50 @@ import { LogIn, UserPlus, ChevronDown } from "lucide-react";
 const LoginDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
     const timeoutRef = useRef(null);
+    const containerRef = useRef(null);
 
     const handleMouseEnter = () => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        setIsOpen(true);
+        if (window.matchMedia("(hover: hover)").matches) {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setIsOpen(true);
+        }
     };
 
     const handleMouseLeave = () => {
-        timeoutRef.current = setTimeout(() => {
-            setIsOpen(false);
-        }, 150);
+        if (window.matchMedia("(hover: hover)").matches) {
+            timeoutRef.current = setTimeout(() => {
+                setIsOpen(false);
+            }, 150);
+        }
+    };
+
+    const toggleDropdown = () => {
+        setIsOpen(!isOpen);
     };
 
     useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
 
     return (
         <div 
+            ref={containerRef}
             className="relative"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
             <button 
+                onClick={toggleDropdown}
                 className={`flex items-center gap-3 bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] text-white px-8 py-2.5 rounded-full font-['Inter'] font-medium text-[16px] tracking-widest hover:scale-105 transition-all shadow-lg shadow-[#DD00B8]/20 uppercase ${isOpen ? 'scale-105' : ''}`}
             >
                 LOG IN
