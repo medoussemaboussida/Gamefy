@@ -12,6 +12,7 @@ import CoachDashboard from "./pages/coach/CoachDashboard";
 import CoachRoom from "./pages/coach/CoachRoom";
 import SignUpCoach from "./pages/auth/SignUpCoach";
 import Rooms from "./pages/player/Rooms";
+import ScrollToHash from "./components/common/ScrollToHash";
 
 import ProfilePage from "./pages/profile";
 import EventsPage from "./pages/event";
@@ -22,6 +23,7 @@ import CoachPacks from "./pages/coach/CoachPacks";
 function App() {
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
+      <ScrollToHash />
       <Routes>
         {/* Layout with Header/Footer for Vitrine and other public pages */}
         <Route path="/" element={

@@ -39,7 +39,7 @@ const Coaches = () => {
     ];
 const navigate = useNavigate();
     return (
-        <section className="relative py-24 min-h-[1200px] flex flex-col items-center overflow-hidden font-['Inter']">
+        <section id="coaches" className="relative py-24 min-h-[1200px] flex flex-col items-center overflow-hidden font-['Inter']">
             {/* Background Image & Overlay */}
             <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"

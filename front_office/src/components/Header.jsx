@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, NavLink } from "react-router-dom";
 import logo from "../assets/images/auth_logo.png";
+import LoginDropdown from "./LoginDropdown";
+import NavDropdown from "./NavDropdown";
 
 const Header = () => {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -15,11 +17,23 @@ const Header = () => {
     }, []);
 
     const navLinks = [
-        { name: "ROOMS", path: "/rooms", hasDropdown: true },
-        { name: "COACHING", path: "/coaches", hasDropdown: true },
-        { name: "EVENTS", path: "/events" },
-        { name: "COMMUNITY", path: "/community" },
-        { name: "PARTNERS", path: "/partners" },
+        { 
+            name: "ROOMS", 
+            items: [
+                { name: "Gaming Room", path: "/signin" },
+                { name: "VIP Room", path: "/signin" }
+            ]
+        },
+        { 
+            name: "COACHING", 
+            items: [
+                { name: "Our Coaches", path: "/#coaches" },
+                { name: "Coaching Room", path: "/signin" }
+            ]
+        },
+        { name: "EVENTS", path: "/#rooms-events" },
+        { name: "COMMUNITY", path: "/#blog" },
+        { name: "PARTNERS", path: "/#hero" },
     ];
 
     return (
@@ -43,29 +57,23 @@ const Header = () => {
                     {/* Navigation */}
                     <nav className="hidden lg:flex items-center space-x-10">
                         {navLinks.map((link) => (
-                            <NavLink
-                                key={link.name}
-                                to={link.path}
-                                className="flex items-center gap-2 text-[16px] font-['Inter'] font-medium tracking-widest text-white hover:text-[#1CF3CA] transition-colors"
-                            >
-                                {link.name}
-                                {link.hasDropdown && (
-                                    <svg className="w-3.5 h-3.5 mt-0.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                )}
-                            </NavLink>
+                            link.items ? (
+                                <NavDropdown key={link.name} title={link.name} items={link.items} />
+                            ) : (
+                                <NavLink
+                                    key={link.name}
+                                    to={link.path}
+                                    className="text-[16px] font-['Inter'] font-medium tracking-widest text-white hover:text-[#1CF3CA] transition-colors"
+                                >
+                                    {link.name}
+                                </NavLink>
+                            )
                         ))}
                     </nav>
 
                     {/* Log In Button */}
                     <div className="flex items-center">
-                        <Link to="/signin" className="flex items-center gap-3 bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] text-white px-8 py-2.5 rounded-full font-['Inter'] font-medium text-[16px] tracking-widest hover:scale-105 transition-all shadow-lg shadow-[#DD00B8]/20 uppercase">
-                            LOG IN
-                            <svg className="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </Link>
+                        <LoginDropdown />
                     </div>
                 </div>
             </div>

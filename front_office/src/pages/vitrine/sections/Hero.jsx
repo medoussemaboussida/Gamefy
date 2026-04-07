@@ -28,7 +28,7 @@ const itemVariants = {
 
 const Hero = () => {
     return (
-        <section className="relative min-h-[950px] flex flex-col items-center justify-between overflow-hidden font-['Inter'] font-bold">
+        <section id="hero" className="relative min-h-[950px] flex flex-col items-center justify-between overflow-hidden font-['Inter'] font-bold">
             {/* Background Image & Overlay */}
             <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"

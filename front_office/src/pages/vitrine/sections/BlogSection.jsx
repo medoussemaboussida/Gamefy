@@ -26,7 +26,7 @@ const itemVariants = {
 
 const BlogSection = () => {
     return (
-        <section className="relative py-24 bg-[#24003E] overflow-hidden font-['Inter']">
+        <section id="blog" className="relative py-24 bg-[#24003E] overflow-hidden font-['Inter']">
             {/* Background Glows */}
             <div className="absolute top-[-300px] -left-20 w-[700px] h-[700px] bg-[#DD00B8] rounded-full blur-[180px] opacity-25 z-0"></div>
             <div className="absolute bottom-1/4 -right-24 w-[600px] h-[600px] bg-[#06F0F6] rounded-full blur-[150px] opacity-15 z-0"></div>

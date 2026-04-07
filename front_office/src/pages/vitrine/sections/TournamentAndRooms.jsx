@@ -28,7 +28,7 @@ const itemVariants = {
 
 const TournamentAndRooms = () => {
   return (
-    <section className="relative bg-[#24003E] overflow-hidden font-['Inter']">
+    <section id="rooms-events" className="relative bg-[#24003E] overflow-hidden font-['Inter']">
       {/* Background Glows shared across both parts */}
       <div className="absolute top-[10%] -right-48 w-[800px] h-[800px] bg-[#DD00B8] rounded-full blur-[180px] opacity-20 z-0"></div>
       <div className="absolute top-[5%] -left-48 w-[600px] h-[600px] bg-[#DD00B8] rounded-full blur-[180px] opacity-15 z-0"></div>

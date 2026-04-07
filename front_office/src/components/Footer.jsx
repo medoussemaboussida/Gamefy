@@ -30,34 +30,34 @@ const Footer = () => {
                     </div>
 
                     {/* Links Columns */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 lg:gap-24 w-full lg:w-auto">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 lg:gap-24 w-full lg:w-auto font-[inter]">
                         {/* Gamefy Column */}
-                        <div className="flex flex-col gap-6">
-                            <h4 className="text-[#888] font-normal text-sm tracking-widest uppercase">Gamefy</h4>
+                        <div className="flex flex-col gap-6 ">
+                            <h4 className="text-[#FFFF]/60 font-normal text-[18px] tracking-widest">Gamefy</h4>
                             <ul className="flex flex-col gap-4 font-normal tracking-tight">
-                                <li><Link to="/rooms" className="hover:text-cyan-400 transition-colors">Rooms</Link></li>
-                                <li><Link to="/coaching" className="hover:text-cyan-400 transition-colors">Coaching</Link></li>
-                                <li><Link to="/events" className="hover:text-cyan-400 transition-colors">Events</Link></li>
-                                <li><Link to="/partners" className="hover:text-cyan-400 transition-colors">Partners</Link></li>
-                                <li><Link to="/community" className="hover:text-cyan-400 transition-colors">Community</Link></li>
+                                <li><Link to="/#rooms-events" className="hover:text-cyan-400 transition-colors">Rooms</Link></li>
+                                <li><Link to="/#coaches" className="hover:text-cyan-400 transition-colors">Coaching</Link></li>
+                                <li><Link to="/#rooms-events" className="hover:text-cyan-400 transition-colors">Events</Link></li>
+                                <li><Link to="/#hero" className="hover:text-cyan-400 transition-colors">Partners</Link></li>
+                                <li><Link to="/#blog" className="hover:text-cyan-400 transition-colors">Community</Link></li>
                             </ul>
                         </div>
 
                         {/* Social Column */}
                         <div className="flex flex-col gap-6">
-                            <h4 className="text-[#888] font-normal text-sm tracking-widest uppercase">Social</h4>
+                            <h4 className="text-[#FFFF]/60 font-normal text-[18px] tracking-widest">Social</h4>
                             <ul className="flex flex-col gap-4 font-normal tracking-tight">
-                                <li><a href="#" className="hover:text-cyan-400 transition-colors">Instagram</a></li>
-                                <li><a href="#" className="hover:text-cyan-400 transition-colors">Facebook</a></li>
-                                <li><a href="#" className="hover:text-cyan-400 transition-colors">X</a></li>
-                                <li><a href="#" className="hover:text-cyan-400 transition-colors">Discord</a></li>
-                                <li><a href="#" className="hover:text-cyan-400 transition-colors">Twitch</a></li>
+                                <li><a href="https://www.instagram.com/gamefyacademy/" className="hover:text-cyan-400 transition-colors">Instagram</a></li>
+                                <li><a href="https://www.facebook.com/gamefyacademy" className="hover:text-cyan-400 transition-colors">Facebook</a></li>
+                                <li><a href="https://x.com/GamefyTn" className="hover:text-cyan-400 transition-colors">X</a></li>
+                                <li><a href="https://discord.gg/gamefyacademy" className="hover:text-cyan-400 transition-colors">Discord</a></li>
+                                <li><a href="https://www.twitch.tv/gamefyacademy" className="hover:text-cyan-400 transition-colors">Twitch</a></li>
                             </ul>
                         </div>
 
                         {/* Information Column */}
                         <div className="flex flex-col gap-6">
-                            <h4 className="text-[#888] font-normal text-sm tracking-widest uppercase">Information</h4>
+                            <h4 className="text-[#FFFF]/60 font-normal text-[18px] tracking-widest">Information</h4>
                             <ul className="flex flex-col gap-4 font-normal tracking-tight">
                                 <li><Link to="/privacy" className="hover:text-cyan-400 transition-colors">Privacy & Guidelines</Link></li>
                                 <li><Link to="/about" className="hover:text-cyan-400 transition-colors">About</Link></li>
@@ -68,10 +68,10 @@ const Footer = () => {
 
                         {/* Contact Information Column */}
                         <div className="flex flex-col gap-6">
-                            <h4 className="text-[#888] font-normal text-sm tracking-widest uppercase">Contact Information</h4>
+                            <h4 className="text-[#FFFF]/60 font-normal text-[18px] tracking-widest">Contact Information</h4>
                             <ul className="flex flex-col gap-4 font-normal tracking-tight">
-                                <li><a href="mailto:contact@gamefy.com" className="hover:text-cyan-400 transition-colors">Mail</a></li>
-                                <li><a href="tel:+1234567890" className="hover:text-cyan-400 transition-colors">Phone</a></li>
+                                <li><a href="mailto:contact@gamefy.tn" className="hover:text-cyan-400 transition-colors">Mail</a></li>
+                                <li><a href="tel:+21625171117" className="hover:text-cyan-400 transition-colors">Phone</a></li>
                             </ul>
                         </div>
                     </div>
@@ -82,12 +82,12 @@ const Footer = () => {
                     <p className="text-[#888] font-normal tracking-tight">@2026 Gamefy Academy</p>
 
                     <div className="flex items-center gap-6">
-                        <a href="#" className="text-white hover:text-cyan-400 transition-colors"><Instagram className="w-5 h-5" /></a>
-                        <a href="#" className="text-white hover:text-cyan-400 transition-colors"><Facebook className="w-5 h-5" /></a>
-                        <a href="#" className="text-white hover:text-cyan-400 transition-colors"><Twitter className="w-5 h-5" /></a>
-                        <a href="#" className="text-white hover:text-cyan-400 transition-colors"><WhatsApp className="w-5 h-5" /></a>
-                        <a href="#" className="text-white hover:text-cyan-400 transition-colors"><Discord className="w-5 h-5" /></a>
-                        <a href="#" className="text-white hover:text-cyan-400 transition-colors"><Linkedin className="w-5 h-5" /></a>
+                        <a href="https://www.instagram.com/gamefyacademy/" className="text-white hover:text-cyan-400 transition-colors"><Instagram className="w-5 h-5" /></a>
+                        <a href="https://www.facebook.com/gamefyacademy" className="text-white hover:text-cyan-400 transition-colors"><Facebook className="w-5 h-5" /></a>
+                        <a href="https://x.com/GamefyTn" className="text-white hover:text-cyan-400 transition-colors"><Twitter className="w-5 h-5" /></a>
+                        <a href="https://wa.me/1234567890" className="text-white hover:text-cyan-400 transition-colors"><WhatsApp className="w-5 h-5" /></a>
+                        <a href="https://discord.gg/gamefyacademy" className="text-white hover:text-cyan-400 transition-colors"><Discord className="w-5 h-5" /></a>
+                        <a href="https://www.linkedin.com/company/gamefy-academy" className="text-white hover:text-cyan-400 transition-colors"><Linkedin className="w-5 h-5" /></a>
                     </div>
                 </div>
             </div>
