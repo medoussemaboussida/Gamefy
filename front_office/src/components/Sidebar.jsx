@@ -18,9 +18,11 @@ import toast from "react-hot-toast";
 
 import { getUserRole } from "../utils/jwt";
 import { useUser } from "../context/UserContext";
+import UserPacksTooltip from "./UserPacksTooltip";
 
 const Sidebar = () => {
   const [isHovered, setIsHovered] = useState(false);
+  const [showPacksTooltip, setShowPacksTooltip] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const { user, setUser } = useUser();
@@ -155,6 +157,8 @@ const Sidebar = () => {
       <div className="w-full space-y-4 px-3 mt-auto pt-6 border-t border-white/5">
         <button
           onClick={() => handleItemClick("/profile")}
+          onMouseEnter={() => !isMobile && role === 'PLAYER' && setShowPacksTooltip(true)}
+          onMouseLeave={() => setShowPacksTooltip(false)}
           className={`w-full flex items-center p-3 rounded-full text-[#1CF3CA] hover:bg-[#1CF3CA] hover:text-black transition-all group ${!isHovered && !isMobile ? "justify-center" : "justify-start px-6 gap-4"}`}
         >
           <div className="w-8 h-8 flex justify-center flex-shrink-0 overflow-hidden rounded-full border border-[#1CF3CA]/30">
@@ -173,6 +177,14 @@ const Sidebar = () => {
             {user ? `${user.firstName} ${user.lastName}` : "Loading..."}
           </span>
         </button>
+
+        {role === 'PLAYER' && (
+          <UserPacksTooltip 
+            user={user} 
+            isVisible={showPacksTooltip} 
+            sidebarHovered={isHovered} 
+          />
+        )}
 
         <button
           onClick={handleLogout}
