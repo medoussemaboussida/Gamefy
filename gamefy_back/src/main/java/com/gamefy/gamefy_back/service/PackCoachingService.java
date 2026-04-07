@@ -5,25 +5,32 @@ import com.gamefy.gamefy_back.dto.PackCoachingDto;
 import com.gamefy.gamefy_back.model.PackCoaching;
 import com.gamefy.gamefy_back.model.Payment;
 import com.gamefy.gamefy_back.model.User;
+import com.gamefy.gamefy_back.model.UserPackCoaching;
+import com.gamefy.gamefy_back.model.enums.UserPackStatus;
 import com.gamefy.gamefy_back.repository.PackCoachingRepository;
 import com.gamefy.gamefy_back.repository.PaymentRepository;
+import com.gamefy.gamefy_back.repository.UserPackCoachingRepository;
 import com.gamefy.gamefy_back.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class PackCoachingService {
 
     private final PackCoachingRepository repository;
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
+    private final UserPackCoachingRepository userPackCoachingRepository;
 
     public List<PackCoachingDto> getPacksByCoachId(Integer coachId) {
         return repository.findByCoachId(coachId).stream()
@@ -87,18 +94,33 @@ public class PackCoachingService {
     public void deletePackAdmin(Integer id) {
         PackCoaching existing = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pack not found"));
+
+        // Remove all junction records for this pack
+        List<UserPackCoaching> junctionRecords = userPackCoachingRepository.findByPackCoaching(existing);
+        userPackCoachingRepository.deleteAll(junctionRecords);
+
         repository.delete(existing);
     }
 
     @Transactional
     @CacheEvict(value = {"users"}, allEntries = true)
     public void assignPackToPlayer(Integer packId, Integer userId) {
+        log.info("Service: Assigning coaching packId {} to userId {}", packId, userId);
         PackCoaching pack = repository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Coaching pack not found with id: " + packId));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        user.setPackCoaching(pack);
-        userRepository.save(user);
+
+        // Create junction record
+        UserPackCoaching userPack = new UserPackCoaching();
+        userPack.setUser(user);
+        userPack.setPackCoaching(pack);
+        userPack.setActivatedAt(LocalDateTime.now());
+        userPack.setExpiresAt(LocalDateTime.now().plusMonths(
+                pack.getDurationMonths() != null ? pack.getDurationMonths() : 6));
+        userPack.setRemainingHours(calculateHoursFromPack(pack));
+        userPack.setStatus(UserPackStatus.ACTIVE);
+        userPackCoachingRepository.save(userPack);
 
         // Add to payment history
         Payment payment = new Payment();
@@ -111,10 +133,22 @@ public class PackCoachingService {
     @Transactional
     @CacheEvict(value = {"users"}, allEntries = true)
     public void removePackFromPlayer(Integer userId) {
+        log.info("Service: Removing coaching pack from userId {}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        user.setPackCoaching(null);
-        userRepository.save(user);
+
+        // Find and delete active junction records for this user
+        List<UserPackCoaching> activeRecords = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        userPackCoachingRepository.deleteAll(activeRecords);
+    }
+
+    /**
+     * Converts the pack's LocalTime hours field into a Double.
+     * e.g. 02:30 → 2.5 hours
+     */
+    private double calculateHoursFromPack(PackCoaching pack) {
+        if (pack.getHours() == null) return 0.0;
+        return pack.getHours().getHour() + (pack.getHours().getMinute() / 60.0);
     }
 
     private PackCoachingDto mapToDto(PackCoaching pack) {

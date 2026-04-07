@@ -35,9 +35,8 @@ public class PackCoaching {
     @JoinColumn(name = "coach_id")
     private User coach;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "packCoaching")
-    private java.util.List<User> users = new java.util.ArrayList<>();
+    @Column(name = "duration_months")
+    private Integer durationMonths;
 
     @JsonIgnore
     @OneToMany(mappedBy = "packCoaching")

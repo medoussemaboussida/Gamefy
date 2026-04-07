@@ -53,9 +53,6 @@ public class User implements UserDetails {
     @Column(name = "profile_photo")
     private String profilePhoto;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pack_coaching_id")
-    private PackCoaching packCoaching;
 
 
 
