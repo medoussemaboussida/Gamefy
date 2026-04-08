@@ -106,6 +106,10 @@ public class PackCoachingService {
     @CacheEvict(value = {"users"}, allEntries = true)
     public void assignPackToPlayer(Integer packId, Integer userId) {
         log.info("Service: Assigning coaching packId {} to userId {}", packId, userId);
+        
+        // Ensure only one active coaching pack at a time
+        removePackFromPlayer(userId);
+
         PackCoaching pack = repository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Coaching pack not found with id: " + packId));
         User user = userRepository.findById(userId)
@@ -137,9 +141,19 @@ public class PackCoachingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        // Find and delete active junction records for this user
+    // Find and delete active junction records for this user
         List<UserPackCoaching> activeRecords = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
         userPackCoachingRepository.deleteAll(activeRecords);
+    }
+
+    public List<Integer> getPurchasedCoachingPackIds(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        List<UserPackCoaching> activeRecords = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        return activeRecords.stream()
+                .map(r -> r.getPackCoaching().getId())
+                .collect(Collectors.toList());
     }
 
     /**

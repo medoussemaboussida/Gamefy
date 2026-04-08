@@ -5,6 +5,7 @@ import { packCoachingApi } from "../../api/packCoaching";
 import { Gift, Info, Check, CreditCard, Clock, User } from "lucide-react";
 import toast from "react-hot-toast";
 import PaymentModal from "../../components/payment/PaymentModal";
+import CoachingPaymentModal from "../../components/payment/CoachingPaymentModal";
 import PackDescriptionModal from "../../modals/PackDescriptionModal";
 import CoachingPackDescriptionModal from "../../modals/CoachingPackDescriptionModal";
 
@@ -22,9 +23,11 @@ const Packs = () => {
 
     // Payment states
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [isCoachingPaymentModalOpen, setIsCoachingPaymentModalOpen] = useState(false);
     const [clientSecret, setClientSecret] = useState("");
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
     const [purchasedPackIds, setPurchasedPackIds] = useState([]);
+    const [purchasedCoachingPackIds, setPurchasedCoachingPackIds] = useState([]);
 
 
     useEffect(() => {
@@ -52,8 +55,12 @@ const Packs = () => {
 
         const fetchCoachingPacks = async () => {
             try {
-                const data = await packCoachingApi.getAllPacks();
+                const [data, purchasedIds] = await Promise.all([
+                    packCoachingApi.getAllPacks(),
+                    packCoachingApi.getMyPurchasedCoachingPacks().catch(() => []),
+                ]);
                 setCoachingPacks(data);
+                setPurchasedCoachingPackIds(purchasedIds);
             } catch (error) {
                 console.error("Failed to fetch coaching packs", error);
             } finally {
@@ -93,9 +100,33 @@ const Packs = () => {
     const handlePaymentSuccess = () => {
         setIsPaymentModalOpen(false);
         setClientSecret("");
-        // Add the purchased pack to the list so the button disables immediately
+        // Replace the list because the player only has one active Gamefy pack
         if (selectedPack) {
-            setPurchasedPackIds(prev => [...prev, selectedPack.id]);
+            setPurchasedPackIds([selectedPack.id]);
+        }
+    };
+
+    const handleBuyCoachingPack = async (pack) => {
+        setSelectedCoachingPack(pack);
+        setIsProcessingPayment(true);
+        try {
+            const response = await packCoachingApi.createCoachingPackPaymentIntent(pack.id);
+            setClientSecret(response.clientSecret);
+            setIsCoachingPaymentModalOpen(true);
+        } catch (error) {
+            console.error("Failed to create coaching payment intent", error);
+            toast.error("Could not start payment process. Please try again.");
+        } finally {
+            setIsProcessingPayment(false);
+        }
+    };
+
+    const handleCoachingPaymentSuccess = () => {
+        setIsCoachingPaymentModalOpen(false);
+        setClientSecret("");
+        // Replace the list because the player only has one active coaching pack
+        if (selectedCoachingPack) {
+            setPurchasedCoachingPackIds([selectedCoachingPack.id]);
         }
     };
 
@@ -280,16 +311,39 @@ const Packs = () => {
                                         </div>
                                     )}
                                     {/* Show Description button */}
-                                    <button
-                                        onClick={() => {
-                                            setSelectedCoachingPack(pack);
-                                            setIsCoachingModalOpen(true);
-                                        }}
-                                        className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white font-semibold transition-all hover:bg-[#FF89EB]/10 hover:border-[#FF89EB]/30 flex items-center justify-center gap-2"
-                                    >
-                                        <Info size={18} />
-                                        Show Description
-                                    </button>
+                                    <div className="flex flex-col gap-3">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedCoachingPack(pack);
+                                                setIsCoachingModalOpen(true);
+                                            }}
+                                            className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white font-semibold transition-all hover:bg-[#FF89EB]/10 hover:border-[#FF89EB]/30 flex items-center justify-center gap-2"
+                                        >
+                                            <Info size={18} />
+                                            Show Description
+                                        </button>
+                                        {purchasedCoachingPackIds.includes(pack.id) ? (
+                                            <div className="w-full py-3 px-4 rounded-xl bg-white/5 border border-[#FF89EB]/30 text-[#FF89EB] font-semibold flex items-center justify-center gap-2 cursor-default">
+                                                <Check size={18} />
+                                                You already bought this pack
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleBuyCoachingPack(pack)}
+                                                disabled={isProcessingPayment && selectedCoachingPack?.id === pack.id}
+                                                className="w-full py-3 px-4 rounded-xl bg-[#FF89EB] text-black font-bold transition-all hover:bg-[#FF89EB]/90 disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(255,137,235,0.2)]"
+                                            >
+                                                {isProcessingPayment && selectedCoachingPack?.id === pack.id ? (
+                                                    <div className="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full"></div>
+                                                ) : (
+                                                    <>
+                                                        <CreditCard size={18} />
+                                                        Buy Now
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -306,6 +360,14 @@ const Packs = () => {
                 clientSecret={clientSecret}
                 pack={selectedPack}
                 onPaymentSuccess={handlePaymentSuccess}
+            />
+
+            <CoachingPaymentModal
+                isOpen={isCoachingPaymentModalOpen}
+                onClose={() => setIsCoachingPaymentModalOpen(false)}
+                clientSecret={clientSecret}
+                pack={selectedCoachingPack}
+                onPaymentSuccess={handleCoachingPaymentSuccess}
             />
 
             <PackDescriptionModal

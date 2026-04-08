@@ -38,6 +38,17 @@ public class PaymentController {
     }
 
     /**
+     * Create a Stripe PaymentIntent for purchasing a coaching pack
+     */
+    @PostMapping("/create-coaching-pack-intent")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<PaymentDtos.PaymentIntentResponse> createCoachingPackIntent(
+            @RequestBody PaymentDtos.PackPaymentRequest request,
+            @AuthenticationPrincipal User currentUser) throws StripeException {
+        return ResponseEntity.ok(paymentService.createCoachingPackPaymentIntent(request.getPackId(), currentUser.getId()));
+    }
+
+    /**
      * Webhook endpoint for Stripe events
      */
     @PostMapping("/webhook")
@@ -58,6 +69,8 @@ public class PaymentController {
                     String type = intent.getMetadata().get("type");
                     if ("PACK_PURCHASE".equals(type)) {
                         paymentService.handlePackPaymentSucceeded(intent);
+                    } else if ("COACHING_PACK_PURCHASE".equals(type)) {
+                        paymentService.handleCoachingPackPaymentSucceeded(intent);
                     }
                 }
             }
@@ -81,6 +94,22 @@ public class PaymentController {
         try {
             paymentService.fulfillPackPurchase(request.getPackId(), currentUser.getId());
             return ResponseEntity.ok("Pack purchase fulfilled successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Fulfillment error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Called directly by the front-end after Stripe confirms payment on the client side for coaching packs.
+     */
+    @PostMapping("/confirm-coaching-pack-payment")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<String> confirmCoachingPackPayment(
+            @RequestBody PaymentDtos.PackConfirmRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        try {
+            paymentService.fulfillCoachingPackPurchase(request.getPackId(), currentUser.getId());
+            return ResponseEntity.ok("Coaching pack purchase fulfilled successfully");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Fulfillment error: " + e.getMessage());
         }
@@ -121,6 +150,16 @@ public class PaymentController {
     public ResponseEntity<List<Integer>> getMyPurchasedPacks(
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(paymentService.getPurchasedPackIds(currentUser.getId()));
+    }
+
+    /**
+     * Get all coaching pack IDs that the current user has already purchased
+     */
+    @GetMapping("/my-purchased-coaching-packs")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<List<Integer>> getMyPurchasedCoachingPacks(
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(paymentService.getPurchasedCoachingPackIds(currentUser.getId()));
     }
 
     /**

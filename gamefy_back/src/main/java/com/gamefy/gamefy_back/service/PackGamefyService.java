@@ -145,6 +145,10 @@ public class PackGamefyService {
     @CacheEvict(value = {"users"}, allEntries = true)
     public void assignPackToUser(Integer packId, Integer userId) {
         log.info("Service: Assigning packId {} to userId {}", packId, userId);
+        
+        // Ensure only one active Gamefy pack at a time
+        removePackFromUser(userId);
+
         PackGamefy pack = repository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Pack not found with id: " + packId));
         User user = userRepository.findById(userId)

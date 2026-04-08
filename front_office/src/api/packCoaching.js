@@ -90,5 +90,46 @@ export const packCoachingApi = {
         } catch (error) {
             throw error;
         }
+    },
+
+    /**
+     * Create a Stripe PaymentIntent for a coaching pack
+     * @param {number} packId 
+     * @returns {Promise<{clientSecret: string, publishableKey: string}>} 
+     */
+    createCoachingPackPaymentIntent: async (packId) => {
+        try {
+            const response = await apiClient.post("/gamefy/payments/create-coaching-pack-intent", { packId });
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    /**
+     * Confirm a coaching pack payment with the backend
+     * @param {number} packId 
+     * @returns {Promise<string>} 
+     */
+    confirmCoachingPackPayment: async (packId) => {
+        try {
+            const response = await apiClient.post("/gamefy/payments/confirm-coaching-pack-payment", { packId });
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    /**
+     * Get IDs of coaching packs purchased by the current user
+     * @returns {Promise<number[]>} 
+     */
+    getMyPurchasedCoachingPacks: async () => {
+        try {
+            const response = await apiClient.get("/gamefy/payments/my-purchased-coaching-packs");
+            return response;
+        } catch (error) {
+            throw error;
+        }
     }
 };

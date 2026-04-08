@@ -1,20 +1,12 @@
 package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.PaymentDtos;
-import com.gamefy.gamefy_back.model.PackGamefy;
-import com.gamefy.gamefy_back.model.Payment;
-import com.gamefy.gamefy_back.model.Reservation;
-import com.gamefy.gamefy_back.model.User;
-import com.gamefy.gamefy_back.model.UserPackGamefy;
+import com.gamefy.gamefy_back.model.*;
 import com.gamefy.gamefy_back.model.enums.Benefit_type;
 import com.gamefy.gamefy_back.model.enums.Payment_Type;
 import com.gamefy.gamefy_back.model.enums.Rate_Rule;
 import com.gamefy.gamefy_back.model.enums.UserPackStatus;
-import com.gamefy.gamefy_back.repository.PackGamefyRepository;
-import com.gamefy.gamefy_back.repository.PaymentRepository;
-import com.gamefy.gamefy_back.repository.ReservationRepository;
-import com.gamefy.gamefy_back.repository.UserPackGamefyRepository;
-import com.gamefy.gamefy_back.repository.UserRepository;
+import com.gamefy.gamefy_back.repository.*;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +32,9 @@ public class PaymentService {
     private final ReservationService reservationService;
     private final StripeService stripeService;
     private final UserPackGamefyRepository userPackGamefyRepository;
+    private final PackCoachingService packCoachingService;
+    private final PackCoachingRepository packCoachingRepository;
+    private final PackGamefyService packGamefyService;
 
     @Value("${stripe.publishable.key}")
     private String stripePublishableKey;
@@ -57,6 +52,28 @@ public class PaymentService {
         metadata.put("packId", packId.toString());
         metadata.put("userId", userId.toString());
         metadata.put("type", "PACK_PURCHASE");
+
+        PaymentIntent intent = stripeService.createPaymentIntent(amount, "usd", metadata);
+
+        return new PaymentDtos.PaymentIntentResponse(
+                intent.getClientSecret(),
+                stripePublishableKey
+        );
+    }
+
+    /**
+     * Create a PaymentIntent for a specific coaching pack
+     */
+    public PaymentDtos.PaymentIntentResponse createCoachingPackPaymentIntent(Integer packId, Integer userId) throws StripeException {
+        PackCoaching pack = packCoachingRepository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Coaching Pack not found"));
+
+        Long amount = (long) (pack.getPrice() * 100);
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("packId", packId.toString());
+        metadata.put("userId", userId.toString());
+        metadata.put("type", "COACHING_PACK_PURCHASE");
 
         PaymentIntent intent = stripeService.createPaymentIntent(amount, "usd", metadata);
 
@@ -140,6 +157,9 @@ public class PaymentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Ensure only one active Gamefy pack at a time
+        packGamefyService.removePackFromUser(userId);
+
         // Create junction record
         UserPackGamefy userPack = new UserPackGamefy();
         userPack.setUser(user);
@@ -162,6 +182,30 @@ public class PaymentService {
         paymentRepository.save(payment);
     }
 
+    /**
+     * Fulfill the coaching pack order after successful payment
+     */
+    @Transactional
+    public void handleCoachingPackPaymentSucceeded(PaymentIntent intent) {
+        String packIdStr = intent.getMetadata().get("packId");
+        String userIdStr = intent.getMetadata().get("userId");
+
+        if (packIdStr == null || userIdStr == null) {
+            throw new RuntimeException("Missing metadata in PaymentIntent");
+        }
+
+        Integer packId = Integer.parseInt(packIdStr);
+        Integer userId = Integer.parseInt(userIdStr);
+
+        packCoachingService.assignPackToPlayer(packId, userId);
+    }
+
+    @Transactional
+    @CacheEvict(value = "users", allEntries = true)
+    public void fulfillCoachingPackPurchase(Integer packId, Integer userId) {
+        packCoachingService.assignPackToPlayer(packId, userId);
+    }
+
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
     public void fulfillPackPurchase(Integer packId, Integer userId) {
@@ -172,12 +216,8 @@ public class PaymentService {
         PackGamefy pack = packGamefyRepository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Pack not found: " + packId));
 
-        List<UserPackGamefy> existing = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
-        boolean alreadyHasPack = existing.stream()
-                .anyMatch(r -> r.getPackGamefy().getId().equals(packId));
-        if (alreadyHasPack) {
-            throw new RuntimeException("You already hold this pack as your active pack");
-        }
+        // Ensure only one active Gamefy pack at a time
+        packGamefyService.removePackFromUser(userId);
 
         // Create junction record
         UserPackGamefy userPack = new UserPackGamefy();
@@ -209,6 +249,10 @@ public class PaymentService {
         return activeRecords.stream()
                 .map(r -> r.getPackGamefy().getId())
                 .collect(Collectors.toList());
+    }
+
+    public List<Integer> getPurchasedCoachingPackIds(Integer userId) {
+        return packCoachingService.getPurchasedCoachingPackIds(userId);
     }
 
     public List<PaymentDtos.AllPaymentResponse> getAllPayments() {
