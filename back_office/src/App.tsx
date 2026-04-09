@@ -30,6 +30,7 @@ import PackManagement from "./pages/PackManagement";
 import PaymentManagement from "./pages/PaymentManagement";
 import ReservationManagement from "./pages/ReservationManagement";
 import CoachingPackManagement from "./pages/CoachingPackManagement";
+import PcGameManagement from "./pages/PcGameManagement";
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/payments" element={<PaymentManagement />} />
             <Route path="/reservations" element={<ReservationManagement />} />
             <Route path="/coaching-packs" element={<CoachingPackManagement />} />
+            <Route path="/pc-games" element={<PcGameManagement />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

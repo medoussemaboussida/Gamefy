@@ -2,13 +2,13 @@ package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.PcDto;
 import com.gamefy.gamefy_back.model.PC;
-import com.gamefy.gamefy_back.model.enums.PC_Games;
+import com.gamefy.gamefy_back.model.PcGame;
 import com.gamefy.gamefy_back.repository.PCRepository;
+import com.gamefy.gamefy_back.repository.PcGameRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,14 +18,15 @@ import java.util.stream.Collectors;
 public class PCService {
 
     private final PCRepository repository;
+    private final PcGameRepository pcGameRepository;
     public List<PcDto> getAllPCs() {
         return repository.findAll().stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
     public List<String> getAllGamesEnums() {
-        return Arrays.stream(PC_Games.values())
-                .map(Enum::name)
+        return pcGameRepository.findAll().stream()
+                .map(PcGame::getGameName)
                 .collect(Collectors.toList());
     }
 
@@ -47,7 +48,13 @@ public class PCService {
 
         existing.setPcNumber(dto.getPcNumber());
         existing.setStatus(dto.getStatus());
-        existing.setGames(dto.getGames());
+        
+        List<PcGame> gameEntities = dto.getGames().stream()
+                .map(name -> pcGameRepository.findByGameName(name)
+                        .orElseThrow(() -> new RuntimeException("Game not found: " + name)))
+                .collect(Collectors.toList());
+        existing.setGames(gameEntities);
+        
         existing.setPcType(dto.getPcType());
         existing.setPcLocation(dto.getPcLocation());
 
@@ -67,7 +74,7 @@ public class PCService {
                 .id(pc.getId())
                 .pcNumber(pc.getPcNumber())
                 .status(pc.getStatus())
-                .games(pc.getGames())
+                .games(pc.getGames() != null ? pc.getGames().stream().map(PcGame::getGameName).collect(Collectors.toList()) : null)
                 .pcType(pc.getPcType())
                 .pcLocation(pc.getPcLocation())
                 .build();
@@ -78,7 +85,15 @@ public class PCService {
         pc.setId(dto.getId());           // usually null on create
         pc.setPcNumber(dto.getPcNumber());
         pc.setStatus(dto.getStatus());
-        pc.setGames(dto.getGames());
+        
+        if (dto.getGames() != null) {
+            List<PcGame> gameEntities = dto.getGames().stream()
+                    .map(name -> pcGameRepository.findByGameName(name)
+                            .orElseThrow(() -> new RuntimeException("Game not found: " + name)))
+                    .collect(Collectors.toList());
+            pc.setGames(gameEntities);
+        }
+        
         pc.setPcType(dto.getPcType());
         pc.setPcLocation(dto.getPcLocation());
         return pc;

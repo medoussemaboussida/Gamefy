@@ -1,7 +1,6 @@
 package com.gamefy.gamefy_back.dto;
 
 import com.gamefy.gamefy_back.model.enums.Location;
-import com.gamefy.gamefy_back.model.enums.PC_Games;
 import com.gamefy.gamefy_back.model.enums.PC_Status;
 import com.gamefy.gamefy_back.model.enums.PC_Type;
 import jakarta.validation.constraints.Min;
@@ -29,7 +28,7 @@ public class PcDto {
     private PC_Status status;
 
     @NotNull(message = "Games is required")
-    private List<PC_Games> games;
+    private List<String> games;
 
     @NotNull(message = "PC Type is required")
     private PC_Type pcType;

@@ -13,7 +13,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -36,6 +35,7 @@ public class ReservationService {
     private final PaymentRepository paymentRepository;
     private final WorkDaysScheduleRepository workDaysScheduleRepository;
     private final SubscriptionService subscriptionService;
+    private final PcGameRepository pcGameRepository;
 
     /**
      * Create a reservation with multiple PCs.
@@ -85,7 +85,7 @@ public class ReservationService {
             // If coaching, ensure PC has the requested game
             if (dto.getReservationType() == Reservation_Type.COACHING_ROOM && dto.getGame() != null) {
                 boolean hasGame = pc.getGames().stream()
-                        .anyMatch(g -> g.name().equalsIgnoreCase(dto.getGame()));
+                        .anyMatch(g -> g.getGameName().equalsIgnoreCase(dto.getGame()));
                 if (!hasGame) {
                     throw new RuntimeException("PC #" + pc.getPcNumber() + " does not have the game: " + dto.getGame());
                 }
@@ -255,7 +255,7 @@ public class ReservationService {
         // If game is provided (coaching flow), filter PCs by game
         if (reservationType == Reservation_Type.COACHING_ROOM && game != null) {
             allPCs = allPCs.stream()
-                    .filter(pc -> pc.getGames().stream().anyMatch(g -> g.name().equalsIgnoreCase(game)))
+                    .filter(pc -> pc.getGames().stream().anyMatch(g -> g.getGameName().equalsIgnoreCase(game)))
                     .collect(Collectors.toList());
         }
 
@@ -269,7 +269,7 @@ public class ReservationService {
             pcInfo.put("id", pc.getId());
             pcInfo.put("pcNumber", pc.getPcNumber());
             pcInfo.put("pcType", pc.getPcType().name());
-            pcInfo.put("games", pc.getGames().stream().map(Enum::name).collect(Collectors.toList()));
+            pcInfo.put("games", pc.getGames().stream().map(PcGame::getGameName).collect(Collectors.toList()));
             pcInfo.put("pcLocation", pc.getPcLocation() != null ? pc.getPcLocation().name() : null);
             pcInfo.put("available", !bookedPcIds.contains(pc.getId()));
             result.add(pcInfo);
@@ -434,8 +434,8 @@ public class ReservationService {
     }
 
     public List<String> getAvailableGames() {
-        return Arrays.stream(PC_Games.values())
-                .map(Enum::name)
+        return pcGameRepository.findAll().stream()
+                .map(PcGame::getGameName)
                 .collect(Collectors.toList());
     }
 

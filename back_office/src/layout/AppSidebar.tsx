@@ -44,6 +44,11 @@ const navItems: NavItem[] = [
     path: "/pcs",
   },
   {
+    icon: <Monitor />,
+    name: "PC Games",
+    path: "/pc-games",
+  },
+  {
     icon: <Gift />,
     name: "Offer Management",
     path: "/offers",

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import { userApi, CoachProfileDto } from "../../api/user";
+import { pcApi } from "../../api/pc";
 import { AlertIcon } from "../../icons";
 import toast from "react-hot-toast";
 import Input from "../form/input/InputField";
@@ -16,24 +17,27 @@ interface CoachProfileModalProps {
     isAdmin: boolean;
 }
 
-const PC_GAMES = [
-    { value: "FC26", label: "FC 26" },
-    { value: "VALORANT", label: "Valorant" },
-    { value: "CS_GO", label: "CS:GO" },
-    { value: "LEAGUE_OF_LEGENDS", label: "League of Legends" },
-];
-
 const CoachProfileModal: React.FC<CoachProfileModalProps> = ({ isOpen, onClose, userId, userName, isAdmin }) => {
     const [profile, setProfile] = useState<CoachProfileDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [availableGames, setAvailableGames] = useState<{ value: string; label: string }[]>([]);
     const [editData, setEditData] = useState({
         game: "",
         hourlyPrice: 0,
         bio: "",
     });
+
+    const fetchGames = async () => {
+        try {
+            const data = await pcApi.getAllPCGames();
+            setAvailableGames(data.map(g => ({ value: g, label: g })));
+        } catch (err) {
+            console.error("Failed to fetch games for coach profile:", err);
+        }
+    };
 
     const fetchProfile = async () => {
         setLoading(true);
@@ -61,6 +65,7 @@ const CoachProfileModal: React.FC<CoachProfileModalProps> = ({ isOpen, onClose, 
     useEffect(() => {
         if (isOpen) {
             fetchProfile();
+            fetchGames();
             setIsEditing(false);
         }
     }, [isOpen, userId]);
@@ -127,7 +132,7 @@ const CoachProfileModal: React.FC<CoachProfileModalProps> = ({ isOpen, onClose, 
                             <div>
                                 <Label>Game</Label>
                                 <Select
-                                    options={PC_GAMES}
+                                    options={availableGames}
                                     defaultValue={editData.game}
                                     onChange={(val) => setEditData(prev => ({ ...prev, game: val }))}
                                 />

@@ -1,7 +1,6 @@
 package com.gamefy.gamefy_back.model;
 
 import com.gamefy.gamefy_back.model.enums.Location;
-import com.gamefy.gamefy_back.model.enums.PC_Games;
 import com.gamefy.gamefy_back.model.enums.PC_Status;
 import com.gamefy.gamefy_back.model.enums.PC_Type;
 import jakarta.persistence.*;
@@ -30,11 +29,13 @@ public class PC {
     @Column(nullable = false)
     private PC_Status status;
 
-    @ElementCollection(targetClass = PC_Games.class)
-    @CollectionTable(name = "pc_games", joinColumns = @JoinColumn(name = "pc_id"))
-    @Column(name = "game")
-    @Enumerated(EnumType.STRING)
-    private List<PC_Games> games;
+    @ManyToMany
+    @JoinTable(
+            name = "pc_games_relation",
+            joinColumns = @JoinColumn(name = "pc_id"),
+            inverseJoinColumns = @JoinColumn(name = "game_id")
+    )
+    private List<PcGame> games;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "pc_type", nullable = false)

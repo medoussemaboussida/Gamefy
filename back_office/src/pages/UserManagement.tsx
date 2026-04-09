@@ -516,7 +516,7 @@ export default function UserManagement() {
                                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white transition-all group"
                                   title="View Coaching Profile"
                                 >
-                                  <span>Profile</span>
+                                  <span>Coaching Profile</span>
                                 </button>
                               )}
                               {user.role === "PLAYER" &&
