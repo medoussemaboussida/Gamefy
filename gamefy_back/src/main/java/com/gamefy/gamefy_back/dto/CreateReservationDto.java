@@ -19,4 +19,6 @@ public class CreateReservationDto {
     private Double priceTime;
     private Integer coachId;
     private String game;
+    private Double packHoursUsed;
+    private Boolean packDiscountUsed;
 }

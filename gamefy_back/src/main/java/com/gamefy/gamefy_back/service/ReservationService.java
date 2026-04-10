@@ -36,6 +36,7 @@ public class ReservationService {
     private final WorkDaysScheduleRepository workDaysScheduleRepository;
     private final SubscriptionService subscriptionService;
     private final PcGameRepository pcGameRepository;
+    private final UserPackGamefyRepository userPackGamefyRepository;
 
     /**
      * Create a reservation with multiple PCs.
@@ -179,6 +180,14 @@ public class ReservationService {
             slot.setStartTime(reservation.getStartTime());
             slot.setEndTime(reservation.getEndTime());
             coachingSlotRepository.save(slot);
+        }
+
+        // Deduct pack benefits if the player activated them
+        if (dto.getPackHoursUsed() != null && dto.getPackHoursUsed() > 0) {
+            deductPackHours(userId, dto.getReservationType(), dto.getPackHoursUsed());
+        }
+        if (dto.getPackDiscountUsed() != null && dto.getPackDiscountUsed()) {
+            deductPackDiscount(userId, dto.getReservationType());
         }
 
         // Return the DTO with the generated ID
@@ -437,6 +446,101 @@ public class ReservationService {
         return pcGameRepository.findAll().stream()
                 .map(PcGame::getGameName)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get the current user's active pack benefits relevant to a reservation room type.
+     */
+    public Map<String, Object> getPackBenefitsForReservation(Integer userId, String roomType) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<UserPackGamefy> activePacks = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        UserPackGamefy activePack = activePacks.isEmpty() ? null : activePacks.get(0);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        if (activePack == null) {
+            result.put("hasActivePack", false);
+            return result;
+        }
+
+        result.put("hasActivePack", true);
+        result.put("packName", activePack.getPackGamefy().getName());
+
+        // Map room type to benefit type
+        Benefit_type benefitType = mapRoomTypeToBenefitType(roomType);
+
+        // Get remaining hours for this room type
+        double remainingHours = switch (benefitType) {
+            case PC -> activePack.getRemainingPcHours() != null ? activePack.getRemainingPcHours() : 0.0;
+            case VIP -> activePack.getRemainingVipHours() != null ? activePack.getRemainingVipHours() : 0.0;
+            case COACH -> activePack.getRemainingCoachingHours() != null ? activePack.getRemainingCoachingHours() : 0.0;
+        };
+        result.put("remainingHours", remainingHours);
+
+        // Get remaining discounts for this room type
+        int remainingDiscounts = switch (benefitType) {
+            case PC -> activePack.getRemainingPcDiscounts() != null ? activePack.getRemainingPcDiscounts() : 0;
+            case VIP -> activePack.getRemainingVipDiscounts() != null ? activePack.getRemainingVipDiscounts() : 0;
+            case COACH -> activePack.getRemainingCoachingDiscounts() != null ? activePack.getRemainingCoachingDiscounts() : 0;
+        };
+        result.put("remainingDiscounts", remainingDiscounts);
+
+        // Get discount details from the pack's benefits
+        GamefyPackBenefit discountBenefit = activePack.getPackGamefy().getBenefits().stream()
+                .filter(b -> b.getBenefitType() == benefitType && b.getRateRule() == Rate_Rule.DISCOUNT)
+                .findFirst()
+                .orElse(null);
+
+        if (discountBenefit != null && remainingDiscounts > 0) {
+            result.put("discountType", discountBenefit.getDiscountType() != null ? discountBenefit.getDiscountType().name() : null);
+            result.put("discountValue", discountBenefit.getDiscountValue());
+        } else {
+            result.put("discountType", null);
+            result.put("discountValue", null);
+        }
+
+        return result;
+    }
+
+    private Benefit_type mapRoomTypeToBenefitType(String roomType) {
+        return switch (roomType) {
+            case "PC_ROOM" -> Benefit_type.PC;
+            case "VIP_ROOM" -> Benefit_type.VIP;
+            case "COACHING_ROOM" -> Benefit_type.COACH;
+            default -> throw new RuntimeException("Unsupported room type: " + roomType);
+        };
+    }
+
+    private void deductPackHours(Integer userId, Reservation_Type reservationType, Double hoursUsed) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<UserPackGamefy> activePacks = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        if (activePacks.isEmpty()) return;
+        UserPackGamefy pack = activePacks.get(0);
+
+        switch (reservationType) {
+            case PC_ROOM -> pack.setRemainingPcHours(Math.max(0, pack.getRemainingPcHours() - hoursUsed));
+            case VIP_ROOM -> pack.setRemainingVipHours(Math.max(0, pack.getRemainingVipHours() - hoursUsed));
+            case COACHING_ROOM -> pack.setRemainingCoachingHours(Math.max(0, pack.getRemainingCoachingHours() - hoursUsed));
+        }
+        userPackGamefyRepository.save(pack);
+    }
+
+    private void deductPackDiscount(Integer userId, Reservation_Type reservationType) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<UserPackGamefy> activePacks = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        if (activePacks.isEmpty()) return;
+        UserPackGamefy pack = activePacks.get(0);
+
+        switch (reservationType) {
+            case PC_ROOM -> pack.setRemainingPcDiscounts(Math.max(0, pack.getRemainingPcDiscounts() - 1));
+            case VIP_ROOM -> pack.setRemainingVipDiscounts(Math.max(0, pack.getRemainingVipDiscounts() - 1));
+            case COACHING_ROOM -> pack.setRemainingCoachingDiscounts(Math.max(0, pack.getRemainingCoachingDiscounts() - 1));
+        }
+        userPackGamefyRepository.save(pack);
     }
 
     public List<Map<String, Object>> getCoachesByGame(String game) {

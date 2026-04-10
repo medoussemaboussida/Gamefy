@@ -157,3 +157,12 @@ export const getActiveOffer = () => {
     return apiClient.get("/gamefy/offers/active");
 };
 
+/**
+ * Get the current user's active pack benefits for a given room type.
+ * @param {string} roomType - "PC_ROOM", "VIP_ROOM", or "COACHING_ROOM"
+ * @returns {Promise<{hasActivePack: boolean, packName?: string, remainingHours?: number, remainingDiscounts?: number, discountType?: string, discountValue?: number}>}
+ */
+export const getMyPackBenefits = (roomType) => {
+    return apiClient.get(`/gamefy/reservations/my-pack-benefits?roomType=${roomType}`);
+};
+

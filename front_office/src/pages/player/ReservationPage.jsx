@@ -8,6 +8,8 @@ import StepGameSelection from "./reservation_form/StepGameSelection";
 import StepCoachSelection from "./reservation_form/StepCoachSelection";
 import StepCalendarTime from "./reservation_form/StepCalendarTime";
 import StepPcSelection from "./reservation_form/StepPcSelection";
+import StepPackActivation from "./reservation_form/StepPackActivation";
+import StepCheckout from "./reservation_form/StepCheckout";
 
 const MONTHS = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
 const DAY_NAMES = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
@@ -55,6 +57,11 @@ export default function ReservationPage() {
     const [selectedCoachId, setSelectedCoachId] = useState(null);
     const [coachLoading, setCoachLoading] = useState(false);
 
+    // Pack Gamefy Activation (Step 6)
+    const [packHoursUsed, setPackHoursUsed] = useState(0);
+    const [packDiscountUsed, setPackDiscountUsed] = useState(false);
+    const [packBenefits, setPackBenefits] = useState(null);
+
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
@@ -100,13 +107,9 @@ export default function ReservationPage() {
         setError("");
         try {
             if (reservationType === "COACHING_ROOM" && selectedCoachId) {
-                // Fetch ONLY coach sessions
                 const data = await getCoachSessions(selectedCoachId);
-                // The coaching-sessions API returns all sessions for the coach. 
-                // We filter them by month/year in the UI logic or here.
                 setSchedules(data);
             } else if (reservationType !== "COACHING_ROOM") {
-                // Fetch center work schedule
                 const monthName = MONTHS[currentMonth];
                 const data = await getWorkSchedule(monthName, String(currentYear));
                 setSchedules(data);
@@ -128,7 +131,6 @@ export default function ReservationPage() {
         const monthName = MONTHS[currentMonth];
 
         if (reservationType === "COACHING_ROOM") {
-            // Check if coach has ANY session on this day
             return schedules.find(s => 
                 s.day === dayName && 
                 s.month?.toUpperCase() === monthName && 
@@ -167,8 +169,7 @@ export default function ReservationPage() {
         const schedule = getScheduleForDay(selectedDate);
         if (!schedule) return { open: "", close: "" };
 
-        // Backend stores UTC (e.g., "10:00:00"). Convert to local for display.
-        const offset = new Date().getTimezoneOffset(); // -60 for UTC+1
+        const offset = new Date().getTimezoneOffset();
         const parseTime = (t) => {
             const [h, m] = t.split(":").map(Number);
             return h * 60 + m;
@@ -241,12 +242,8 @@ export default function ReservationPage() {
         const formatLocalToUTCISO = (mins) => {
             const offset = new Date().getTimezoneOffset();
             const utcMins = mins + offset;
-            
-            // We keep the selected date but shift the hours to UTC
-            // This matches the symmetry of how sessions are saved
             const h = Math.floor(((utcMins % 1440) + 1440) % 1440 / 60);
             const m = ((utcMins % 1440) + 1440) % 1440 % 60;
-            
             const pad = (n) => String(n).padStart(2, "0");
             return `${currentYear}-${pad(currentMonth + 1)}-${pad(selectedDate)}T${pad(h)}:${pad(m)}:00`;
         };
@@ -255,7 +252,6 @@ export default function ReservationPage() {
         const utcEnd = formatLocalToUTCISO(Number(endTime));
 
         try {
-            // Pass the selected game if coaching room
             const data = await getAvailablePCs(utcStart, utcEnd, reservationType, selectedGame);
             setPcs(data);
             setSelectedPcIds([]);
@@ -293,14 +289,19 @@ export default function ReservationPage() {
         };
 
         try {
+            // Extend endTime by packHoursUsed to add bonus time at the same price
+            const extendedEndTime = Number(endTime) + (packHoursUsed > 0 ? packHoursUsed * 60 : 0);
+
             await createReservation({
                 reservationType,
                 startTime: formatLocalToUTCISO(Number(startTime)),
-                endTime: formatLocalToUTCISO(Number(endTime)),
+                endTime: formatLocalToUTCISO(extendedEndTime),
                 pcIds: selectedPcIds,
                 coachId: selectedCoachId,
                 game: selectedGame,
                 priceTime: calculateTotalPrice(),
+                packHoursUsed: packHoursUsed > 0 ? packHoursUsed : null,
+                packDiscountUsed: packDiscountUsed || null,
             });
             setSuccess(true);
             setTimeout(() => navigate("/player/dashboard"), 2000);
@@ -312,13 +313,13 @@ export default function ReservationPage() {
     };
 
     // ─── Pricing Logic ───
-    const calculateTotalPrice = () => {
-        if (!startTime || !endTime || fixedPrices.length === 0) return 0;
+    // Pack hours add FREE time — they do NOT affect price.
+    // Price is always based on the originally selected duration.
+    const getBasePriceForDuration = (durationHours) => {
+        if (fixedPrices.length === 0) return 0;
 
-        const durationHours = (Number(endTime) - Number(startTime)) / 60;
         const pcPriceType = reservationType === "VIP_ROOM" ? "VIP" : "GAMING";
         const pricing = fixedPrices.find(p => p.pcType === pcPriceType);
-
         if (!pricing) return 0;
 
         const fullHours = Math.floor(durationHours);
@@ -341,17 +342,38 @@ export default function ReservationPage() {
             baseGamingPrice = pricing.oneHourPrice * 0.5;
         }
 
-        const totalGamingPrice = baseGamingPrice * selectedPcIds.length;
+        return baseGamingPrice;
+    };
 
+    const calculateTotalPrice = () => {
+        if (!startTime || !endTime || fixedPrices.length === 0) return 0;
+
+        // Price is ALWAYS based on the originally selected duration.
+        // Pack hours extend the reservation for free — they do NOT reduce the price.
+        const totalDuration = (Number(endTime) - Number(startTime)) / 60;
+
+        const gamingPricePerPc = getBasePriceForDuration(totalDuration);
+        const totalGamingPrice = gamingPricePerPc * selectedPcIds.length;
+
+        // Coaching fee (applies to original selected duration)
         let coachingFee = 0;
         if (reservationType === "COACHING_ROOM" && selectedCoachId) {
             const coach = coaches.find(c => c.id === selectedCoachId);
             if (coach) {
-                coachingFee = coach.hourlyPrice * durationHours;
+                coachingFee = coach.hourlyPrice * totalDuration;
             }
         }
 
-        const subtotal = totalGamingPrice + coachingFee;
+        let subtotal = totalGamingPrice + coachingFee;
+
+        // Apply pack discount (only discount affects price, not hours)
+        if (packDiscountUsed && packBenefits) {
+            if (packBenefits.discountType === "PERCENTAGE" && packBenefits.discountValue) {
+                subtotal = subtotal * (1 - packBenefits.discountValue / 100);
+            } else if (packBenefits.discountType === "FIXED_AMOUNT" && packBenefits.discountValue) {
+                subtotal = Math.max(0, subtotal - packBenefits.discountValue);
+            }
+        }
 
         // Apply active offer reduction
         if (activeOffer && activeOffer.reduction > 0) {
@@ -361,42 +383,33 @@ export default function ReservationPage() {
         return subtotal;
     };
 
-    // Calculate subtotal before discount (for display purposes)
+    // Calculate subtotal before active offer discount (for display)
     const calculateSubtotal = () => {
         if (!startTime || !endTime || fixedPrices.length === 0) return 0;
 
-        const durationHours = (Number(endTime) - Number(startTime)) / 60;
-        const pcPriceType = reservationType === "VIP_ROOM" ? "VIP" : "GAMING";
-        const pricing = fixedPrices.find(p => p.pcType === pcPriceType);
-        if (!pricing) return 0;
+        const totalDuration = (Number(endTime) - Number(startTime)) / 60;
 
-        const fullHours = Math.floor(durationHours);
-        const hasHalfHour = durationHours % 1 !== 0;
-        let baseGamingPrice = 0;
+        const gamingPricePerPc = getBasePriceForDuration(totalDuration);
+        const totalGamingPrice = gamingPricePerPc * selectedPcIds.length;
 
-        if (fullHours >= 4) {
-            baseGamingPrice = pricing.oneHourPrice * fullHours;
-            if (hasHalfHour) baseGamingPrice += (pricing.oneHourPrice * 0.5);
-        } else if (fullHours === 3) {
-            baseGamingPrice = pricing.threeHoursPrice;
-            if (hasHalfHour) baseGamingPrice += (pricing.threeHoursPrice * 0.5);
-        } else if (fullHours === 2) {
-            baseGamingPrice = pricing.twoHoursPrice;
-            if (hasHalfHour) baseGamingPrice += (pricing.twoHoursPrice * 0.5);
-        } else if (fullHours === 1) {
-            baseGamingPrice = pricing.oneHourPrice;
-            if (hasHalfHour) baseGamingPrice += (pricing.oneHourPrice * 0.5);
-        } else if (fullHours === 0 && hasHalfHour) {
-            baseGamingPrice = pricing.oneHourPrice * 0.5;
-        }
-
-        const totalGamingPrice = baseGamingPrice * selectedPcIds.length;
         let coachingFee = 0;
         if (reservationType === "COACHING_ROOM" && selectedCoachId) {
             const coach = coaches.find(c => c.id === selectedCoachId);
-            if (coach) coachingFee = coach.hourlyPrice * durationHours;
+            if (coach) coachingFee = coach.hourlyPrice * totalDuration;
         }
-        return totalGamingPrice + coachingFee;
+
+        let subtotal = totalGamingPrice + coachingFee;
+
+        // Pack discount applies here too
+        if (packDiscountUsed && packBenefits) {
+            if (packBenefits.discountType === "PERCENTAGE" && packBenefits.discountValue) {
+                subtotal = subtotal * (1 - packBenefits.discountValue / 100);
+            } else if (packBenefits.discountType === "FIXED_AMOUNT" && packBenefits.discountValue) {
+                subtotal = Math.max(0, subtotal - packBenefits.discountValue);
+            }
+        }
+
+        return subtotal;
     };
 
     // ─── RENDER ───
@@ -418,12 +431,11 @@ export default function ReservationPage() {
 
                     {/* Step Indicator */}
                     <div className="flex items-center justify-center gap-2 mb-10">
-                        {[1, 2, 3, 4, 5].map((s) => {
+                        {[1, 2, 3, 4, 5, 6, 7].map((s) => {
                             // Skip game/coach steps in indicator if not coaching
                             if (reservationType !== "COACHING_ROOM" && (s === 2 || s === 3)) return null;
                             
-                            // Map step number to label for clarity
-                            const labels = { 1: "Room", 2: "Game", 3: "Coach", 4: "Time", 5: "PC" };
+                            const labels = { 1: "Room", 2: "Game", 3: "Coach", 4: "Time", 5: "PC", 6: "Pack", 7: "Checkout" };
                             
                             return (
                                 <div key={s} className="flex items-center gap-2">
@@ -436,8 +448,8 @@ export default function ReservationPage() {
                                         </div>
                                         <span className="text-[10px] uppercase font-bold font-['Inter'] tracking-tighter mt-1 text-white/40">{labels[s]}</span>
                                     </div>
-                                    {(s < 5 && (reservationType === "COACHING_ROOM" || s === 1 || s >= 4)) && (
-                                        <div className={`w-8 md:w-16 h-0.5 mt-[-15px] ${step > s ? "bg-[#1CF3CA]/50" : "bg-white/10"}`} />
+                                    {(s < 7 && (reservationType === "COACHING_ROOM" || (s !== 2 && s !== 3))) && (
+                                        <div className={`w-6 md:w-12 h-0.5 mt-[-15px] ${step > s ? "bg-[#1CF3CA]/50" : "bg-white/10"}`} />
                                     )}
                                 </div>
                             );
@@ -525,6 +537,29 @@ export default function ReservationPage() {
                             selectedPcIds={selectedPcIds}
                             togglePcSelection={togglePcSelection}
                             setStep={setStep}
+                        />
+                    )}
+
+                    {/* ─── STEP 6: Pack Activation ─── */}
+                    {step === 6 && (
+                        <StepPackActivation
+                            reservationType={reservationType}
+                            setStep={setStep}
+                            startTime={startTime}
+                            endTime={endTime}
+                            packHoursUsed={packHoursUsed}
+                            setPackHoursUsed={setPackHoursUsed}
+                            packDiscountUsed={packDiscountUsed}
+                            setPackDiscountUsed={setPackDiscountUsed}
+                            packBenefits={packBenefits}
+                            setPackBenefits={setPackBenefits}
+                        />
+                    )}
+
+                    {/* ─── STEP 7: Checkout ─── */}
+                    {step === 7 && (
+                        <StepCheckout
+                            setStep={setStep}
                             reservationType={reservationType}
                             selectedDate={selectedDate}
                             selectedGame={selectedGame}
@@ -533,7 +568,11 @@ export default function ReservationPage() {
                             startTime={startTime}
                             endTime={endTime}
                             timeSlots={timeSlots}
+                            selectedPcIds={selectedPcIds}
                             activeOffer={activeOffer}
+                            packHoursUsed={packHoursUsed}
+                            packDiscountUsed={packDiscountUsed}
+                            packBenefits={packBenefits}
                             calculateTotalPrice={calculateTotalPrice}
                             calculateSubtotal={calculateSubtotal}
                             handleSubmit={handleSubmit}
