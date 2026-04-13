@@ -13,7 +13,7 @@ import { reservationApi, ReservationDto, Reservation_Status, Reservation_Type } 
 import { userApi, UserResponseDto } from "../api/user";
 import toast from "react-hot-toast";
 import Pagination from "../components/ui/pagination/Pagination";
-import Badge from "../components/ui/badge/Badge";
+import Badge, { BadgeColor } from "../components/ui/badge/Badge";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
@@ -103,13 +103,32 @@ function StatusCell({ res, onStatusChange }: StatusCellProps) {
         Reservation_Status.CANCELLED,
     ];
 
+    const getPaymentBadge = () => {
+        if (!res.paymentType) return null;
+        let color: BadgeColor = "warning";
+        let label = "Cash";
+        if (res.paymentType === "PACK_COVERED") {
+            color = "success";
+            label = "Pack";
+        } else if (res.paymentType === "CARD_PAYMENT") {
+            color = "info";
+            label = "Card";
+        }
+        return (
+            <Badge size="sm" variant="solid" color={color} className="text-[9px] py-0 px-1.5 leading-tight mb-1 uppercase tracking-tight">
+                {label}
+            </Badge>
+        );
+    };
+
     return (
         <div ref={ref} className="relative inline-block">
             <button
                 onClick={() => setOpen((v) => !v)}
-                className="flex flex-col items-start gap-1 group"
+                className="flex flex-col items-start gap-0.5 group"
                 title="Click to change status"
             >
+                {getPaymentBadge()}
                 <div className="flex items-center gap-1">
                     <Badge size="sm" color={getStatusColor(res.status)}>
                         {res.status}
