@@ -545,6 +545,10 @@ export default function ReservationPage() {
                         <StepPackActivation
                             reservationType={reservationType}
                             setStep={setStep}
+                            selectedDate={selectedDate}
+                            currentMonth={currentMonth}
+                            currentYear={currentYear}
+                            selectedCoachId={selectedCoachId}
                             startTime={startTime}
                             endTime={endTime}
                             packHoursUsed={packHoursUsed}

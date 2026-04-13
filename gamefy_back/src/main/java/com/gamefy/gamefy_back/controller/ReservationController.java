@@ -63,6 +63,18 @@ public class ReservationController {
         return ResponseEntity.ok(service.getPackBenefitsForReservation(user.getId(), roomType));
     }
 
+    @GetMapping("/max-pack-hours")
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<Double> getMaxPackHours(
+            @RequestParam String roomType,
+            @RequestParam String endTime,
+            @RequestParam(required = false) Integer coachId,
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        LocalDateTime resEndTime = LocalDateTime.parse(endTime);
+        return ResponseEntity.ok(service.getMaxPackHoursForReservation(user.getId(), roomType, resEndTime, coachId));
+    }
+
     @GetMapping("/my")
     @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
     public ResponseEntity<List<ReservationDto>> getMyReservations(Authentication authentication) {

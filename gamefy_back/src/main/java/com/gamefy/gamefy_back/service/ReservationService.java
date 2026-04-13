@@ -184,6 +184,13 @@ public class ReservationService {
 
         // Deduct pack benefits if the player activated them
         if (dto.getPackHoursUsed() != null && dto.getPackHoursUsed() > 0) {
+            // Validate that extended time doesn't exceed schedule/coach window
+            double maxAllowed = getMaxPackHoursForReservation(userId, dto.getReservationType().name(), normalizedEndTime, dto.getCoachId());
+            if (dto.getPackHoursUsed() > maxAllowed + 0.01) { // 0.01 for double precision safety
+                throw new RuntimeException("Cannot add " + dto.getPackHoursUsed() + " pack hours. " +
+                        (dto.getReservationType() == Reservation_Type.COACHING_ROOM ? "Coach session" : "Gamefy") +
+                        " ends sooner.");
+            }
             deductPackHours(userId, dto.getReservationType(), dto.getPackHoursUsed());
         }
         if (dto.getPackDiscountUsed() != null && dto.getPackDiscountUsed()) {
@@ -502,6 +509,69 @@ public class ReservationService {
         }
 
         return result;
+    }
+
+    /**
+     * Calculate the maximum number of pack hours that can be added to a reservation,
+     * taking into account both the user's remaining pack hours AND the operating schedule.
+     */
+    public double getMaxPackHoursForReservation(Integer userId, String roomType, LocalDateTime reservationEndTime, Integer coachId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<UserPackGamefy> activePacks = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        if (activePacks.isEmpty()) return 0.0;
+        UserPackGamefy activePack = activePacks.get(0);
+
+        Benefit_type benefitType = mapRoomTypeToBenefitType(roomType);
+        double packRemaining = switch (benefitType) {
+            case PC -> activePack.getRemainingPcHours() != null ? activePack.getRemainingPcHours() : 0.0;
+            case VIP -> activePack.getRemainingVipHours() != null ? activePack.getRemainingVipHours() : 0.0;
+            case COACH -> activePack.getRemainingCoachingHours() != null ? activePack.getRemainingCoachingHours() : 0.0;
+        };
+
+        if (packRemaining <= 0) return 0.0;
+
+        LocalTime resEndTime = reservationEndTime.toLocalTime();
+        LocalTime windowEndTime;
+        String dayName = reservationEndTime.getDayOfWeek().name();
+        String month = reservationEndTime.getMonth().name();
+        String year = String.valueOf(reservationEndTime.getYear());
+
+        if (benefitType == Benefit_type.COACH && coachId != null) {
+            // Check coach availability
+            List<CoachingSession> sessions = coachingSessionRepository.findByCoachId(coachId);
+            CoachingSession session = sessions.stream()
+                    .filter(s -> s.getStatus() == CoachingSessionStatus.AVAILABLE)
+                    .filter(s -> s.getDay().name().equalsIgnoreCase(dayName) &&
+                            s.getMonth().trim().equalsIgnoreCase(month) &&
+                            s.getYear().equals(year))
+                    .findFirst()
+                    .orElse(null);
+
+            if (session == null) return 0.0;
+            windowEndTime = session.getEndTime();
+        } else {
+            // Check platform schedule
+            WorkDaysSchedule schedule = workDaysScheduleRepository.findByDayAndMonthAndYear(
+                    DayOfWeek.valueOf(dayName), month, year)
+                    .orElse(null);
+
+            if (schedule == null || schedule.getStatus() == WorkDayStatus.CLOSED) return 0.0;
+            windowEndTime = schedule.getEndTime();
+        }
+
+        double scheduleHeadroom = calculateMinutesBetween(resEndTime, windowEndTime) / 60.0;
+        
+        return Math.min(packRemaining, Math.max(0.0, scheduleHeadroom));
+    }
+
+    private int calculateMinutesBetween(LocalTime start, LocalTime end) {
+        int startMins = start.getHour() * 60 + start.getMinute();
+        int endMins = end.getHour() * 60 + end.getMinute();
+        int diff = endMins - startMins;
+        // Handle wrap-around (e.g. 23:00 to 05:00)
+        return diff >= 0 ? diff : diff + (24 * 60);
     }
 
     private Benefit_type mapRoomTypeToBenefitType(String roomType) {

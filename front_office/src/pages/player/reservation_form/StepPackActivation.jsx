@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Package, Clock, Percent, ArrowRight, Zap, Gift } from "lucide-react";
-import { getMyPackBenefits } from "../../../api/reservation";
+import { Package, Clock, Percent, ArrowRight, Zap, Gift, AlertCircle } from "lucide-react";
+import { getMyPackBenefits, getMaxPackHours } from "../../../api/reservation";
 
 export default function StepPackActivation({
     reservationType,
     setStep,
+    selectedDate,
+    currentMonth,
+    currentYear,
+    selectedCoachId,
     startTime,
     endTime,
     packHoursUsed,
@@ -17,16 +21,34 @@ export default function StepPackActivation({
 }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [scheduleMaxHours, setScheduleMaxHours] = useState(null);
 
     const reservationDuration = (Number(endTime) - Number(startTime)) / 60;
 
     useEffect(() => {
-        const fetchBenefits = async () => {
+        const fetchPackData = async () => {
             setLoading(true);
             setError("");
             try {
-                const data = await getMyPackBenefits(reservationType);
-                setPackBenefits(data);
+                // 1. Fetch general benefits
+                const benefits = await getMyPackBenefits(reservationType);
+                setPackBenefits(benefits);
+
+                // 2. Fetch schedule-aware max hours if the user has an active pack
+                if (benefits?.hasActivePack) {
+                    const formatToISO = (mins) => {
+                        const offset = new Date().getTimezoneOffset();
+                        const utcMins = mins + offset;
+                        const h = Math.floor(((utcMins % 1440) + 1440) % 1440 / 60);
+                        const m = ((utcMins % 1440) + 1440) % 1440 % 60;
+                        const pad = (n) => String(n).padStart(2, "0");
+                        return `${currentYear}-${pad(currentMonth + 1)}-${pad(selectedDate)}T${pad(h)}:${pad(m)}:00`;
+                    };
+
+                    const isoEndTime = formatToISO(Number(endTime));
+                    const maxHours = await getMaxPackHours(reservationType, isoEndTime, selectedCoachId);
+                    setScheduleMaxHours(maxHours);
+                }
             } catch (e) {
                 setError("Failed to load pack benefits");
                 setPackBenefits(null);
@@ -34,14 +56,15 @@ export default function StepPackActivation({
                 setLoading(false);
             }
         };
-        fetchBenefits();
-    }, [reservationType]);
+        fetchPackData();
+    }, [reservationType, selectedDate, currentMonth, currentYear, selectedCoachId, endTime]);
 
     const maxUsableHours = packBenefits
-        ? Math.min(packBenefits.remainingHours || 0, reservationDuration)
+        ? Math.min(packBenefits.remainingHours || 0, scheduleMaxHours !== null ? scheduleMaxHours : 999)
         : 0;
 
     const hasHours = packBenefits?.remainingHours > 0;
+    const isLimitedBySchedule = scheduleMaxHours !== null && scheduleMaxHours < packBenefits?.remainingHours;
     const hasDiscount = packBenefits?.remainingDiscounts > 0 && packBenefits?.discountType;
 
     const canActivate = hasHours || hasDiscount;
@@ -174,11 +197,20 @@ export default function StepPackActivation({
                                 </div>
                                 <div>
                                     <h4 className="font-black font-['Inter'] uppercase text-sm text-white">Free Extra Time</h4>
-                                    <p className="text-white/30 text-xs">
+                                    <p className="text-white/30 text-xs text-balance">
                                         You have <span className="text-blue-300 font-bold">{packBenefits.remainingHours}h</span> available — extend your {reservationDuration}h session for free
                                     </p>
                                 </div>
                             </div>
+
+                            {isLimitedBySchedule && (
+                                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
+                                    <AlertCircle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                                    <p className="text-[11px] font-bold text-amber-400/80 uppercase tracking-wide leading-relaxed">
+                                        Max hours limited to {scheduleMaxHours}h because {reservationType === "COACHING_ROOM" ? "the coach's session" : "Gamefy"} ends at that time.
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
