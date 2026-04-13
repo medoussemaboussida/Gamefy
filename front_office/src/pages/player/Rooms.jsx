@@ -465,37 +465,65 @@ const Rooms = () => {
                             </div>
 
                             {/* Payment method selection */}
-                            <p className="text-[10px] font-black tracking-[0.2em] uppercase text-white/40">Choose Payment Method</p>
+                                {selectedReservation.priceTime > 0 ? (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {/* Cash */}
+                                        <button
+                                            onClick={handleCashPayment}
+                                            disabled={cashConfirming || cardLoading}
+                                            className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-[#1CF3CA]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                        >
+                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/10 flex items-center justify-center group-hover:from-green-500/30 group-hover:to-green-600/20 transition-all">
+                                                <Banknote size={24} className="text-green-400" />
+                                            </div>
+                                            <span className="text-xs font-black uppercase tracking-wider text-white/70 group-hover:text-white transition-colors">
+                                                {cashConfirming ? "Confirming..." : "Cash"}
+                                            </span>
+                                        </button>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                {/* Cash */}
-                                <button
-                                    onClick={handleCashPayment}
-                                    disabled={cashConfirming || cardLoading}
-                                    className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-[#1CF3CA]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-                                >
-                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/10 flex items-center justify-center group-hover:from-green-500/30 group-hover:to-green-600/20 transition-all">
-                                        <Banknote size={24} className="text-green-400" />
+                                        {/* Card */}
+                                        <button
+                                            onClick={handleCardPayment}
+                                            disabled={cashConfirming || cardLoading}
+                                            className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-[#FF89EB]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                        >
+                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF89EB]/20 to-[#DD00B8]/10 flex items-center justify-center group-hover:from-[#FF89EB]/30 group-hover:to-[#DD00B8]/20 transition-all">
+                                                <CreditCard size={24} className="text-[#FF89EB]" />
+                                            </div>
+                                            <span className="text-xs font-black uppercase tracking-wider text-white/70 group-hover:text-white transition-colors">
+                                                {cardLoading ? "Loading..." : "Card"}
+                                            </span>
+                                        </button>
                                     </div>
-                                    <span className="text-xs font-black uppercase tracking-wider text-white/70 group-hover:text-white transition-colors">
-                                        {cashConfirming ? "Confirming..." : "Cash"}
-                                    </span>
-                                </button>
-
-                                {/* Card */}
-                                <button
-                                    onClick={handleCardPayment}
-                                    disabled={cashConfirming || cardLoading}
-                                    className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-[#FF89EB]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-                                >
-                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF89EB]/20 to-[#DD00B8]/10 flex items-center justify-center group-hover:from-[#FF89EB]/30 group-hover:to-[#DD00B8]/20 transition-all">
-                                        <CreditCard size={24} className="text-[#FF89EB]" />
-                                    </div>
-                                    <span className="text-xs font-black uppercase tracking-wider text-white/70 group-hover:text-white transition-colors">
-                                        {cardLoading ? "Loading..." : "Card"}
-                                    </span>
-                                </button>
-                            </div>
+                                ) : (
+                                    <button
+                                        onClick={async () => {
+                                            setCardLoading(true);
+                                            try {
+                                                const { confirmReservationCardPayment } = await import("../../api/reservation");
+                                                await confirmReservationCardPayment(selectedReservation.id);
+                                                toast.success("Free session confirmed! Enjoy!");
+                                                setConfirmModalOpen(false);
+                                                await fetchReservations();
+                                            } catch (error) {
+                                                toast.error(error.message || "Failed to confirm free session");
+                                            } finally {
+                                                setCardLoading(false);
+                                            }
+                                        }}
+                                        disabled={cardLoading}
+                                        className="w-full py-4 rounded-2xl bg-[#1CF3CA] text-black font-black uppercase tracking-widest hover:shadow-[0_0_30px_rgba(28,243,202,0.3)] transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        {cardLoading ? (
+                                            <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                                        ) : (
+                                            <>
+                                                <CreditCard size={18} />
+                                                Claim Free Session
+                                            </>
+                                        )}
+                                    </button>
+                                )}
                         </div>
                     </div>
                 </div>

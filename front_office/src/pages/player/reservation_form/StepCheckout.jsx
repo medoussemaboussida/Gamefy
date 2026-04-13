@@ -34,8 +34,6 @@ export default function StepCheckout({
 }) {
     const startLabel = timeSlots.find(s => String(s.value) === String(startTime))?.label;
     const originalEndLabel = timeSlots.find(s => String(s.value) === String(endTime))?.label;
-    const extendedEndMins = Number(endTime) + (packHoursUsed > 0 ? packHoursUsed * 60 : 0);
-    const extendedEndLabel = packHoursUsed > 0 ? toAMPM(extendedEndMins) : originalEndLabel;
 
     return (
         <div className="space-y-8">
@@ -86,13 +84,7 @@ export default function StepCheckout({
                                     <div className="pt-2 border-t border-white/5 flex justify-between items-center">
                                         <span className="text-[10px] font-black uppercase text-white/30">Duration</span>
                                         <span className="text-[11px] font-black text-white italic">
-                                            {startLabel} —{" "}
-                                            {packHoursUsed > 0 ? (
-                                                <>
-                                                    <span className="line-through text-white/30 mr-1">{originalEndLabel}</span>
-                                                    <span className="text-blue-400">{extendedEndLabel}</span>
-                                                </>
-                                            ) : originalEndLabel}
+                                            {startLabel} — {originalEndLabel}
                                         </span>
                                     </div>
 
@@ -102,9 +94,9 @@ export default function StepCheckout({
                                             {packHoursUsed > 0 && (
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-[10px] font-black uppercase text-blue-400 flex items-center gap-1">
-                                                        <Clock size={10} /> Pack Bonus Time
+                                                        <Clock size={10} /> Pack Covered Hours
                                                     </span>
-                                                    <span className="text-[11px] font-black text-blue-400 italic">+{packHoursUsed}h free</span>
+                                                    <span className="text-[11px] font-black text-blue-400 italic">{packHoursUsed}h covered (free)</span>
                                                 </div>
                                             )}
                                             {packDiscountUsed && packBenefits && (

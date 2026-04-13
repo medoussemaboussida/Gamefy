@@ -289,13 +289,10 @@ export default function ReservationPage() {
         };
 
         try {
-            // Extend endTime by packHoursUsed to add bonus time at the same price
-            const extendedEndTime = Number(endTime) + (packHoursUsed > 0 ? packHoursUsed * 60 : 0);
-
             await createReservation({
                 reservationType,
                 startTime: formatLocalToUTCISO(Number(startTime)),
-                endTime: formatLocalToUTCISO(extendedEndTime),
+                endTime: formatLocalToUTCISO(Number(endTime)),
                 pcIds: selectedPcIds,
                 coachId: selectedCoachId,
                 game: selectedGame,
@@ -348,19 +345,21 @@ export default function ReservationPage() {
     const calculateTotalPrice = () => {
         if (!startTime || !endTime || fixedPrices.length === 0) return 0;
 
-        // Price is ALWAYS based on the originally selected duration.
-        // Pack hours extend the reservation for free — they do NOT reduce the price.
         const totalDuration = (Number(endTime) - Number(startTime)) / 60;
+        // Pack hours now CONSUME the reservation duration — reducing the billable time
+        const billableDuration = Math.max(0, totalDuration - packHoursUsed);
 
-        const gamingPricePerPc = getBasePriceForDuration(totalDuration);
+        const gamingPricePerPc = getBasePriceForDuration(billableDuration);
         const totalGamingPrice = gamingPricePerPc * selectedPcIds.length;
 
-        // Coaching fee (applies to original selected duration)
+        // Coaching fee (applies to original selected duration, but can be covered by pack hours too?)
+        // The user says "consume it from the pack remaining hour", suggesting it covers the room/session price.
+        // If reservationType is COACHING_ROOM, packHoursUsed refers to coaching hours.
         let coachingFee = 0;
         if (reservationType === "COACHING_ROOM" && selectedCoachId) {
             const coach = coaches.find(c => c.id === selectedCoachId);
             if (coach) {
-                coachingFee = coach.hourlyPrice * totalDuration;
+                coachingFee = coach.hourlyPrice * billableDuration;
             }
         }
 
@@ -388,14 +387,15 @@ export default function ReservationPage() {
         if (!startTime || !endTime || fixedPrices.length === 0) return 0;
 
         const totalDuration = (Number(endTime) - Number(startTime)) / 60;
+        const billableDuration = Math.max(0, totalDuration - packHoursUsed);
 
-        const gamingPricePerPc = getBasePriceForDuration(totalDuration);
+        const gamingPricePerPc = getBasePriceForDuration(billableDuration);
         const totalGamingPrice = gamingPricePerPc * selectedPcIds.length;
 
         let coachingFee = 0;
         if (reservationType === "COACHING_ROOM" && selectedCoachId) {
             const coach = coaches.find(c => c.id === selectedCoachId);
-            if (coach) coachingFee = coach.hourlyPrice * totalDuration;
+            if (coach) coachingFee = coach.hourlyPrice * billableDuration;
         }
 
         let subtotal = totalGamingPrice + coachingFee;
@@ -545,10 +545,6 @@ export default function ReservationPage() {
                         <StepPackActivation
                             reservationType={reservationType}
                             setStep={setStep}
-                            selectedDate={selectedDate}
-                            currentMonth={currentMonth}
-                            currentYear={currentYear}
-                            selectedCoachId={selectedCoachId}
                             startTime={startTime}
                             endTime={endTime}
                             packHoursUsed={packHoursUsed}

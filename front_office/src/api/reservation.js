@@ -166,16 +166,3 @@ export const getMyPackBenefits = (roomType) => {
     return apiClient.get(`/gamefy/reservations/my-pack-benefits?roomType=${roomType}`);
 };
 
-/**
- * Get the maximum pack hours a user can add to a reservation based on schedule constraints.
- * @param {string} roomType
- * @param {string} endTime - ISO datetime string
- * @param {number} [coachId]
- * @returns {Promise<number>}
- */
-export const getMaxPackHours = (roomType, endTime, coachId) => {
-    let url = `/gamefy/reservations/max-pack-hours?roomType=${roomType}&endTime=${endTime}`;
-    if (coachId) url += `&coachId=${coachId}`;
-    return apiClient.get(url);
-};
-
