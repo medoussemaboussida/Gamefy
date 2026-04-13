@@ -115,11 +115,22 @@ public class ReservationService {
         reservation.setReservationType(dto.getReservationType());
         reservation.setStatus(Reservation_Status.PENDING);
         reservation.setPriceTime(dto.getPriceTime());
+
+        // If reservation is fully covered by pack (0 DT), auto-confirm
+        if (dto.getPriceTime() != null && dto.getPriceTime() <= 0) {
+            reservation.setStatus(Reservation_Status.CONFIRMED);
+            reservation.setPaymentType(Payment_Type.PACK_COVERED);
+        }
         if (coach != null) {
             reservation.setCoach(coach);
         }
 
         Reservation saved = reservationRepository.save(reservation);
+
+        // Transition: Confirmed (Auto-confirmation for free reservations)
+        if (saved.getStatus() == Reservation_Status.CONFIRMED) {
+            subscriptionService.addHoursForConfirmedReservation(saved);
+        }
 
         // Create PcAvailability records for each selected PC
         for (PC pc : selectedPCs) {

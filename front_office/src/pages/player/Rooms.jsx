@@ -158,6 +158,13 @@ const Rooms = () => {
     };
 
     const paymentBadge = (res) => {
+        if (res.paymentType === "PACK_COVERED") {
+            return (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border-blue-500/20">
+                    <Clock size={10} /> Pack Covered
+                </span>
+            );
+        }
         if (res.status === "PENDING" && res.paymentType === "CASH_PAYMENT") {
             return (
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest bg-orange-500/10 text-orange-400 border-orange-500/20">
