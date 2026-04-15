@@ -177,6 +177,38 @@ public class PackCoachingService {
     }
 
     /**
+     * Renew a coaching pack for a user in-place.
+     */
+    @Transactional
+    public void renewPackForUser(Integer packId, Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        PackCoaching pack = repository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack not found: " + packId));
+
+        // Find existing record or create new if somehow missing
+        UserPackCoaching userPack = userPackCoachingRepository.findFirstByUserOrderByActivatedAtDesc(user)
+                .orElse(new UserPackCoaching());
+        
+        userPack.setUser(user);
+        userPack.setPackCoaching(pack);
+        userPack.setActivatedAt(LocalDateTime.now());
+        userPack.setExpiresAt(LocalDateTime.now().plusMonths(
+                pack.getDurationMonths() != null ? pack.getDurationMonths() : 6));
+        userPack.setRemainingHours(calculateHoursFromPack(pack));
+        userPack.setStatus(UserPackStatus.ACTIVE);
+        
+        userPackCoachingRepository.save(userPack);
+
+        // Record payment
+        Payment payment = new Payment();
+        payment.setUser(user);
+        payment.setPackCoaching(pack);
+        payment.setTotalPrice(pack.getPrice());
+        paymentRepository.save(payment);
+    }
+
+    /**
      * Converts the pack's LocalTime hours field into a Double.
      * e.g. 02:30 → 2.5 hours
      */

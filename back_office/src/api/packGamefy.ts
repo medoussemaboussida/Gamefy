@@ -62,5 +62,9 @@ export const packGamefyApi = {
 
     removePackFromPlayer: async (userId: number): Promise<string> => {
         return apiClient.post(`/gamefy/pack-gamefies/remove-from-player/${userId}`);
+    },
+
+    renewPackForPlayer: async (dto: AssignPackDto): Promise<string> => {
+        return apiClient.post("/gamefy/pack-gamefies/renew-pack", dto);
     }
 };

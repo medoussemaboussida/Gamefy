@@ -65,6 +65,8 @@ export default function UserManagement() {
   const [isRemovePackModalOpen, setIsRemovePackModalOpen] = useState(false);
   const [userToRemovePack, setUserToRemovePack] = useState<User | null>(null);
   const [removePackLoading, setRemovePackLoading] = useState(false);
+  const [renewPackLoading, setRenewPackLoading] = useState<number | null>(null);
+  const [renewCoachingPackLoading, setRenewCoachingPackLoading] = useState<number | null>(null);
   const [isAssignCoachingPackModalOpen, setIsAssignCoachingPackModalOpen] = useState(false);
   const [userForCoachingPack, setUserForCoachingPack] = useState<User | null>(null);
   const [isRemoveCoachingPackModalOpen, setIsRemoveCoachingPackModalOpen] = useState(false);
@@ -181,6 +183,34 @@ export default function UserManagement() {
       toast.error(error.message || "Failed to remove pack assignment");
     } finally {
       setRemovePackLoading(false);
+    }
+  };
+
+  const handleRenewPack = async (user: User) => {
+    if (!user.packGamefyId) return;
+    setRenewPackLoading(user.id);
+    try {
+      await packGamefyApi.renewPackForPlayer({ userId: user.id, packId: user.packGamefyId });
+      toast.success(`Pack renewed for ${user.firstName} ${user.lastName}!`);
+      await fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to renew pack");
+    } finally {
+      setRenewPackLoading(null);
+    }
+  };
+
+  const handleRenewCoachingPack = async (user: User) => {
+    if (!user.packCoachingId) return;
+    setRenewCoachingPackLoading(user.id);
+    try {
+      await packCoachingApi.renewPackForPlayer({ userId: user.id, packId: user.packCoachingId });
+      toast.success(`Coaching pack renewed for ${user.firstName} ${user.lastName}!`);
+      await fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to renew coaching pack");
+    } finally {
+      setRenewCoachingPackLoading(null);
     }
   };
 
@@ -522,18 +552,34 @@ export default function UserManagement() {
                               {user.role === "PLAYER" &&
                                 (user.packGamefyId != null ? (
                                   <div className="flex flex-col items-start gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setUserToRemovePack(user);
-                                        setIsRemovePackModalOpen(true);
-                                      }}
-                                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-error-500/10 text-error-600 dark:text-error-400 hover:bg-error-500 hover:text-white transition-all group"
-                                      title="Remove Gamefy pack assignment"
-                                    >
-                                      <TrashBinIcon className="w-4 h-4" />
-                                      <span>Remove pack</span>
-                                    </button>
+                                    <div className="flex items-center gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setUserToRemovePack(user);
+                                          setIsRemovePackModalOpen(true);
+                                        }}
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-error-500/10 text-error-600 dark:text-error-400 hover:bg-error-500 hover:text-white transition-all group"
+                                        title="Remove Gamefy pack assignment"
+                                      >
+                                        <TrashBinIcon className="w-4 h-4" />
+                                        <span>Remove</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRenewPack(user)}
+                                        disabled={renewPackLoading === user.id}
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-success-500/10 text-success-600 dark:text-success-400 hover:bg-success-500 hover:text-white transition-all group disabled:opacity-50"
+                                        title="Renew Gamefy pack (restore all benefits)"
+                                      >
+                                        {renewPackLoading === user.id ? (
+                                          <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
+                                        ) : (
+                                          <span>⟳</span>
+                                        )}
+                                        <span>Renew</span>
+                                      </button>
+                                    </div>
                                     <span
                                       className="inline-block max-w-[10rem]"
                                       title={
@@ -575,18 +621,34 @@ export default function UserManagement() {
                               {user.role === "PLAYER" &&
                                 (user.packCoachingId != null ? (
                                   <div className="flex flex-col items-start gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setUserToRemoveCoachingPack(user);
-                                        setIsRemoveCoachingPackModalOpen(true);
-                                      }}
-                                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-error-500/10 text-error-600 dark:text-error-400 hover:bg-error-500 hover:text-white transition-all group"
-                                      title="Remove Coaching pack assignment"
-                                    >
-                                      <TrashBinIcon className="w-4 h-4" />
-                                      <span>Remove pack</span>
-                                    </button>
+                                    <div className="flex items-center gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setUserToRemoveCoachingPack(user);
+                                          setIsRemoveCoachingPackModalOpen(true);
+                                        }}
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-error-500/10 text-error-600 dark:text-error-400 hover:bg-error-500 hover:text-white transition-all group"
+                                        title="Remove Coaching pack assignment"
+                                      >
+                                        <TrashBinIcon className="w-4 h-4" />
+                                        <span>Remove</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRenewCoachingPack(user)}
+                                        disabled={renewCoachingPackLoading === user.id}
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-success-500/10 text-success-600 dark:text-success-400 hover:bg-success-500 hover:text-white transition-all group disabled:opacity-50"
+                                        title="Renew Coaching pack (restore all benefits)"
+                                      >
+                                        {renewCoachingPackLoading === user.id ? (
+                                          <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
+                                        ) : (
+                                          <span>⟳</span>
+                                        )}
+                                        <span>Renew</span>
+                                      </button>
+                                    </div>
                                     <span
                                       className="inline-block max-w-[10rem]"
                                       title={

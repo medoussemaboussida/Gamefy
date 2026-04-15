@@ -38,4 +38,11 @@ export const packCoachingApi = {
     removePackFromPlayer: async (userId: number): Promise<string> => {
         return await apiClient.post(`/gamefy/pack-coachings/remove-from-player/${userId}`);
     },
+
+    /**
+     * Renew a coaching pack for a player (Admin / WebMaster)
+     */
+    renewPackForPlayer: async (dto: { userId: number; packId: number }): Promise<string> => {
+        return await apiClient.post("/gamefy/pack-coachings/renew-pack", dto);
+    },
 };

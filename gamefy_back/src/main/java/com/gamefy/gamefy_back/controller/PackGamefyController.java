@@ -64,4 +64,12 @@ public class PackGamefyController {
         service.removePackFromUser(userId);
         return ResponseEntity.ok("Pack removed successfully from player");
     }
+
+    @PostMapping("/renew-pack")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<String> renewPack(@RequestBody AssignPackDto request) {
+        log.info("Renewing pack {} for user {}", request.getPackId(), request.getUserId());
+        service.renewPackForUser(request.getPackId(), request.getUserId());
+        return ResponseEntity.ok("Pack renewed successfully for player");
+    }
 }

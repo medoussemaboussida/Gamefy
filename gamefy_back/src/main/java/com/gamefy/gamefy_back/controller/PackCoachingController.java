@@ -72,6 +72,13 @@ public class PackCoachingController {
         return ResponseEntity.ok("Coaching pack removed successfully from player");
     }
 
+    @PostMapping("/renew-pack")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<String> renewCoachingPack(@RequestBody AssignPackDto request) {
+        service.renewPackForUser(request.getPackId(), request.getUserId());
+        return ResponseEntity.ok("Coaching pack renewed successfully for player");
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('COACH')")
     public ResponseEntity<Void> deletePack(@PathVariable Integer id, @AuthenticationPrincipal User coach) {
