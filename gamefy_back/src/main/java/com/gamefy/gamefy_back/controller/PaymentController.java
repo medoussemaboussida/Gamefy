@@ -69,6 +69,8 @@ public class PaymentController {
                     String type = intent.getMetadata().get("type");
                     if ("PACK_PURCHASE".equals(type)) {
                         paymentService.handlePackPaymentSucceeded(intent);
+                    } else if ("PACK_RENEWAL".equals(type)) {
+                        paymentService.handlePackRenewalSucceeded(intent);
                     } else if ("COACHING_PACK_PURCHASE".equals(type)) {
                         paymentService.handleCoachingPackPaymentSucceeded(intent);
                     }
@@ -97,6 +99,44 @@ public class PaymentController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Fulfillment error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Create a Stripe PaymentIntent for renewing a pack
+     */
+    @PostMapping("/create-renew-pack-intent")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<PaymentDtos.PaymentIntentResponse> createRenewPackIntent(
+            @RequestBody PaymentDtos.PackPaymentRequest request,
+            @AuthenticationPrincipal User currentUser) throws StripeException {
+        return ResponseEntity.ok(paymentService.createRenewPackPaymentIntent(request.getPackId(), currentUser.getId()));
+    }
+
+    /**
+     * Confirm a pack renewal after Stripe payment succeeds (client-side fulfillment)
+     */
+    @PostMapping("/confirm-pack-renewal")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<String> confirmPackRenewal(
+            @RequestBody PaymentDtos.PackConfirmRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        try {
+            paymentService.fulfillPackRenewal(request.getPackId(), currentUser.getId());
+            return ResponseEntity.ok("Pack renewal fulfilled successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Renewal error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get the current user's pack status (ACTIVE/EXPIRED/CONSUMED or null)
+     */
+    @GetMapping("/my-pack-status")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<PaymentDtos.MyPackStatusResponse> getMyPackStatus(
+            @AuthenticationPrincipal User currentUser) {
+        PaymentDtos.MyPackStatusResponse status = paymentService.getMyPackStatus(currentUser.getId());
+        return ResponseEntity.ok(status);
     }
 
     /**

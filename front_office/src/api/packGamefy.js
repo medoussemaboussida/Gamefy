@@ -83,5 +83,46 @@ export const packGamefyApi = {
         } catch (error) {
             throw error;
         }
+    },
+
+    /**
+     * Create a Stripe PaymentIntent for renewing a pack
+     * @param {number} packId
+     * @returns {Promise<{clientSecret: string, publishableKey: string}>}
+     */
+    createRenewPaymentIntent: async (packId) => {
+        try {
+            const response = await apiClient.post("/gamefy/payments/create-renew-pack-intent", { packId });
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    /**
+     * Confirm pack renewal with the backend after Stripe payment succeeds
+     * @param {number} packId
+     * @returns {Promise<string>} Confirmation message
+     */
+    confirmPackRenewal: async (packId) => {
+        try {
+            const response = await apiClient.post("/gamefy/payments/confirm-pack-renewal", { packId, paymentIntentId: "" });
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    /**
+     * Get the current user's pack status (ACTIVE/EXPIRED/CONSUMED or null)
+     * @returns {Promise<{packId: number, packName: string, status: string}|null>}
+     */
+    getMyPackStatus: async () => {
+        try {
+            const response = await apiClient.get("/gamefy/payments/my-pack-status");
+            return response;
+        } catch (error) {
+            throw error;
+        }
     }
 };

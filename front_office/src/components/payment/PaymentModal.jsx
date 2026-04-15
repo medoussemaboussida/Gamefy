@@ -4,7 +4,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import CheckoutForm from "./CheckoutForm";
 import { X } from "lucide-react";
 
-const PaymentModal = ({ isOpen, onClose, clientSecret, pack, onPaymentSuccess }) => {
+const PaymentModal = ({ isOpen, onClose, clientSecret, pack, onPaymentSuccess, isRenewal = false }) => {
     if (!isOpen || !clientSecret || !pack) return null;
 
     const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -40,7 +40,7 @@ const PaymentModal = ({ isOpen, onClose, clientSecret, pack, onPaymentSuccess })
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     <div className="p-6 md:p-8 flex flex-col">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-white">Secure Checkout</h2>
+                            <h2 className="text-2xl font-bold text-white">{isRenewal ? "Renew Pack" : "Secure Checkout"}</h2>
                             <button
                                 onClick={onClose}
                                 className="p-2 rounded-full hover:bg-white/5 text-gray-400 hover:text-white transition-all"
@@ -55,6 +55,7 @@ const PaymentModal = ({ isOpen, onClose, clientSecret, pack, onPaymentSuccess })
                                 amount={pack.price}
                                 packName={pack.name}
                                 packId={pack.id}
+                                isRenewal={isRenewal}
                             />
                         </Elements>
                     </div>

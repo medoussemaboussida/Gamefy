@@ -146,6 +146,26 @@ public class PackCoachingService {
         userPackCoachingRepository.deleteAll(activeRecords);
     }
 
+    /**
+     * Check and auto-update coaching pack status based on expiration date and remaining hours.
+     */
+    @Transactional
+    public UserPackCoaching checkAndUpdatePackStatus(UserPackCoaching pack) {
+        if (pack.getStatus() == UserPackStatus.ACTIVE) {
+            // Check date-based expiration
+            if (pack.getExpiresAt() != null && pack.getExpiresAt().isBefore(LocalDateTime.now())) {
+                pack.setStatus(UserPackStatus.EXPIRED);
+                return userPackCoachingRepository.save(pack);
+            }
+            // Check consumed: remaining hours are 0
+            if (pack.getRemainingHours() != null && pack.getRemainingHours() <= 0) {
+                pack.setStatus(UserPackStatus.CONSUMED);
+                return userPackCoachingRepository.save(pack);
+            }
+        }
+        return pack;
+    }
+
     public List<Integer> getPurchasedCoachingPackIds(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));

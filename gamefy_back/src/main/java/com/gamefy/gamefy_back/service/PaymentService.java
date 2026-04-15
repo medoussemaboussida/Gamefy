@@ -62,6 +62,28 @@ public class PaymentService {
     }
 
     /**
+     * Create a PaymentIntent for renewing a pack
+     */
+    public PaymentDtos.PaymentIntentResponse createRenewPackPaymentIntent(Integer packId, Integer userId) throws StripeException {
+        PackGamefy pack = packGamefyRepository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack not found"));
+
+        Long amount = (long) (pack.getPrice() * 100);
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("packId", packId.toString());
+        metadata.put("userId", userId.toString());
+        metadata.put("type", "PACK_RENEWAL");
+
+        PaymentIntent intent = stripeService.createPaymentIntent(amount, "usd", metadata);
+
+        return new PaymentDtos.PaymentIntentResponse(
+                intent.getClientSecret(),
+                stripePublishableKey
+        );
+    }
+
+    /**
      * Create a PaymentIntent for a specific coaching pack
      */
     public PaymentDtos.PaymentIntentResponse createCoachingPackPaymentIntent(Integer packId, Integer userId) throws StripeException {
@@ -183,6 +205,23 @@ public class PaymentService {
     }
 
     /**
+     * Handle pack renewal payment via webhook
+     */
+    @Transactional
+    public void handlePackRenewalSucceeded(PaymentIntent intent) {
+        String packIdStr = intent.getMetadata().get("packId");
+        String userIdStr = intent.getMetadata().get("userId");
+
+        if (packIdStr == null || userIdStr == null) {
+            throw new RuntimeException("Missing metadata in PaymentIntent");
+        }
+
+        Integer packId = Integer.parseInt(packIdStr);
+        Integer userId = Integer.parseInt(userIdStr);
+        packGamefyService.renewPackForUser(packId, userId);
+    }
+
+    /**
      * Fulfill the coaching pack order after successful payment
      */
     @Transactional
@@ -239,6 +278,39 @@ public class PaymentService {
         payment.setTotalPrice(pack.getPrice());
         payment.setUser(user);
         paymentRepository.save(payment);
+    }
+
+    @Transactional
+    @CacheEvict(value = "users", allEntries = true)
+    public void fulfillPackRenewal(Integer packId, Integer userId) {
+        packGamefyService.renewPackForUser(packId, userId);
+    }
+
+    public PaymentDtos.MyPackStatusResponse getMyPackStatus(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
+        // First check active
+        List<UserPackGamefy> activeRecords = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        if (!activeRecords.isEmpty()) {
+            UserPackGamefy pack = activeRecords.get(0);
+            // Auto-check status
+            pack = packGamefyService.checkAndUpdatePackStatus(pack);
+            return PaymentDtos.MyPackStatusResponse.builder()
+                    .packId(pack.getPackGamefy().getId())
+                    .packName(pack.getPackGamefy().getName())
+                    .status(pack.getStatus().name())
+                    .build();
+        }
+
+        // Check for any pack (expired/consumed)
+        return userPackGamefyRepository.findFirstByUserOrderByActivatedAtDesc(user)
+                .map(pack -> PaymentDtos.MyPackStatusResponse.builder()
+                        .packId(pack.getPackGamefy().getId())
+                        .packName(pack.getPackGamefy().getName())
+                        .status(pack.getStatus().name())
+                        .build())
+                .orElse(null);
     }
 
     public List<Integer> getPurchasedPackIds(Integer userId) {

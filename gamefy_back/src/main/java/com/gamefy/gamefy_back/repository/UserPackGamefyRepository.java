@@ -20,4 +20,6 @@ public interface UserPackGamefyRepository extends JpaRepository<UserPackGamefy, 
     void deleteByUserAndPackGamefy(User user, PackGamefy packGamefy);
 
     List<UserPackGamefy> findByPackGamefy(PackGamefy packGamefy);
+
+    Optional<UserPackGamefy> findFirstByUserOrderByActivatedAtDesc(User user);
 }

@@ -33,6 +33,8 @@ public class UserService {
     private final SubscriptionRepository subscriptionRepository;
     private final UserPackGamefyRepository userPackGamefyRepository;
     private final UserPackCoachingRepository userPackCoachingRepository;
+    private final PackGamefyService packGamefyService;
+    private final PackCoachingService packCoachingService;
 
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
     private static final SecureRandom random = new SecureRandom();
@@ -152,10 +154,31 @@ public class UserService {
 
         // Query junction tables for active packs
         List<UserPackGamefy> activeGamefyPacks = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
-        UserPackGamefy activeGamefyPack = activeGamefyPacks.isEmpty() ? null : activeGamefyPacks.get(0);
+        UserPackGamefy gamefyPack = activeGamefyPacks.isEmpty() ? null : activeGamefyPacks.get(0);
 
+        // If no active pack, check for the latest pack (could be EXPIRED/CONSUMED)
+        if (gamefyPack == null) {
+            gamefyPack = userPackGamefyRepository.findFirstByUserOrderByActivatedAtDesc(user).orElse(null);
+        }
+
+        // Auto-check pack status (may transition ACTIVE -> EXPIRED/CONSUMED)
+        if (gamefyPack != null) {
+            gamefyPack = packGamefyService.checkAndUpdatePackStatus(gamefyPack);
+        }
+
+        // Query junction tables for active coaching packs
         List<UserPackCoaching> activeCoachingPacks = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
-        UserPackCoaching activeCoachingPack = activeCoachingPacks.isEmpty() ? null : activeCoachingPacks.get(0);
+        UserPackCoaching coachingPack = activeCoachingPacks.isEmpty() ? null : activeCoachingPacks.get(0);
+
+        // If no active coaching pack, check for the latest (fallback to EXPIRED/CONSUMED)
+        if (coachingPack == null) {
+            coachingPack = userPackCoachingRepository.findFirstByUserOrderByActivatedAtDesc(user).orElse(null);
+        }
+
+        // Auto-check status
+        if (coachingPack != null) {
+            coachingPack = packCoachingService.checkAndUpdatePackStatus(coachingPack);
+        }
 
         return UserResponseDto.builder()
                 .id(user.getId())
@@ -165,20 +188,21 @@ public class UserService {
                 .role(user.getRole())
                 .status(user.getStatus())
                 .profilePhoto(user.getProfilePhoto())
-                .packGamefyId(activeGamefyPack != null ? activeGamefyPack.getPackGamefy().getId() : null)
-                .packGamefyName(activeGamefyPack != null ? activeGamefyPack.getPackGamefy().getName() : null)
-                .packCoachingId(activeCoachingPack != null ? activeCoachingPack.getPackCoaching().getId() : null)
-                .packCoachingName(activeCoachingPack != null ? activeCoachingPack.getPackCoaching().getName() : null)
+                .packGamefyId(gamefyPack != null ? gamefyPack.getPackGamefy().getId() : null)
+                .packGamefyName(gamefyPack != null ? gamefyPack.getPackGamefy().getName() : null)
+                .packGamefyStatus(gamefyPack != null ? gamefyPack.getStatus().name() : null)
+                .packCoachingId(coachingPack != null ? coachingPack.getPackCoaching().getId() : null)
+                .packCoachingName(coachingPack != null ? coachingPack.getPackCoaching().getName() : null)
+                .packCoachingStatus(coachingPack != null ? coachingPack.getStatus().name() : null)
                 .twoFaActivated(user.isTwoFaActivated())
                 .createdAt(user.getCreatedAt())
                 .totalHours(totalHours)
-                .remainingPcHours(activeGamefyPack != null ? activeGamefyPack.getRemainingPcHours() : 0.0)
-
-                .remainingVipHours(activeGamefyPack != null ? activeGamefyPack.getRemainingVipHours() : 0.0)
-                .remainingCoachingHours(activeGamefyPack != null ? activeGamefyPack.getRemainingCoachingHours() : 0.0)
-                .remainingPcDiscounts(activeGamefyPack != null ? activeGamefyPack.getRemainingPcDiscounts() : 0)
-                .remainingVipDiscounts(activeGamefyPack != null ? activeGamefyPack.getRemainingVipDiscounts() : 0)
-                .remainingCoachingDiscounts(activeGamefyPack != null ? activeGamefyPack.getRemainingCoachingDiscounts() : 0)
+                .remainingPcHours(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingPcHours() : 0.0)
+                .remainingVipHours(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingVipHours() : 0.0)
+                .remainingCoachingHours(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingCoachingHours() : 0.0)
+                .remainingPcDiscounts(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingPcDiscounts() : 0)
+                .remainingVipDiscounts(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingVipDiscounts() : 0)
+                .remainingCoachingDiscounts(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingCoachingDiscounts() : 0)
                 .build();
     }
 

@@ -7,7 +7,7 @@ import {
 import toast from "react-hot-toast";
 import { packGamefyApi } from "../../api/packGamefy";
 
-const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
+const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId, isRenewal = false }) => {
     const stripe = useStripe();
     const elements = useElements();
 
@@ -18,8 +18,6 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
         e.preventDefault();
 
         if (!stripe || !elements) {
-            // Stripe.js has not yet loaded.
-            // Make sure to disable form submission until Stripe.js has loaded.
             return;
         }
 
@@ -28,12 +26,8 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
         const { error } = await stripe.confirmPayment({
             elements,
             confirmParams: {
-                // Return URL for post-payment redirection
-                // In a real app, you'd handle this URL in your routing
                 return_url: window.location.origin + "/player/packs?payment_success=true",
             },
-            // If you want to handle the success manually without redirection (for single page apps),
-            // you can set redirect: 'if_required'
             redirect: "if_required",
         });
 
@@ -48,7 +42,11 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
         } else {
             // Payment succeeded! Now confirm to backend to update DB.
             try {
-                await packGamefyApi.confirmPackPayment(packId);
+                if (isRenewal) {
+                    await packGamefyApi.confirmPackRenewal(packId);
+                } else {
+                    await packGamefyApi.confirmPackPayment(packId);
+                }
             } catch (err) {
                 const detail = err?.message || String(err) || "Unknown error";
                 console.error("Failed to confirm payment with backend:", detail);
@@ -57,7 +55,8 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
                 return;
             }
 
-            toast.success(`Success! You have purchased the ${packName}.`, {
+            const action = isRenewal ? "renewed" : "purchased";
+            toast.success(`Success! You have ${action} the ${packName}.`, {
                 duration: 6000,
                 style: {
                     background: "#24003E",
@@ -77,7 +76,9 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
                 <label className="block text-sm font-medium text-gray-400 mb-2">Pack</label>
                 <div className="text-xl font-bold text-[#1CF3CA]">{packName}</div>
                 <div className="text-2xl font-bold text-white mt-1">{Number(amount).toFixed(3)} DT</div>
-
+                {isRenewal && (
+                    <div className="mt-2 text-sm text-amber-400 font-medium">⟳ Renewal — all benefits will be restored</div>
+                )}
             </div>
 
             <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
@@ -95,7 +96,7 @@ const CheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
                 className="w-full py-4 rounded-2xl bg-[#1CF3CA] text-black font-bold text-lg hover:bg-[#1CF3CA]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(28,243,202,0.3)]"
             >
                 <span id="button-text">
-                    {isLoading ? <div className="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full mx-auto"></div> : "Pay Now"}
+                    {isLoading ? <div className="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full mx-auto"></div> : (isRenewal ? "Renew Now" : "Pay Now")}
                 </span>
             </button>
 

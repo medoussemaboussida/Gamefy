@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
 import { packGamefyApi } from "../../api/packGamefy";
 import { packCoachingApi } from "../../api/packCoaching";
-import { Gift, Info, Check, CreditCard, Clock, User } from "lucide-react";
+import { Gift, Info, Check, CreditCard, Clock, User, RefreshCw } from "lucide-react";
 import toast from "react-hot-toast";
 import PaymentModal from "../../components/payment/PaymentModal";
 import CoachingPaymentModal from "../../components/payment/CoachingPaymentModal";
@@ -28,17 +28,21 @@ const Packs = () => {
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
     const [purchasedPackIds, setPurchasedPackIds] = useState([]);
     const [purchasedCoachingPackIds, setPurchasedCoachingPackIds] = useState([]);
+    const [myPackStatus, setMyPackStatus] = useState(null); // { packId, packName, status }
+    const [isRenewalMode, setIsRenewalMode] = useState(false);
 
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [packsData, purchasedIds] = await Promise.all([
+                const [packsData, purchasedIds, packStatus] = await Promise.all([
                     packGamefyApi.getAllPacks(),
                     packGamefyApi.getMyPurchasedPacks().catch(() => []),
+                    packGamefyApi.getMyPackStatus().catch(() => null),
                 ]);
                 setPacks(packsData);
                 setPurchasedPackIds(purchasedIds);
+                setMyPackStatus(packStatus);
             } catch (error) {
                 console.error("Failed to fetch packs", error);
                 toast.error("Could not load packs. Please try again later.", {
@@ -85,6 +89,7 @@ const Packs = () => {
     const handleBuyNow = async (pack) => {
         setSelectedPack(pack);
         setIsProcessingPayment(true);
+        setIsRenewalMode(false);
         try {
             const response = await packGamefyApi.createPackPaymentIntent(pack.id);
             setClientSecret(response.clientSecret);
@@ -97,12 +102,30 @@ const Packs = () => {
         }
     };
 
+    const handleRenewPack = async (pack) => {
+        setSelectedPack(pack);
+        setIsProcessingPayment(true);
+        setIsRenewalMode(true);
+        try {
+            const response = await packGamefyApi.createRenewPaymentIntent(pack.id);
+            setClientSecret(response.clientSecret);
+            setIsPaymentModalOpen(true);
+        } catch (error) {
+            console.error("Failed to create renewal payment intent", error);
+            toast.error("Could not start renewal process. Please try again.");
+        } finally {
+            setIsProcessingPayment(false);
+        }
+    };
+
     const handlePaymentSuccess = () => {
         setIsPaymentModalOpen(false);
         setClientSecret("");
+        setIsRenewalMode(false);
         // Replace the list because the player only has one active Gamefy pack
         if (selectedPack) {
             setPurchasedPackIds([selectedPack.id]);
+            setMyPackStatus({ packId: selectedPack.id, packName: selectedPack.name, status: "ACTIVE" });
         }
     };
 
@@ -228,6 +251,21 @@ const Packs = () => {
                                             <Check size={18} />
                                             You already bought this pack
                                         </div>
+                                    ) : myPackStatus && myPackStatus.packId === pack.id && (myPackStatus.status === "EXPIRED" || myPackStatus.status === "CONSUMED") ? (
+                                        <button
+                                            onClick={() => handleRenewPack(pack)}
+                                            disabled={isProcessingPayment && selectedPack?.id === pack.id}
+                                            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold transition-all hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                                        >
+                                            {isProcessingPayment && selectedPack?.id === pack.id ? (
+                                                <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                                            ) : (
+                                                <>
+                                                    <RefreshCw size={18} />
+                                                    Renew Pack
+                                                </>
+                                            )}
+                                        </button>
                                     ) : (
                                         <button
                                             onClick={() => handleBuyNow(pack)}
@@ -356,10 +394,11 @@ const Packs = () => {
 
             <PaymentModal
                 isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
+                onClose={() => { setIsPaymentModalOpen(false); setIsRenewalMode(false); }}
                 clientSecret={clientSecret}
                 pack={selectedPack}
                 onPaymentSuccess={handlePaymentSuccess}
+                isRenewal={isRenewalMode}
             />
 
             <CoachingPaymentModal

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -187,6 +188,77 @@ public class PackGamefyService {
         // Find and delete active junction records for this user
         List<UserPackGamefy> activeRecords = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
         userPackGamefyRepository.deleteAll(activeRecords);
+    }
+
+    /**
+     * Check and auto-update pack status based on expiration date and remaining benefits.
+     */
+    @Transactional
+    public UserPackGamefy checkAndUpdatePackStatus(UserPackGamefy pack) {
+        if (pack.getStatus() == UserPackStatus.ACTIVE) {
+            // Check date-based expiration
+            if (pack.getExpiresAt() != null && pack.getExpiresAt().isBefore(LocalDateTime.now())) {
+                pack.setStatus(UserPackStatus.EXPIRED);
+                return userPackGamefyRepository.save(pack);
+            }
+            // Check consumed: all hours and discounts are 0
+            boolean allConsumed =
+                    (pack.getRemainingPcHours() == null || pack.getRemainingPcHours() <= 0) &&
+                    (pack.getRemainingVipHours() == null || pack.getRemainingVipHours() <= 0) &&
+                    (pack.getRemainingCoachingHours() == null || pack.getRemainingCoachingHours() <= 0) &&
+                    (pack.getRemainingPcDiscounts() == null || pack.getRemainingPcDiscounts() <= 0) &&
+                    (pack.getRemainingVipDiscounts() == null || pack.getRemainingVipDiscounts() <= 0) &&
+                    (pack.getRemainingCoachingDiscounts() == null || pack.getRemainingCoachingDiscounts() <= 0);
+            if (allConsumed) {
+                pack.setStatus(UserPackStatus.CONSUMED);
+                return userPackGamefyRepository.save(pack);
+            }
+        }
+        return pack;
+    }
+
+    /**
+     * Renew an existing pack for a user: updates the existing UserPackGamefy record
+     * in-place with fresh benefits, new dates, and ACTIVE status.
+     */
+    @Transactional
+    @CacheEvict(value = {"users"}, allEntries = true)
+    public void renewPackForUser(Integer packId, Integer userId) {
+        log.info("Service: Renewing packId {} for userId {}", packId, userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        PackGamefy pack = repository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack not found with id: " + packId));
+
+        // Find existing record for this user (any status)
+        Optional<UserPackGamefy> existingOpt = userPackGamefyRepository.findFirstByUserOrderByActivatedAtDesc(user);
+
+        if (existingOpt.isEmpty()) {
+            throw new RuntimeException("No existing pack record found for this user to renew");
+        }
+
+        UserPackGamefy userPack = existingOpt.get();
+
+        // Update in-place: restore all benefits and dates
+        userPack.setPackGamefy(pack);
+        userPack.setActivatedAt(LocalDateTime.now());
+        userPack.setExpiresAt(LocalDateTime.now().plusMonths(pack.getDurationMonths()));
+        userPack.setRemainingPcHours(calculateHours(pack, Benefit_type.PC));
+        userPack.setRemainingVipHours(calculateHours(pack, Benefit_type.VIP));
+        userPack.setRemainingCoachingHours(calculateHours(pack, Benefit_type.COACH));
+        userPack.setRemainingPcDiscounts(calculateDiscounts(pack, Benefit_type.PC));
+        userPack.setRemainingVipDiscounts(calculateDiscounts(pack, Benefit_type.VIP));
+        userPack.setRemainingCoachingDiscounts(calculateDiscounts(pack, Benefit_type.COACH));
+        userPack.setStatus(UserPackStatus.ACTIVE);
+        userPackGamefyRepository.save(userPack);
+
+        // Add to payment history
+        Payment payment = new Payment();
+        payment.setUser(user);
+        payment.setPackGamefy(pack);
+        payment.setTotalPrice(pack.getPrice());
+        paymentRepository.save(payment);
     }
 
     /**

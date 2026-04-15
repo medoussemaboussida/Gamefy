@@ -56,4 +56,14 @@ public class PaymentDtos {
     public static class ReservationConfirmRequest {
         private Integer reservationId;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class MyPackStatusResponse {
+        private Integer packId;
+        private String packName;
+        private String status; // "ACTIVE", "EXPIRED", "CONSUMED"
+    }
 }
