@@ -4,9 +4,11 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import wallpaper from "../../assets/images/Auth_second_wallpaper.png";
 import { authApi } from "../../api/auth";
 import toast from "react-hot-toast";
+import { useUser } from "../../context/UserContext";
 
 const TwoFaVerify = () => {
     const navigate = useNavigate();
+    const { refreshUser } = useUser();
     const [code, setCode] = useState(["", "", "", "", "", ""]);
     const [isLoading, setIsLoading] = useState(false);
     const inputRefs = useRef([]);
@@ -86,6 +88,9 @@ const TwoFaVerify = () => {
             localStorage.setItem("accessToken", response.accessToken);
             localStorage.setItem("userId", response.userId);
             sessionStorage.removeItem("2fa_userId");
+
+            // Refresh the global user context immediately after login
+            refreshUser();
 
             toast.success("Verification successful!", {
                 id: loadingToast,
