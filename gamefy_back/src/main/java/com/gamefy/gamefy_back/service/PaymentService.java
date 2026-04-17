@@ -191,9 +191,7 @@ public class PaymentService {
         userPack.setRemainingPcHours(calculateHours(pack, Benefit_type.PC));
         userPack.setRemainingVipHours(calculateHours(pack, Benefit_type.VIP));
         userPack.setRemainingCoachingHours(calculateHours(pack, Benefit_type.COACH));
-        userPack.setRemainingPcDiscounts(calculateDiscounts(pack, Benefit_type.PC));
-        userPack.setRemainingVipDiscounts(calculateDiscounts(pack, Benefit_type.VIP));
-        userPack.setRemainingCoachingDiscounts(calculateDiscounts(pack, Benefit_type.COACH));
+        userPack.setAvailableDiscountIdsList(calculateAllDiscountIds(pack));
         userPack.setStatus(UserPackStatus.ACTIVE);
         userPackGamefyRepository.save(userPack);
 
@@ -267,9 +265,7 @@ public class PaymentService {
         userPack.setRemainingPcHours(calculateHours(pack, Benefit_type.PC));
         userPack.setRemainingVipHours(calculateHours(pack, Benefit_type.VIP));
         userPack.setRemainingCoachingHours(calculateHours(pack, Benefit_type.COACH));
-        userPack.setRemainingPcDiscounts(calculateDiscounts(pack, Benefit_type.PC));
-        userPack.setRemainingVipDiscounts(calculateDiscounts(pack, Benefit_type.VIP));
-        userPack.setRemainingCoachingDiscounts(calculateDiscounts(pack, Benefit_type.COACH));
+        userPack.setAvailableDiscountIdsList(calculateAllDiscountIds(pack));
         userPack.setStatus(UserPackStatus.ACTIVE);
         userPackGamefyRepository.save(userPack);
 
@@ -393,13 +389,13 @@ public class PaymentService {
     }
 
     /**
-     * Count the number of benefits of a given type with rateRule=DISCOUNT.
-     * Each such benefit = 1 discount use.
+     * Get all benefit IDs that are discounts.
      */
-    private int calculateDiscounts(PackGamefy pack, Benefit_type type) {
-        if (pack.getBenefits() == null) return 0;
-        return (int) pack.getBenefits().stream()
-                .filter(b -> b.getBenefitType() == type && b.getRateRule() == Rate_Rule.DISCOUNT)
-                .count();
+    private List<Integer> calculateAllDiscountIds(PackGamefy pack) {
+        if (pack.getBenefits() == null) return new java.util.ArrayList<>();
+        return pack.getBenefits().stream()
+                .filter(b -> b.getRateRule() == Rate_Rule.DISCOUNT)
+                .map(GamefyPackBenefit::getId)
+                .collect(Collectors.toList());
     }
 }

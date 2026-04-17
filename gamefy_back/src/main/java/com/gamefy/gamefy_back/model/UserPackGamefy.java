@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "user_pack_gamefy")
@@ -42,14 +44,12 @@ public class UserPackGamefy {
     @Column(name = "remaining_coaching_hours")
     private Double remainingCoachingHours;
 
-    @Column(name = "remaining_pc_discounts")
-    private Integer remainingPcDiscounts;
-
-    @Column(name = "remaining_vip_discounts")
-    private Integer remainingVipDiscounts;
-
-    @Column(name = "remaining_coaching_discounts")
-    private Integer remainingCoachingDiscounts;
+    /**
+     * JSON array of GamefyPackBenefit IDs that are still available for use.
+     * e.g. "[1,2,5,8]" — each ID maps to a specific discount benefit.
+     */
+    @Column(name = "available_discount_ids", columnDefinition = "TEXT")
+    private String availableDiscountIds;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -65,6 +65,27 @@ public class UserPackGamefy {
         }
     }
 
+    // --- Helper methods for JSON discount IDs ---
+
+    public List<Integer> getAvailableDiscountIdsList() {
+        if (availableDiscountIds == null || availableDiscountIds.isBlank()) return new ArrayList<>();
+        String trimmed = availableDiscountIds.replaceAll("[\\[\\]\\s]", "");
+        if (trimmed.isEmpty()) return new ArrayList<>();
+        List<Integer> ids = new ArrayList<>();
+        for (String s : trimmed.split(",")) {
+            ids.add(Integer.parseInt(s.trim()));
+        }
+        return ids;
+    }
+
+    public void setAvailableDiscountIdsList(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            this.availableDiscountIds = "[]";
+        } else {
+            this.availableDiscountIds = ids.toString();
+        }
+    }
+
     @Override
     public String toString() {
         return "UserPackGamefy{" +
@@ -74,9 +95,7 @@ public class UserPackGamefy {
                 ", remainingPcHours=" + remainingPcHours +
                 ", remainingVipHours=" + remainingVipHours +
                 ", remainingCoachingHours=" + remainingCoachingHours +
-                ", remainingPcDiscounts=" + remainingPcDiscounts +
-                ", remainingVipDiscounts=" + remainingVipDiscounts +
-                ", remainingCoachingDiscounts=" + remainingCoachingDiscounts +
+                ", availableDiscountIds=" + availableDiscountIds +
                 ", status=" + status +
                 '}';
     }

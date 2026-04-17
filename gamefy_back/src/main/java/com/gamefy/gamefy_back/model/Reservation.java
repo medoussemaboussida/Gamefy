@@ -55,6 +55,16 @@ public class Reservation {
     @Column(name = "price_time")
     private Double priceTime;
 
+    @Column(name = "pack_hours_used")
+    private Double packHoursUsed;
+
+    /**
+     * JSON array of GamefyPackBenefit IDs used for discount on this reservation.
+     * e.g. "[1,5]"
+     */
+    @Column(name = "pack_discount_ids_used", columnDefinition = "TEXT")
+    private String packDiscountIdsUsed;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

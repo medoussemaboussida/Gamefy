@@ -34,7 +34,10 @@ public class UserResponseDto implements Serializable {
     private Double remainingPcHours;
     private Double remainingVipHours;
     private Double remainingCoachingHours;
-    private Integer remainingPcDiscounts;
-    private Integer remainingVipDiscounts;
-    private Integer remainingCoachingDiscounts;
+    private Integer remainingPcDiscountAmount;
+    private Integer remainingPcDiscountPercentage;
+    private Integer remainingVipDiscountAmount;
+    private Integer remainingVipDiscountPercentage;
+    private Integer remainingCoachingDiscountAmount;
+    private Integer remainingCoachingDiscountPercentage;
 }

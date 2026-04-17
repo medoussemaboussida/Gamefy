@@ -25,7 +25,7 @@ export default function StepCheckout({
     selectedPcIds,
     activeOffer,
     packHoursUsed,
-    packDiscountUsed,
+    selectedDiscounts,
     packBenefits,
     calculateTotalPrice,
     calculateSubtotal,
@@ -89,7 +89,7 @@ export default function StepCheckout({
                                     </div>
 
                                     {/* Pack Benefits Applied */}
-                                    {(packHoursUsed > 0 || packDiscountUsed) && (
+                                    {(packHoursUsed > 0 || selectedDiscounts.length > 0) && (
                                         <div className="pt-2 border-t border-[#1CF3CA]/10 space-y-2">
                                             {packHoursUsed > 0 && (
                                                 <div className="flex justify-between items-center">
@@ -99,16 +99,18 @@ export default function StepCheckout({
                                                     <span className="text-[11px] font-black text-blue-400 italic">{packHoursUsed}h covered (free)</span>
                                                 </div>
                                             )}
-                                            {packDiscountUsed && packBenefits && (
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-[10px] font-black uppercase text-green-400">Pack Discount</span>
+                                            {selectedDiscounts.map((disc, i) => (
+                                                <div key={disc.id || i} className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-black uppercase text-green-400">
+                                                        {disc.discountType === 'PERCENTAGE' ? 'Pack % Discount' : 'Pack Fixed Discount'}
+                                                    </span>
                                                     <span className="text-[11px] font-black text-green-400 italic">
-                                                        {packBenefits.discountType === "PERCENTAGE"
-                                                            ? `-${packBenefits.discountValue}%`
-                                                            : `-${packBenefits.discountValue?.toFixed(3)} DT`}
+                                                        {disc.discountType === 'PERCENTAGE'
+                                                            ? `-${disc.discountValue}%`
+                                                            : `-${disc.discountValue?.toFixed(3)} DT`}
                                                     </span>
                                                 </div>
-                                            )}
+                                            ))}
                                         </div>
                                     )}
 

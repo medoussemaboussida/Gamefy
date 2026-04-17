@@ -86,10 +86,13 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
         }));
     };
 
-    const updateBenefit = (index: number, field: string, value: string) => {
+    const updateBenefit = (index: number, field: string, value: any) => {
         setFormData(prev => ({
             ...prev,
-            benefits: prev.benefits.map((b, i) => i === index ? { ...b, [field]: value } : b)
+            benefits: prev.benefits.map((b, i) => i === index ? { 
+                ...b, 
+                [field]: field === "discountValue" ? parseFloat(value) : value 
+            } : b)
         }));
     };
 
@@ -208,7 +211,7 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                                 <Select
                                                     options={RATE_RULES}
                                                     defaultValue={benefit.rateRule}
-                                                    onChange={(val) => {
+                                                     onChange={(val) => {
                                                         updateBenefit(index, "rateRule", val);
                                                         if (val === "HOURS") {
                                                             // Clear discount fields when switching to HOURS
@@ -216,6 +219,14 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                                                 ...prev,
                                                                 benefits: prev.benefits.map((b, i) => i === index
                                                                     ? { ...b, rateRule: val, discountType: undefined, discountValue: undefined }
+                                                                    : b)
+                                                            }));
+                                                        } else if (val === "DISCOUNT") {
+                                                            // Set default discount values when switching to DISCOUNT
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                benefits: prev.benefits.map((b, i) => i === index
+                                                                    ? { ...b, rateRule: val, discountType: "PERCENTAGE", discountValue: 0 }
                                                                     : b)
                                                             }));
                                                         }

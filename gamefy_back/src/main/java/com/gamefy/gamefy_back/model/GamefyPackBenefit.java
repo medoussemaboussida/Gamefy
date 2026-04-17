@@ -42,9 +42,10 @@ public class GamefyPackBenefit {
     public String toString() {
         return "GamefyPackBenefit{" +
                 "id=" + id +
-                ", packGamefy=" + packGamefy +
                 ", benefitType=" + benefitType +
                 ", rateRule=" + rateRule +
+                ", discountType=" + discountType +
+                ", discountValue=" + discountValue +
                 '}';
     }
 }

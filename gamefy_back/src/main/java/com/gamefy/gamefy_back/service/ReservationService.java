@@ -196,9 +196,16 @@ public class ReservationService {
         // Deduct pack benefits if the player activated them
         if (dto.getPackHoursUsed() != null && dto.getPackHoursUsed() > 0) {
             deductPackHours(userId, dto.getReservationType(), dto.getPackHoursUsed());
+            saved.setPackHoursUsed(dto.getPackHoursUsed());
         }
-        if (dto.getPackDiscountUsed() != null && dto.getPackDiscountUsed()) {
-            deductPackDiscount(userId, dto.getReservationType());
+        if (dto.getPackDiscountIdsUsed() != null && !dto.getPackDiscountIdsUsed().isEmpty()) {
+            deductPackDiscounts(userId, dto.getPackDiscountIdsUsed());
+            saved.setPackDiscountIdsUsed(dto.getPackDiscountIdsUsed().toString());
+        }
+        boolean hasPackUsage = saved.getPackHoursUsed() != null
+                || (saved.getPackDiscountIdsUsed() != null && !saved.getPackDiscountIdsUsed().equals("[]"));
+        if (hasPackUsage) {
+            reservationRepository.save(saved);
         }
 
         // Return the DTO with the generated ID
@@ -364,6 +371,11 @@ public class ReservationService {
             subscriptionService.removeHoursForConfirmedReservation(reservation);
         }
 
+        // Restore pack benefits if the reservation was never confirmed
+        if (reservation.getStatus() != Reservation_Status.CONFIRMED) {
+            restorePackBenefits(reservation);
+        }
+
         // Cleanup associated data
         if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
             pcAvailabilityRepository.deleteAll(reservation.getPcAvailabilities());
@@ -490,27 +502,30 @@ public class ReservationService {
         };
         result.put("remainingHours", remainingHours);
 
-        // Get remaining discounts for this room type
-        int remainingDiscounts = switch (benefitType) {
-            case PC -> activePack.getRemainingPcDiscounts() != null ? activePack.getRemainingPcDiscounts() : 0;
-            case VIP -> activePack.getRemainingVipDiscounts() != null ? activePack.getRemainingVipDiscounts() : 0;
-            case COACH -> activePack.getRemainingCoachingDiscounts() != null ? activePack.getRemainingCoachingDiscounts() : 0;
-        };
-        result.put("remainingDiscounts", remainingDiscounts);
+        // Get remaining discount IDs
+        List<Integer> availableIds = activePack.getAvailableDiscountIdsList();
+        
+        // Filter those belonging to the current reservation type
+        List<GamefyPackBenefit> availableBenefits = activePack.getPackGamefy().getBenefits().stream()
+                .filter(b -> b.getRateRule() == Rate_Rule.DISCOUNT)
+                .filter(b -> b.getBenefitType() == benefitType)
+                .filter(b -> availableIds.contains(b.getId()))
+                .collect(Collectors.toList());
 
-        // Get discount details from the pack's benefits
-        GamefyPackBenefit discountBenefit = activePack.getPackGamefy().getBenefits().stream()
-                .filter(b -> b.getBenefitType() == benefitType && b.getRateRule() == Rate_Rule.DISCOUNT)
-                .findFirst()
-                .orElse(null);
-
-        if (discountBenefit != null && remainingDiscounts > 0) {
-            result.put("discountType", discountBenefit.getDiscountType() != null ? discountBenefit.getDiscountType().name() : null);
-            result.put("discountValue", discountBenefit.getDiscountValue());
-        } else {
-            result.put("discountType", null);
-            result.put("discountValue", null);
+        // Build a list of individual discount objects for toggling on the frontend
+        List<Map<String, Object>> discounts = new java.util.ArrayList<>();
+        for (GamefyPackBenefit b : availableBenefits) {
+            Map<String, Object> d = new LinkedHashMap<>();
+            d.put("id", b.getId());
+            d.put("discountType", b.getDiscountType().name());
+            d.put("discountValue", b.getDiscountValue());
+            discounts.add(d);
         }
+        
+        result.put("discounts", discounts);
+        // Deprecated but keeping for compatibility if needed
+        result.put("remainingDiscountAmount", (int) availableBenefits.stream().filter(b -> b.getDiscountType() == DiscountType.FIXED_AMOUNT).count());
+        result.put("remainingDiscountPercentage", (int) availableBenefits.stream().filter(b -> b.getDiscountType() == DiscountType.PERCENTAGE).count());
 
         return result;
     }
@@ -539,18 +554,18 @@ public class ReservationService {
         userPackGamefyRepository.save(pack);
     }
 
-    private void deductPackDiscount(Integer userId, Reservation_Type reservationType) {
+    private void deductPackDiscounts(Integer userId, List<Integer> idsToDeduct) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         List<UserPackGamefy> activePacks = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
         if (activePacks.isEmpty()) return;
         UserPackGamefy pack = activePacks.get(0);
 
-        switch (reservationType) {
-            case PC_ROOM -> pack.setRemainingPcDiscounts(Math.max(0, pack.getRemainingPcDiscounts() - 1));
-            case VIP_ROOM -> pack.setRemainingVipDiscounts(Math.max(0, pack.getRemainingVipDiscounts() - 1));
-            case COACHING_ROOM -> pack.setRemainingCoachingDiscounts(Math.max(0, pack.getRemainingCoachingDiscounts() - 1));
+        List<Integer> currentIds = pack.getAvailableDiscountIdsList();
+        for (Integer id : idsToDeduct) {
+            currentIds.remove(id);
         }
+        pack.setAvailableDiscountIdsList(currentIds);
         userPackGamefyRepository.save(pack);
     }
 
@@ -593,6 +608,10 @@ public class ReservationService {
         for (Reservation reservation : expired) {
             log.info("Auto-deleting expired/cancelled reservation ID={} status={} (created at {})",
                     reservation.getId(), reservation.getStatus(), reservation.getCreatedAt());
+            
+            // Restore pack benefits before deleting
+            restorePackBenefits(reservation);
+            
             pcAvailabilityRepository.deleteAll(reservation.getPcAvailabilities());
             coachingSlotRepository.deleteAll(reservation.getCoachingSlots());
             reservationRepository.delete(reservation);
@@ -600,6 +619,60 @@ public class ReservationService {
 
         if (!expired.isEmpty()) {
             log.info("Cleaned up {} expired/cancelled reservation(s)", expired.size());
+        }
+    }
+
+    /**
+     * Restore pack benefits that were consumed when the reservation was created.
+     * Called when auto-deleting PENDING/CANCELLED reservations.
+     */
+    private void restorePackBenefits(Reservation reservation) {
+        User player = reservation.getPlayer();
+        Optional<UserPackGamefy> packOpt = userPackGamefyRepository.findFirstByUserOrderByActivatedAtDesc(player);
+        if (packOpt.isEmpty()) return;
+        UserPackGamefy pack = packOpt.get();
+
+        boolean changed = false;
+
+        // Restore hours
+        if (reservation.getPackHoursUsed() != null && reservation.getPackHoursUsed() > 0) {
+            double hours = reservation.getPackHoursUsed();
+            switch (reservation.getReservationType()) {
+                case PC_ROOM -> pack.setRemainingPcHours(
+                        (pack.getRemainingPcHours() != null ? pack.getRemainingPcHours() : 0) + hours);
+                case VIP_ROOM -> pack.setRemainingVipHours(
+                        (pack.getRemainingVipHours() != null ? pack.getRemainingVipHours() : 0) + hours);
+                case COACHING_ROOM -> pack.setRemainingCoachingHours(
+                        (pack.getRemainingCoachingHours() != null ? pack.getRemainingCoachingHours() : 0) + hours);
+            }
+            changed = true;
+            log.info("Restored {} pack hours ({}) for user ID={}", hours, reservation.getReservationType(), player.getId());
+        }
+
+        // Restore used discount IDs
+        if (reservation.getPackDiscountIdsUsed() != null && !reservation.getPackDiscountIdsUsed().equals("[]")) {
+            String trimmed = reservation.getPackDiscountIdsUsed().replaceAll("[\\[\\]\\s]", "");
+            if (!trimmed.isEmpty()) {
+                List<Integer> currentIds = pack.getAvailableDiscountIdsList();
+                for (String s : trimmed.split(",")) {
+                    Integer id = Integer.parseInt(s.trim());
+                    if (!currentIds.contains(id)) {
+                        currentIds.add(id);
+                    }
+                }
+                pack.setAvailableDiscountIdsList(currentIds);
+                changed = true;
+                log.info("Restored pack discount IDs {} for user ID={}", reservation.getPackDiscountIdsUsed(), player.getId());
+            }
+        }
+
+        if (changed) {
+            // If the pack was marked CONSUMED because it ran out, re-activate it
+            if (pack.getStatus() == UserPackStatus.CONSUMED) {
+                pack.setStatus(UserPackStatus.ACTIVE);
+                log.info("Pack re-activated for user ID={} (was CONSUMED, benefits restored)", player.getId());
+            }
+            userPackGamefyRepository.save(pack);
         }
     }
 }

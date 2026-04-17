@@ -7,6 +7,8 @@ import com.gamefy.gamefy_back.emailManager.EmailService;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.UserPackCoaching;
 import com.gamefy.gamefy_back.model.UserPackGamefy;
+import com.gamefy.gamefy_back.model.enums.Benefit_type;
+import com.gamefy.gamefy_back.model.enums.DiscountType;
 import com.gamefy.gamefy_back.model.enums.Roles;
 import com.gamefy.gamefy_back.model.enums.UserPackStatus;
 import com.gamefy.gamefy_back.model.enums.UserStatus;
@@ -200,10 +202,25 @@ public class UserService {
                 .remainingPcHours(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingPcHours() : 0.0)
                 .remainingVipHours(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingVipHours() : 0.0)
                 .remainingCoachingHours(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingCoachingHours() : 0.0)
-                .remainingPcDiscounts(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingPcDiscounts() : 0)
-                .remainingVipDiscounts(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingVipDiscounts() : 0)
-                .remainingCoachingDiscounts(gamefyPack != null && gamefyPack.getStatus() == UserPackStatus.ACTIVE ? gamefyPack.getRemainingCoachingDiscounts() : 0)
+                .remainingPcDiscountAmount(countDiscounts(gamefyPack, Benefit_type.PC, DiscountType.FIXED_AMOUNT))
+                .remainingPcDiscountPercentage(countDiscounts(gamefyPack, Benefit_type.PC, DiscountType.PERCENTAGE))
+                .remainingVipDiscountAmount(countDiscounts(gamefyPack, Benefit_type.VIP, DiscountType.FIXED_AMOUNT))
+                .remainingVipDiscountPercentage(countDiscounts(gamefyPack, Benefit_type.VIP, DiscountType.PERCENTAGE))
+                .remainingCoachingDiscountAmount(countDiscounts(gamefyPack, Benefit_type.COACH, DiscountType.FIXED_AMOUNT))
+                .remainingCoachingDiscountPercentage(countDiscounts(gamefyPack, Benefit_type.COACH, DiscountType.PERCENTAGE))
                 .build();
+    }
+
+    private Integer countDiscounts(UserPackGamefy pack, Benefit_type benefitType, DiscountType discountType) {
+        if (pack == null || pack.getStatus() != UserPackStatus.ACTIVE) return 0;
+        List<Integer> availableIds = pack.getAvailableDiscountIdsList();
+        if (availableIds.isEmpty()) return 0;
+        
+        return (int) pack.getPackGamefy().getBenefits().stream()
+                .filter(b -> availableIds.contains(b.getId()))
+                .filter(b -> b.getBenefitType() == benefitType)
+                .filter(b -> b.getDiscountType() == discountType)
+                .count();
     }
 
     private String generateRandomPassword(int length) {

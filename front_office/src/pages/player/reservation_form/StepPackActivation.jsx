@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Package, Clock, Percent, ArrowRight, Zap, Gift } from "lucide-react";
+import { Package, Clock, Percent, ArrowRight, Zap, Gift, Check } from "lucide-react";
 import { getMyPackBenefits } from "../../../api/reservation";
 
 export default function StepPackActivation({
@@ -10,8 +10,8 @@ export default function StepPackActivation({
     endTime,
     packHoursUsed,
     setPackHoursUsed,
-    packDiscountUsed,
-    setPackDiscountUsed,
+    selectedDiscounts,
+    setSelectedDiscounts,
     packBenefits,
     setPackBenefits,
 }) {
@@ -42,7 +42,7 @@ export default function StepPackActivation({
         : 0;
 
     const hasHours = packBenefits?.remainingHours > 0;
-    const hasDiscount = packBenefits?.remainingDiscounts > 0 && packBenefits?.discountType;
+    const hasDiscount = packBenefits?.discounts && packBenefits.discounts.length > 0;
 
     const canActivate = hasHours || hasDiscount;
 
@@ -55,12 +55,21 @@ export default function StepPackActivation({
 
     const handleSkip = () => {
         setPackHoursUsed(0);
-        setPackDiscountUsed(false);
+        setSelectedDiscounts([]);
         setStep(7);
     };
 
     const handleContinue = () => {
         setStep(7);
+    };
+
+    const toggleDiscount = (discount) => {
+        const isSelected = selectedDiscounts.some(d => d.id === discount.id);
+        if (isSelected) {
+            setSelectedDiscounts(prev => prev.filter(d => d.id !== discount.id));
+        } else {
+            setSelectedDiscounts(prev => [...prev, discount]);
+        }
     };
 
     const roomLabel = reservationType === "VIP_ROOM" ? "VIP" : reservationType === "COACHING_ROOM" ? "Coaching" : "PC";
@@ -215,51 +224,66 @@ export default function StepPackActivation({
                         </div>
                     )}
 
-                    {/* Discount Section */}
+                    {/* Discount Section — Individual Toggle Cards */}
                     {hasDiscount && (
                         <div className="p-6 md:p-8 rounded-[24px] bg-[#320141]/60 border border-white/10 space-y-5">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-green-500/10">
-                                        <Gift size={20} className="text-green-400" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-black font-['Inter'] uppercase text-sm text-white">Price Discount</h4>
-                                        <p className="text-white/30 text-xs">
-                                            {packBenefits.discountType === "PERCENTAGE"
-                                                ? `${packBenefits.discountValue}% off`
-                                                : `${packBenefits.discountValue?.toFixed(3)} DT cut`}
-                                            {" "}— {packBenefits.remainingDiscounts} use{packBenefits.remainingDiscounts !== 1 ? 's' : ''} left
-                                        </p>
-                                    </div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-green-500/10">
+                                    <Gift size={20} className="text-green-400" />
                                 </div>
-
-                                {/* Toggle */}
-                                <button
-                                    onClick={() => setPackDiscountUsed(!packDiscountUsed)}
-                                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                                        packDiscountUsed
-                                            ? "bg-[#1CF3CA] shadow-[0_0_15px_rgba(28,243,202,0.3)]"
-                                            : "bg-white/10"
-                                    }`}
-                                >
-                                    <div
-                                        className={`absolute top-1 w-6 h-6 rounded-full transition-all duration-300 ${
-                                            packDiscountUsed
-                                                ? "left-7 bg-black"
-                                                : "left-1 bg-white/40"
-                                        }`}
-                                    />
-                                </button>
+                                <div>
+                                    <h4 className="font-black font-['Inter'] uppercase text-sm text-white">Price Discounts</h4>
+                                    <p className="text-white/30 text-xs">
+                                        Select which discounts to activate for this reservation
+                                    </p>
+                                </div>
                             </div>
 
-                            {packDiscountUsed && (
+                            <div className="grid gap-3">
+                                {packBenefits.discounts.map((discount, index) => {
+                                    const isSelected = selectedDiscounts.some(d => d.id === discount.id);
+                                    return (
+                                        <button
+                                            key={discount.id || index}
+                                            onClick={() => toggleDiscount(discount)}
+                                            className={`relative flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 text-left ${
+                                                isSelected
+                                                    ? "bg-[#1CF3CA]/10 border-[#1CF3CA]/40 shadow-[0_0_20px_rgba(28,243,202,0.1)]"
+                                                    : "bg-white/[0.03] border-white/10 hover:border-white/20 hover:bg-white/[0.05]"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                                                    isSelected ? "bg-[#1CF3CA] text-black" : "bg-white/5 text-white/30"
+                                                }`}>
+                                                    {isSelected ? <Check size={16} strokeWidth={3} /> : <Percent size={14} />}
+                                                </div>
+                                                <div>
+                                                    <p className={`text-sm font-black font-['Inter'] ${isSelected ? 'text-[#1CF3CA]' : 'text-white/80'}`}>
+                                                        {discount.discountType === "PERCENTAGE"
+                                                            ? `${discount.discountValue}% Off`
+                                                            : `${discount.discountValue?.toFixed(3)} DT Cut`}
+                                                    </p>
+                                                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider">
+                                                        {discount.discountType === "PERCENTAGE" ? "Percentage Discount" : "Fixed Amount Discount"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                                isSelected ? "border-[#1CF3CA] bg-[#1CF3CA]" : "border-white/20"
+                                            }`}>
+                                                {isSelected && <Check size={12} className="text-black" strokeWidth={3} />}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {selectedDiscounts.length > 0 && (
                                 <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/10">
                                     <p className="text-xs text-green-400 font-bold flex items-center gap-1.5">
-                                        <Percent size={12} />
-                                        {packBenefits.discountType === "PERCENTAGE"
-                                            ? `${packBenefits.discountValue}% discount will be applied on the remaining price`
-                                            : `${packBenefits.discountValue?.toFixed(3)} DT will be cut from the remaining price`}
+                                        <Check size={12} />
+                                        {selectedDiscounts.length} discount{selectedDiscounts.length !== 1 ? 's' : ''} selected — will be applied to the final price
                                     </p>
                                 </div>
                             )}
@@ -276,9 +300,9 @@ export default function StepPackActivation({
                         </button>
                         <button
                             onClick={handleContinue}
-                            disabled={packHoursUsed === 0 && !packDiscountUsed}
+                            disabled={packHoursUsed === 0 && selectedDiscounts.length === 0}
                             className={`flex-1 py-4 rounded-full font-black uppercase font-['Inter'] tracking-[0.1em] transition-all duration-300 ${
-                                packHoursUsed > 0 || packDiscountUsed
+                                packHoursUsed > 0 || selectedDiscounts.length > 0
                                     ? "bg-[#1CF3CA] text-black hover:shadow-[0_0_30px_rgba(28,243,202,0.3)] hover:scale-[1.02] active:scale-95"
                                     : "bg-white/5 text-white/20 cursor-not-allowed"
                             }`}

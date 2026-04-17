@@ -59,7 +59,7 @@ export default function ReservationPage() {
 
     // Pack Gamefy Activation (Step 6)
     const [packHoursUsed, setPackHoursUsed] = useState(0);
-    const [packDiscountUsed, setPackDiscountUsed] = useState(false);
+    const [selectedDiscounts, setSelectedDiscounts] = useState([]);
     const [packBenefits, setPackBenefits] = useState(null);
 
     const [submitting, setSubmitting] = useState(false);
@@ -298,7 +298,7 @@ export default function ReservationPage() {
                 game: selectedGame,
                 priceTime: calculateTotalPrice(),
                 packHoursUsed: packHoursUsed > 0 ? packHoursUsed : null,
-                packDiscountUsed: packDiscountUsed || null,
+                packDiscountIdsUsed: selectedDiscounts.length > 0 ? selectedDiscounts.map(d => d.id) : null,
             });
             setSuccess(true);
             setTimeout(() => navigate("/player/dashboard"), 2000);
@@ -366,11 +366,13 @@ export default function ReservationPage() {
         let subtotal = totalGamingPrice + coachingFee;
 
         // Apply pack discount (only discount affects price, not hours)
-        if (packDiscountUsed && packBenefits) {
-            if (packBenefits.discountType === "PERCENTAGE" && packBenefits.discountValue) {
-                subtotal = subtotal * (1 - packBenefits.discountValue / 100);
-            } else if (packBenefits.discountType === "FIXED_AMOUNT" && packBenefits.discountValue) {
-                subtotal = Math.max(0, subtotal - packBenefits.discountValue);
+        if (selectedDiscounts.length > 0) {
+            for (const disc of selectedDiscounts) {
+                if (disc.discountType === "PERCENTAGE" && disc.discountValue) {
+                    subtotal = subtotal * (1 - disc.discountValue / 100);
+                } else if (disc.discountType === "FIXED_AMOUNT" && disc.discountValue) {
+                    subtotal = Math.max(0, subtotal - disc.discountValue);
+                }
             }
         }
 
@@ -401,11 +403,13 @@ export default function ReservationPage() {
         let subtotal = totalGamingPrice + coachingFee;
 
         // Pack discount applies here too
-        if (packDiscountUsed && packBenefits) {
-            if (packBenefits.discountType === "PERCENTAGE" && packBenefits.discountValue) {
-                subtotal = subtotal * (1 - packBenefits.discountValue / 100);
-            } else if (packBenefits.discountType === "FIXED_AMOUNT" && packBenefits.discountValue) {
-                subtotal = Math.max(0, subtotal - packBenefits.discountValue);
+        if (selectedDiscounts.length > 0) {
+            for (const disc of selectedDiscounts) {
+                if (disc.discountType === "PERCENTAGE" && disc.discountValue) {
+                    subtotal = subtotal * (1 - disc.discountValue / 100);
+                } else if (disc.discountType === "FIXED_AMOUNT" && disc.discountValue) {
+                    subtotal = Math.max(0, subtotal - disc.discountValue);
+                }
             }
         }
 
@@ -549,8 +553,8 @@ export default function ReservationPage() {
                             endTime={endTime}
                             packHoursUsed={packHoursUsed}
                             setPackHoursUsed={setPackHoursUsed}
-                            packDiscountUsed={packDiscountUsed}
-                            setPackDiscountUsed={setPackDiscountUsed}
+                            selectedDiscounts={selectedDiscounts}
+                            setSelectedDiscounts={setSelectedDiscounts}
                             packBenefits={packBenefits}
                             setPackBenefits={setPackBenefits}
                         />
@@ -571,7 +575,7 @@ export default function ReservationPage() {
                             selectedPcIds={selectedPcIds}
                             activeOffer={activeOffer}
                             packHoursUsed={packHoursUsed}
-                            packDiscountUsed={packDiscountUsed}
+                            selectedDiscounts={selectedDiscounts}
                             packBenefits={packBenefits}
                             calculateTotalPrice={calculateTotalPrice}
                             calculateSubtotal={calculateSubtotal}
