@@ -18,6 +18,7 @@ import { Modal } from "../components/ui/modal";
 import Input from "../components/form/input/InputField";
 import Label from "../components/form/Label";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
+import Pagination from "../components/ui/pagination/Pagination";
 
 export default function PcGameManagement() {
   const [games, setGames] = useState<PcGame[]>([]);
@@ -28,6 +29,8 @@ export default function PcGameManagement() {
   const [gameName, setGameName] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
 
   const currentUserRole = getUserRole();
   const isAdmin = currentUserRole === "ADMIN";
@@ -37,6 +40,7 @@ export default function PcGameManagement() {
       setLoading(true);
       const data = await pcApi.getAllPcGamesEntities();
       setGames(data);
+      setCurrentPage(1);
     } catch (error: any) {
       toast.error(error.message || "Failed to fetch PC games");
     } finally {
@@ -109,7 +113,7 @@ export default function PcGameManagement() {
       <PageBreadcrumb pageTitle="PC Games Management" />
       <div className="space-y-6">
         <ComponentCard title="PC Games List">
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-start mb-4">
             {isAdmin && (
               <Button variant="primary" size="sm" onClick={openAddModal}>
                 Add PC Game
@@ -121,9 +125,6 @@ export default function PcGameManagement() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50 dark:bg-white/5">
-                  <TableCell className="px-5 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                    ID
-                  </TableCell>
                   <TableCell className="px-5 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Game Name
                   </TableCell>
@@ -138,7 +139,7 @@ export default function PcGameManagement() {
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={isAdmin ? 3 : 2}
+                      colSpan={isAdmin ? 2 : 1}
                       className="px-5 py-10 text-center text-gray-500"
                     >
                       Loading games...
@@ -147,18 +148,15 @@ export default function PcGameManagement() {
                 ) : games.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={isAdmin ? 3 : 2}
+                      colSpan={isAdmin ? 2 : 1}
                       className="px-5 py-10 text-center text-gray-500"
                     >
                       No PC games found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  games.map((game) => (
+                  games.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((game) => (
                     <TableRow key={game.id}>
-                      <TableCell className="px-5 py-4 text-start font-medium text-gray-800 dark:text-white/90">
-                        #{game.id}
-                      </TableCell>
                       <TableCell className="px-5 py-4 text-start text-gray-600 dark:text-gray-400">
                         {game.gameName}
                       </TableCell>
@@ -191,6 +189,12 @@ export default function PcGameManagement() {
               </TableBody>
             </Table>
           </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={games.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
         </ComponentCard>
       </div>
 
