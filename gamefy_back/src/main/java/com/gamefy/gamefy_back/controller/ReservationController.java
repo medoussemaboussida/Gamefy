@@ -63,6 +63,15 @@ public class ReservationController {
         return ResponseEntity.ok(service.getPackBenefitsForReservation(user.getId(), roomType));
     }
 
+    @GetMapping("/my-coaching-pack-benefits")
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<Map<String, Object>> getMyCoachingPackBenefits(
+            @RequestParam Integer coachId,
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(service.getCoachingPackBenefits(user.getId(), coachId));
+    }
+
     @GetMapping("/my")
     @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
     public ResponseEntity<List<ReservationDto>> getMyReservations(Authentication authentication) {

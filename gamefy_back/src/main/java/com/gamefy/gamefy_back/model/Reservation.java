@@ -65,6 +65,9 @@ public class Reservation {
     @Column(name = "pack_discount_ids_used", columnDefinition = "TEXT")
     private String packDiscountIdsUsed;
 
+    @Column(name = "coaching_pack_hours_used")
+    private Double coachingPackHoursUsed;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

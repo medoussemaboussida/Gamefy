@@ -166,3 +166,12 @@ export const getMyPackBenefits = (roomType) => {
     return apiClient.get(`/gamefy/reservations/my-pack-benefits?roomType=${roomType}`);
 };
 
+/**
+ * Get the current user's active coaching pack benefits for a given coach.
+ * @param {number} coachId
+ * @returns {Promise<{hasActivePack: boolean, packName?: string, remainingHours?: number}>}
+ */
+export const getMyCoachingPackBenefits = (coachId) => {
+    return apiClient.get(`/gamefy/reservations/my-coaching-pack-benefits?coachId=${coachId}`);
+};
+

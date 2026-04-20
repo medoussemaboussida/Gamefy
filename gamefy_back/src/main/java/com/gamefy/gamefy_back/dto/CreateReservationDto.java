@@ -21,4 +21,5 @@ public class CreateReservationDto {
     private String game;
     private Double packHoursUsed;
     private java.util.List<Integer> packDiscountIdsUsed;
+    private Double coachingPackHoursUsed;
 }

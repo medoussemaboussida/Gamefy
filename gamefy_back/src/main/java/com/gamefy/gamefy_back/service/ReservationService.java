@@ -37,6 +37,7 @@ public class ReservationService {
     private final SubscriptionService subscriptionService;
     private final PcGameRepository pcGameRepository;
     private final UserPackGamefyRepository userPackGamefyRepository;
+    private final UserPackCoachingRepository userPackCoachingRepository;
 
     /**
      * Create a reservation with multiple PCs.
@@ -193,7 +194,15 @@ public class ReservationService {
             coachingSlotRepository.save(slot);
         }
 
-        // Deduct pack benefits if the player activated them
+        // Validate mutual exclusion: cannot use both gamefy pack and coaching pack
+        boolean usesGamefyPack = (dto.getPackHoursUsed() != null && dto.getPackHoursUsed() > 0)
+                || (dto.getPackDiscountIdsUsed() != null && !dto.getPackDiscountIdsUsed().isEmpty());
+        boolean usesCoachingPack = dto.getCoachingPackHoursUsed() != null && dto.getCoachingPackHoursUsed() > 0;
+        if (usesGamefyPack && usesCoachingPack) {
+            throw new RuntimeException("You cannot activate both Gamefy Pack and Coaching Pack on the same reservation");
+        }
+
+        // Deduct gamefy pack benefits if the player activated them
         if (dto.getPackHoursUsed() != null && dto.getPackHoursUsed() > 0) {
             deductPackHours(userId, dto.getReservationType(), dto.getPackHoursUsed());
             saved.setPackHoursUsed(dto.getPackHoursUsed());
@@ -202,8 +211,19 @@ public class ReservationService {
             deductPackDiscounts(userId, dto.getPackDiscountIdsUsed());
             saved.setPackDiscountIdsUsed(dto.getPackDiscountIdsUsed().toString());
         }
+
+        // Deduct coaching pack hours if the player activated them
+        if (usesCoachingPack) {
+            if (dto.getCoachId() == null) {
+                throw new RuntimeException("Coach ID is required when using a coaching pack");
+            }
+            deductCoachingPackHours(userId, dto.getCoachId(), dto.getCoachingPackHoursUsed());
+            saved.setCoachingPackHoursUsed(dto.getCoachingPackHoursUsed());
+        }
+
         boolean hasPackUsage = saved.getPackHoursUsed() != null
-                || (saved.getPackDiscountIdsUsed() != null && !saved.getPackDiscountIdsUsed().equals("[]"));
+                || (saved.getPackDiscountIdsUsed() != null && !saved.getPackDiscountIdsUsed().equals("[]"))
+                || saved.getCoachingPackHoursUsed() != null;
         if (hasPackUsage) {
             reservationRepository.save(saved);
         }
@@ -569,6 +589,51 @@ public class ReservationService {
         userPackGamefyRepository.save(pack);
     }
 
+    /**
+     * Get coaching pack benefits for the current user, filtered by coach.
+     * Only returns benefits if the user has an active coaching pack with this specific coach.
+     */
+    public Map<String, Object> getCoachingPackBenefits(Integer userId, Integer coachId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        List<UserPackCoaching> activePacks = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        // Find a pack whose coach matches the selected coach
+        UserPackCoaching matchingPack = activePacks.stream()
+                .filter(p -> p.getPackCoaching().getCoach() != null
+                        && p.getPackCoaching().getCoach().getId().equals(coachId))
+                .findFirst()
+                .orElse(null);
+
+        if (matchingPack == null) {
+            result.put("hasActivePack", false);
+            return result;
+        }
+
+        result.put("hasActivePack", true);
+        result.put("packName", matchingPack.getPackCoaching().getName());
+        result.put("remainingHours", matchingPack.getRemainingHours() != null ? matchingPack.getRemainingHours() : 0.0);
+        return result;
+    }
+
+    private void deductCoachingPackHours(Integer userId, Integer coachId, Double hoursUsed) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<UserPackCoaching> activePacks = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+        UserPackCoaching pack = activePacks.stream()
+                .filter(p -> p.getPackCoaching().getCoach() != null
+                        && p.getPackCoaching().getCoach().getId().equals(coachId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No active coaching pack found for this coach"));
+
+        double remaining = pack.getRemainingHours() != null ? pack.getRemainingHours() : 0;
+        pack.setRemainingHours(Math.max(0, remaining - hoursUsed));
+        userPackCoachingRepository.save(pack);
+    }
+
     public List<Map<String, Object>> getCoachesByGame(String game) {
         return coachProfileRepository.findByGameIgnoreCase(game).stream()
                 .map(cp -> {
@@ -628,51 +693,70 @@ public class ReservationService {
      */
     private void restorePackBenefits(Reservation reservation) {
         User player = reservation.getPlayer();
-        Optional<UserPackGamefy> packOpt = userPackGamefyRepository.findFirstByUserOrderByActivatedAtDesc(player);
-        if (packOpt.isEmpty()) return;
-        UserPackGamefy pack = packOpt.get();
 
-        boolean changed = false;
+        // --- Restore Gamefy pack benefits ---
+        boolean gamefyChanged = false;
+        Optional<UserPackGamefy> gamefyPackOpt = userPackGamefyRepository.findFirstByUserOrderByActivatedAtDesc(player);
+        if (gamefyPackOpt.isPresent()) {
+            UserPackGamefy pack = gamefyPackOpt.get();
 
-        // Restore hours
-        if (reservation.getPackHoursUsed() != null && reservation.getPackHoursUsed() > 0) {
-            double hours = reservation.getPackHoursUsed();
-            switch (reservation.getReservationType()) {
-                case PC_ROOM -> pack.setRemainingPcHours(
-                        (pack.getRemainingPcHours() != null ? pack.getRemainingPcHours() : 0) + hours);
-                case VIP_ROOM -> pack.setRemainingVipHours(
-                        (pack.getRemainingVipHours() != null ? pack.getRemainingVipHours() : 0) + hours);
-                case COACHING_ROOM -> pack.setRemainingCoachingHours(
-                        (pack.getRemainingCoachingHours() != null ? pack.getRemainingCoachingHours() : 0) + hours);
-            }
-            changed = true;
-            log.info("Restored {} pack hours ({}) for user ID={}", hours, reservation.getReservationType(), player.getId());
-        }
-
-        // Restore used discount IDs
-        if (reservation.getPackDiscountIdsUsed() != null && !reservation.getPackDiscountIdsUsed().equals("[]")) {
-            String trimmed = reservation.getPackDiscountIdsUsed().replaceAll("[\\[\\]\\s]", "");
-            if (!trimmed.isEmpty()) {
-                List<Integer> currentIds = pack.getAvailableDiscountIdsList();
-                for (String s : trimmed.split(",")) {
-                    Integer id = Integer.parseInt(s.trim());
-                    if (!currentIds.contains(id)) {
-                        currentIds.add(id);
-                    }
+            // Restore gamefy pack hours
+            if (reservation.getPackHoursUsed() != null && reservation.getPackHoursUsed() > 0) {
+                double hours = reservation.getPackHoursUsed();
+                switch (reservation.getReservationType()) {
+                    case PC_ROOM -> pack.setRemainingPcHours(
+                            (pack.getRemainingPcHours() != null ? pack.getRemainingPcHours() : 0) + hours);
+                    case VIP_ROOM -> pack.setRemainingVipHours(
+                            (pack.getRemainingVipHours() != null ? pack.getRemainingVipHours() : 0) + hours);
+                    case COACHING_ROOM -> pack.setRemainingCoachingHours(
+                            (pack.getRemainingCoachingHours() != null ? pack.getRemainingCoachingHours() : 0) + hours);
                 }
-                pack.setAvailableDiscountIdsList(currentIds);
-                changed = true;
-                log.info("Restored pack discount IDs {} for user ID={}", reservation.getPackDiscountIdsUsed(), player.getId());
+                gamefyChanged = true;
+                log.info("Restored {} gamefy pack hours ({}) for user ID={}", hours, reservation.getReservationType(), player.getId());
+            }
+
+            // Restore used discount IDs
+            if (reservation.getPackDiscountIdsUsed() != null && !reservation.getPackDiscountIdsUsed().equals("[]")) {
+                String trimmed = reservation.getPackDiscountIdsUsed().replaceAll("[\\[\\]\\s]", "");
+                if (!trimmed.isEmpty()) {
+                    List<Integer> currentIds = pack.getAvailableDiscountIdsList();
+                    for (String s : trimmed.split(",")) {
+                        Integer id = Integer.parseInt(s.trim());
+                        if (!currentIds.contains(id)) {
+                            currentIds.add(id);
+                        }
+                    }
+                    pack.setAvailableDiscountIdsList(currentIds);
+                    gamefyChanged = true;
+                    log.info("Restored pack discount IDs {} for user ID={}", reservation.getPackDiscountIdsUsed(), player.getId());
+                }
+            }
+
+            if (gamefyChanged) {
+                if (pack.getStatus() == UserPackStatus.CONSUMED) {
+                    pack.setStatus(UserPackStatus.ACTIVE);
+                    log.info("Gamefy pack re-activated for user ID={} (was CONSUMED, benefits restored)", player.getId());
+                }
+                userPackGamefyRepository.save(pack);
             }
         }
 
-        if (changed) {
-            // If the pack was marked CONSUMED because it ran out, re-activate it
-            if (pack.getStatus() == UserPackStatus.CONSUMED) {
-                pack.setStatus(UserPackStatus.ACTIVE);
-                log.info("Pack re-activated for user ID={} (was CONSUMED, benefits restored)", player.getId());
-            }
-            userPackGamefyRepository.save(pack);
+        // --- Restore Coaching pack hours ---
+        if (reservation.getCoachingPackHoursUsed() != null && reservation.getCoachingPackHoursUsed() > 0
+                && reservation.getCoach() != null) {
+            List<UserPackCoaching> coachingPacks = userPackCoachingRepository.findByUserAndStatus(player, UserPackStatus.ACTIVE);
+            coachingPacks.stream()
+                    .filter(p -> p.getPackCoaching().getCoach() != null
+                            && p.getPackCoaching().getCoach().getId().equals(reservation.getCoach().getId()))
+                    .findFirst()
+                    .ifPresent(coachPack -> {
+                        double restored = reservation.getCoachingPackHoursUsed();
+                        double current = coachPack.getRemainingHours() != null ? coachPack.getRemainingHours() : 0;
+                        coachPack.setRemainingHours(current + restored);
+                        userPackCoachingRepository.save(coachPack);
+                        log.info("Restored {} coaching pack hours for user ID={} (coach ID={})",
+                                restored, player.getId(), reservation.getCoach().getId());
+                    });
         }
     }
 }

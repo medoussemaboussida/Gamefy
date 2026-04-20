@@ -62,6 +62,10 @@ export default function ReservationPage() {
     const [selectedDiscounts, setSelectedDiscounts] = useState([]);
     const [packBenefits, setPackBenefits] = useState(null);
 
+    // Coaching Pack Activation (Step 6)
+    const [coachingPackHoursUsed, setCoachingPackHoursUsed] = useState(0);
+    const [coachingPackBenefits, setCoachingPackBenefits] = useState(null);
+
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
@@ -299,6 +303,7 @@ export default function ReservationPage() {
                 priceTime: calculateTotalPrice(),
                 packHoursUsed: packHoursUsed > 0 ? packHoursUsed : null,
                 packDiscountIdsUsed: selectedDiscounts.length > 0 ? selectedDiscounts.map(d => d.id) : null,
+                coachingPackHoursUsed: coachingPackHoursUsed > 0 ? coachingPackHoursUsed : null,
             });
             setSuccess(true);
             setTimeout(() => navigate("/player/dashboard"), 2000);
@@ -347,7 +352,9 @@ export default function ReservationPage() {
 
         const totalDuration = (Number(endTime) - Number(startTime)) / 60;
         // Pack hours now CONSUME the reservation duration — reducing the billable time
-        const billableDuration = Math.max(0, totalDuration - packHoursUsed);
+        // Either gamefy pack hours OR coaching pack hours (mutually exclusive)
+        const effectivePackHours = coachingPackHoursUsed > 0 ? coachingPackHoursUsed : packHoursUsed;
+        const billableDuration = Math.max(0, totalDuration - effectivePackHours);
 
         const gamingPricePerPc = getBasePriceForDuration(billableDuration);
         const totalGamingPrice = gamingPricePerPc * selectedPcIds.length;
@@ -389,7 +396,8 @@ export default function ReservationPage() {
         if (!startTime || !endTime || fixedPrices.length === 0) return 0;
 
         const totalDuration = (Number(endTime) - Number(startTime)) / 60;
-        const billableDuration = Math.max(0, totalDuration - packHoursUsed);
+        const effectivePackHours = coachingPackHoursUsed > 0 ? coachingPackHoursUsed : packHoursUsed;
+        const billableDuration = Math.max(0, totalDuration - effectivePackHours);
 
         const gamingPricePerPc = getBasePriceForDuration(billableDuration);
         const totalGamingPrice = gamingPricePerPc * selectedPcIds.length;
@@ -557,6 +565,11 @@ export default function ReservationPage() {
                             setSelectedDiscounts={setSelectedDiscounts}
                             packBenefits={packBenefits}
                             setPackBenefits={setPackBenefits}
+                            coachingPackHoursUsed={coachingPackHoursUsed}
+                            setCoachingPackHoursUsed={setCoachingPackHoursUsed}
+                            coachingPackBenefits={coachingPackBenefits}
+                            setCoachingPackBenefits={setCoachingPackBenefits}
+                            selectedCoachId={selectedCoachId}
                         />
                     )}
 
@@ -577,6 +590,7 @@ export default function ReservationPage() {
                             packHoursUsed={packHoursUsed}
                             selectedDiscounts={selectedDiscounts}
                             packBenefits={packBenefits}
+                            coachingPackHoursUsed={coachingPackHoursUsed}
                             calculateTotalPrice={calculateTotalPrice}
                             calculateSubtotal={calculateSubtotal}
                             handleSubmit={handleSubmit}

@@ -27,6 +27,7 @@ export default function StepCheckout({
     packHoursUsed,
     selectedDiscounts,
     packBenefits,
+    coachingPackHoursUsed,
     calculateTotalPrice,
     calculateSubtotal,
     handleSubmit,
@@ -89,7 +90,7 @@ export default function StepCheckout({
                                     </div>
 
                                     {/* Pack Benefits Applied */}
-                                    {(packHoursUsed > 0 || selectedDiscounts.length > 0) && (
+                                    {(packHoursUsed > 0 || selectedDiscounts.length > 0 || coachingPackHoursUsed > 0) && (
                                         <div className="pt-2 border-t border-[#1CF3CA]/10 space-y-2">
                                             {packHoursUsed > 0 && (
                                                 <div className="flex justify-between items-center">
@@ -97,6 +98,14 @@ export default function StepCheckout({
                                                         <Clock size={10} /> Pack Covered Hours
                                                     </span>
                                                     <span className="text-[11px] font-black text-blue-400 italic">{packHoursUsed}h covered (free)</span>
+                                                </div>
+                                            )}
+                                            {coachingPackHoursUsed > 0 && (
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-black uppercase text-purple-400 flex items-center gap-1">
+                                                        <Clock size={10} /> Coaching Pack Hours
+                                                    </span>
+                                                    <span className="text-[11px] font-black text-purple-400 italic">{coachingPackHoursUsed}h covered (free)</span>
                                                 </div>
                                             )}
                                             {selectedDiscounts.map((disc, i) => (
