@@ -32,5 +32,8 @@ public class PackCoachingDto {
     @Min(value = 0, message = "Price cannot be negative")
     private Double price;
 
+    @Min(value = 1, message = "Duration must be at least 1 month")
+    private Integer durationMonths;
+
     private Integer coachId;
 }

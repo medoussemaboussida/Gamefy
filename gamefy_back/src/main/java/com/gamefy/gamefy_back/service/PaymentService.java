@@ -35,6 +35,7 @@ public class PaymentService {
     private final PackCoachingService packCoachingService;
     private final PackCoachingRepository packCoachingRepository;
     private final PackGamefyService packGamefyService;
+    private final UserPackCoachingRepository userPackCoachingRepository;
 
     @Value("${stripe.publishable.key}")
     private String stripePublishableKey;
@@ -96,6 +97,28 @@ public class PaymentService {
         metadata.put("packId", packId.toString());
         metadata.put("userId", userId.toString());
         metadata.put("type", "COACHING_PACK_PURCHASE");
+
+        PaymentIntent intent = stripeService.createPaymentIntent(amount, "usd", metadata);
+
+        return new PaymentDtos.PaymentIntentResponse(
+                intent.getClientSecret(),
+                stripePublishableKey
+        );
+    }
+
+    /**
+     * Create a PaymentIntent for renewing a coaching pack
+     */
+    public PaymentDtos.PaymentIntentResponse createRenewCoachingPackPaymentIntent(Integer packId, Integer userId) throws StripeException {
+        PackCoaching pack = packCoachingRepository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Coaching Pack not found"));
+
+        Long amount = (long) (pack.getPrice() * 100);
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("packId", packId.toString());
+        metadata.put("userId", userId.toString());
+        metadata.put("type", "COACHING_PACK_RENEWAL");
 
         PaymentIntent intent = stripeService.createPaymentIntent(amount, "usd", metadata);
 
@@ -220,6 +243,23 @@ public class PaymentService {
     }
 
     /**
+     * Handle coaching pack renewal payment via webhook
+     */
+    @Transactional
+    public void handleCoachingPackRenewalSucceeded(PaymentIntent intent) {
+        String packIdStr = intent.getMetadata().get("packId");
+        String userIdStr = intent.getMetadata().get("userId");
+
+        if (packIdStr == null || userIdStr == null) {
+            throw new RuntimeException("Missing metadata in PaymentIntent");
+        }
+
+        Integer packId = Integer.parseInt(packIdStr);
+        Integer userId = Integer.parseInt(userIdStr);
+        packCoachingService.renewPackForUser(packId, userId);
+    }
+
+    /**
      * Fulfill the coaching pack order after successful payment
      */
     @Transactional
@@ -282,6 +322,12 @@ public class PaymentService {
         packGamefyService.renewPackForUser(packId, userId);
     }
 
+    @Transactional
+    @CacheEvict(value = "users", allEntries = true)
+    public void fulfillCoachingPackRenewal(Integer packId, Integer userId) {
+        packCoachingService.renewPackForUser(packId, userId);
+    }
+
     public PaymentDtos.MyPackStatusResponse getMyPackStatus(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
@@ -306,6 +352,27 @@ public class PaymentService {
                         .packName(pack.getPackGamefy().getName())
                         .status(pack.getStatus().name())
                         .build())
+                .orElse(null);
+    }
+
+    /**
+     * Get the current user's coaching pack status (ACTIVE/EXPIRED/CONSUMED or null)
+     */
+    public PaymentDtos.MyPackStatusResponse getMyCoachingPackStatus(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
+        // Use the repository method I just verified
+        return userPackCoachingRepository.findFirstByUserOrderByActivatedAtDesc(user)
+                .map(pack -> {
+                    // Auto-check status (expiresAt, remainingHours)
+                    pack = packCoachingService.checkAndUpdatePackStatus(pack);
+                    return PaymentDtos.MyPackStatusResponse.builder()
+                            .packId(pack.getPackCoaching().getId())
+                            .packName(pack.getPackCoaching().getName())
+                            .status(pack.getStatus().name())
+                            .build();
+                })
                 .orElse(null);
     }
 

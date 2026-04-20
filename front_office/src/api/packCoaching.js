@@ -6,6 +6,7 @@ import { apiClient } from "./apiClient";
  * @property {string} name
  * @property {string} hours - LocalTime formatted as HH:mm
  * @property {number} price
+ * @property {number} [durationMonths]
  * @property {number} [coachId]
  */
 
@@ -127,6 +128,42 @@ export const packCoachingApi = {
     getMyPurchasedCoachingPacks: async () => {
         try {
             const response = await apiClient.get("/gamefy/payments/my-purchased-coaching-packs");
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    /**
+     * Get current user's coaching pack status
+     */
+    getMyCoachingPackStatus: async () => {
+        try {
+            const response = await apiClient.get("/gamefy/payments/my-coaching-pack-status");
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    /**
+     * Create a renewal PaymentIntent for coaching pack
+     */
+    createRenewCoachingPackPaymentIntent: async (packId) => {
+        try {
+            const response = await apiClient.post("/gamefy/payments/create-renew-coaching-pack-intent", { packId });
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    /**
+     * Confirm coaching pack renewal
+     */
+    confirmCoachingPackRenewal: async (packId) => {
+        try {
+            const response = await apiClient.post("/gamefy/payments/confirm-coaching-pack-renewal", { packId });
             return response;
         } catch (error) {
             throw error;

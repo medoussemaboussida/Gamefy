@@ -7,7 +7,7 @@ import {
 import toast from "react-hot-toast";
 import { packCoachingApi } from "../../api/packCoaching";
 
-const CoachingCheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) => {
+const CoachingCheckoutForm = ({ onPaymentSuccess, amount, packName, packId, isRenewal }) => {
     const stripe = useStripe();
     const elements = useElements();
 
@@ -42,7 +42,11 @@ const CoachingCheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) =>
         } else {
             // Payment succeeded! Now confirm to backend to update DB.
             try {
-                await packCoachingApi.confirmCoachingPackPayment(packId);
+                if (isRenewal) {
+                    await packCoachingApi.confirmCoachingPackRenewal(packId);
+                } else {
+                    await packCoachingApi.confirmCoachingPackPayment(packId);
+                }
             } catch (err) {
                 const detail = err?.message || String(err) || "Unknown error";
                 console.error("Failed to confirm coaching pack payment with backend:", detail);
@@ -51,7 +55,8 @@ const CoachingCheckoutForm = ({ onPaymentSuccess, amount, packName, packId }) =>
                 return;
             }
 
-            toast.success(`Success! You have purchased the ${packName}.`, {
+            const action = isRenewal ? "renewed" : "purchased";
+            toast.success(`Success! You have ${action} the ${packName}.`, {
                 duration: 6000,
                 style: {
                     background: "#24003E",

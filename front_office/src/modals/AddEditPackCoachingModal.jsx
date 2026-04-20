@@ -9,6 +9,7 @@ const AddEditPackCoachingModal = ({ isOpen, onClose, onRefresh, pack = null }) =
         hours: 1,
         minutes: 0,
         price: "",
+        durationMonths: 6,
         description: "",
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,6 +22,7 @@ const AddEditPackCoachingModal = ({ isOpen, onClose, onRefresh, pack = null }) =
                 hours: h || 0,
                 minutes: m || 0,
                 price: pack.price || "",
+                durationMonths: pack.durationMonths || 6,
                 description: pack.description || "",
             });
         } else {
@@ -29,6 +31,7 @@ const AddEditPackCoachingModal = ({ isOpen, onClose, onRefresh, pack = null }) =
                 hours: 1,
                 minutes: 0,
                 price: "",
+                durationMonths: 6,
                 description: "",
             });
         }
@@ -40,8 +43,11 @@ const AddEditPackCoachingModal = ({ isOpen, onClose, onRefresh, pack = null }) =
         e.preventDefault();
         
         if (!formData.name.trim()) return toast.error("Name is required");
-        if (formData.hours < 0 || formData.minutes < 0) return toast.error("Valid hours/minutes are required");
+        if (formData.hours < 0 || (formData.minutes !== 0 && formData.minutes !== 30)) {
+            return toast.error("Valid hours/minutes (0 or 30) are required");
+        }
         if (!formData.price || formData.price <= 0) return toast.error("Valid price is required");
+        if (!formData.durationMonths || formData.durationMonths < 1) return toast.error("Valid duration is required");
 
         setIsSubmitting(true);
         // Format as HH:mm
@@ -133,15 +139,14 @@ const AddEditPackCoachingModal = ({ isOpen, onClose, onRefresh, pack = null }) =
                                 </div>
                                 <span className="text-white/40 font-bold">:</span>
                                 <div className="relative flex-1">
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        max="59"
-                                        placeholder="MM"
+                                    <select
                                         value={formData.minutes}
-                                        onChange={(e) => setFormData({ ...formData, minutes: parseInt(e.target.value) || 0 })}
-                                        className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-4 text-white text-center focus:outline-none focus:border-[#1CF3CA]/50 transition-all"
-                                    />
+                                        onChange={(e) => setFormData({ ...formData, minutes: parseInt(e.target.value) })}
+                                        className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-4 text-white appearance-none focus:outline-none focus:border-[#1CF3CA]/50 transition-all cursor-pointer text-center"
+                                    >
+                                        <option value={0} className="bg-[#1a0b2e]">00</option>
+                                        <option value={30} className="bg-[#1a0b2e]">30</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -160,6 +165,22 @@ const AddEditPackCoachingModal = ({ isOpen, onClose, onRefresh, pack = null }) =
                                     className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 text-white placeholder:text-white/20 focus:outline-none focus:border-[#1CF3CA]/50 transition-all"
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Duration Months */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-400 ml-1">Validity (Months)</label>
+                        <div className="relative">
+                            <Clock size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-[#1CF3CA]" />
+                            <input
+                                type="number"
+                                min="1"
+                                placeholder="6"
+                                value={formData.durationMonths}
+                                onChange={(e) => setFormData({ ...formData, durationMonths: parseInt(e.target.value) || "" })}
+                                className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 text-white placeholder:text-white/20 focus:outline-none focus:border-[#1CF3CA]/50 transition-all"
+                            />
                         </div>
                     </div>
 

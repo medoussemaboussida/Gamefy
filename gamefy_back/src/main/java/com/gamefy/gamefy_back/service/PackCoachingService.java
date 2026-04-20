@@ -75,6 +75,7 @@ public class PackCoachingService {
         existing.setHours(dto.getHours());
         existing.setPrice(dto.getPrice());
         existing.setDescription(dto.getDescription());
+        existing.setDurationMonths(dto.getDurationMonths());
 
         existing = repository.save(existing);
         return mapToDto(existing);
@@ -224,6 +225,7 @@ public class PackCoachingService {
                 .hours(pack.getHours())
                 .price(pack.getPrice())
                 .description(pack.getDescription())
+                .durationMonths(pack.getDurationMonths())
                 .coachId(pack.getCoach() != null ? pack.getCoach().getId() : null)
                 .build();
     }
@@ -235,6 +237,7 @@ public class PackCoachingService {
                 .hours(pack.getHours())
                 .price(pack.getPrice())
                 .description(pack.getDescription())
+                .durationMonths(pack.getDurationMonths())
                 .coachId(pack.getCoach() != null ? pack.getCoach().getId() : null)
                 .coachName(pack.getCoach() != null ? 
                         pack.getCoach().getFirstName() + " " + pack.getCoach().getLastName() : "Unknown")
@@ -247,6 +250,7 @@ public class PackCoachingService {
         pack.setHours(dto.getHours());
         pack.setPrice(dto.getPrice());
         pack.setDescription(dto.getDescription());
+        pack.setDurationMonths(dto.getDurationMonths());
         return pack;
     }
 }

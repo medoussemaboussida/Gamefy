@@ -23,4 +23,5 @@ public class PackCoachingAdminDto {
     private String coachName;
     private Double price;
     private Integer coachId;
+    private Integer durationMonths;
 }

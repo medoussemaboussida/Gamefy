@@ -29,6 +29,7 @@ const Packs = () => {
     const [purchasedPackIds, setPurchasedPackIds] = useState([]);
     const [purchasedCoachingPackIds, setPurchasedCoachingPackIds] = useState([]);
     const [myPackStatus, setMyPackStatus] = useState(null); // { packId, packName, status }
+    const [myCoachingPackStatus, setMyCoachingPackStatus] = useState(null); // { packId, packName, status }
     const [isRenewalMode, setIsRenewalMode] = useState(false);
 
 
@@ -59,12 +60,14 @@ const Packs = () => {
 
         const fetchCoachingPacks = async () => {
             try {
-                const [data, purchasedIds] = await Promise.all([
+                const [data, purchasedIds, coachingStatus] = await Promise.all([
                     packCoachingApi.getAllPacks(),
                     packCoachingApi.getMyPurchasedCoachingPacks().catch(() => []),
+                    packCoachingApi.getMyCoachingPackStatus().catch(() => null),
                 ]);
                 setCoachingPacks(data);
                 setPurchasedCoachingPackIds(purchasedIds);
+                setMyCoachingPackStatus(coachingStatus);
             } catch (error) {
                 console.error("Failed to fetch coaching packs", error);
             } finally {
@@ -132,6 +135,7 @@ const Packs = () => {
     const handleBuyCoachingPack = async (pack) => {
         setSelectedCoachingPack(pack);
         setIsProcessingPayment(true);
+        setIsRenewalMode(false);
         try {
             const response = await packCoachingApi.createCoachingPackPaymentIntent(pack.id);
             setClientSecret(response.clientSecret);
@@ -144,12 +148,30 @@ const Packs = () => {
         }
     };
 
+    const handleRenewCoachingPack = async (pack) => {
+        setSelectedCoachingPack(pack);
+        setIsProcessingPayment(true);
+        setIsRenewalMode(true);
+        try {
+            const response = await packCoachingApi.createRenewCoachingPackPaymentIntent(pack.id);
+            setClientSecret(response.clientSecret);
+            setIsCoachingPaymentModalOpen(true);
+        } catch (error) {
+            console.error("Failed to create coaching renewal payment intent", error);
+            toast.error("Could not start renewal process. Please try again.");
+        } finally {
+            setIsProcessingPayment(false);
+        }
+    };
+
     const handleCoachingPaymentSuccess = () => {
         setIsCoachingPaymentModalOpen(false);
         setClientSecret("");
+        setIsRenewalMode(false);
         // Replace the list because the player only has one active coaching pack
         if (selectedCoachingPack) {
             setPurchasedCoachingPackIds([selectedCoachingPack.id]);
+            setMyCoachingPackStatus({ packId: selectedCoachingPack.id, packName: selectedCoachingPack.name, status: "ACTIVE" });
         }
     };
 
@@ -365,6 +387,21 @@ const Packs = () => {
                                                 <Check size={18} />
                                                 You already bought this pack
                                             </div>
+                                        ) : myCoachingPackStatus && myCoachingPackStatus.packId === pack.id && (myCoachingPackStatus.status === "EXPIRED" || myCoachingPackStatus.status === "CONSUMED") ? (
+                                            <button
+                                                onClick={() => handleRenewCoachingPack(pack)}
+                                                disabled={isProcessingPayment && selectedCoachingPack?.id === pack.id}
+                                                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold transition-all hover:from-purple-400 hover:to-pink-400 disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                                            >
+                                                {isProcessingPayment && selectedCoachingPack?.id === pack.id ? (
+                                                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCw size={18} />
+                                                        Renew Pack
+                                                    </>
+                                                )}
+                                            </button>
                                         ) : (
                                             <button
                                                 onClick={() => handleBuyCoachingPack(pack)}
@@ -407,6 +444,7 @@ const Packs = () => {
                 clientSecret={clientSecret}
                 pack={selectedCoachingPack}
                 onPaymentSuccess={handleCoachingPaymentSuccess}
+                isRenewal={isRenewalMode}
             />
 
             <PackDescriptionModal

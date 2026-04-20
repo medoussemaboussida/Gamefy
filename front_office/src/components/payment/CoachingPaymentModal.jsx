@@ -4,7 +4,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import CoachingCheckoutForm from "./CoachingCheckoutForm";
 import { X } from "lucide-react";
 
-const CoachingPaymentModal = ({ isOpen, onClose, clientSecret, pack, onPaymentSuccess }) => {
+const CoachingPaymentModal = ({ isOpen, onClose, clientSecret, pack, onPaymentSuccess, isRenewal }) => {
     if (!isOpen || !clientSecret || !pack) return null;
 
     const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -54,6 +54,7 @@ const CoachingPaymentModal = ({ isOpen, onClose, clientSecret, pack, onPaymentSu
                                 amount={pack.price}
                                 packName={pack.name}
                                 packId={pack.id}
+                                isRenewal={isOpen && isRenewal}
                             />
                         </Elements>
                     </div>

@@ -73,6 +73,8 @@ public class PaymentController {
                         paymentService.handlePackRenewalSucceeded(intent);
                     } else if ("COACHING_PACK_PURCHASE".equals(type)) {
                         paymentService.handleCoachingPackPaymentSucceeded(intent);
+                    } else if ("COACHING_PACK_RENEWAL".equals(type)) {
+                        paymentService.handleCoachingPackRenewalSucceeded(intent);
                     }
                 }
             }
@@ -126,6 +128,44 @@ public class PaymentController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Renewal error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Create a Stripe PaymentIntent for renewing a coaching pack
+     */
+    @PostMapping("/create-renew-coaching-pack-intent")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<PaymentDtos.PaymentIntentResponse> createRenewCoachingPackIntent(
+            @RequestBody PaymentDtos.PackPaymentRequest request,
+            @AuthenticationPrincipal User currentUser) throws StripeException {
+        return ResponseEntity.ok(paymentService.createRenewCoachingPackPaymentIntent(request.getPackId(), currentUser.getId()));
+    }
+
+    /**
+     * Confirm a coaching pack renewal after Stripe payment succeeds (client-side fulfillment)
+     */
+    @PostMapping("/confirm-coaching-pack-renewal")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<String> confirmCoachingPackRenewal(
+            @RequestBody PaymentDtos.PackConfirmRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        try {
+            paymentService.fulfillCoachingPackRenewal(request.getPackId(), currentUser.getId());
+            return ResponseEntity.ok("Coaching pack renewal fulfilled successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Renewal error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get the current user's coaching pack status (ACTIVE/EXPIRED/CONSUMED or null)
+     */
+    @GetMapping("/my-coaching-pack-status")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<PaymentDtos.MyPackStatusResponse> getMyCoachingPackStatus(
+            @AuthenticationPrincipal User currentUser) {
+        PaymentDtos.MyPackStatusResponse status = paymentService.getMyCoachingPackStatus(currentUser.getId());
+        return ResponseEntity.ok(status);
     }
 
     /**
