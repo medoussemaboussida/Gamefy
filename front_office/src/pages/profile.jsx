@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Shield, Camera, Edit2, Loader2, ChevronRight, LogOut, Search, Bell, Calendar, MapPin, X, FileText } from "lucide-react";
+import { User, Mail, Shield, Camera, Edit2, Loader2, ChevronRight, LogOut, Search, Bell, Calendar, MapPin, X, FileText, Receipt } from "lucide-react";
 import toast from "react-hot-toast";
 import { profileApi } from "../api/profile";
 import { authApi } from "../api/auth";
 import { eventApi } from "../api/event";
 import ProfileForm from "../modals/ProfileForm";
 import EventDescriptionModal from "../modals/EventDescriptionModal";
+import PaymentHistoryModal from "../modals/PaymentHistoryModal";
 import { useUser } from "../context/UserContext";
 
 const ProfilePage = () => {
@@ -15,6 +16,7 @@ const ProfilePage = () => {
     const { user, setUser, isLoadingUser } = useUser();
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [participatedEvents, setParticipatedEvents] = useState([]);
     const [descriptionModal, setDescriptionModal] = useState({ open: false, title: "", description: "" });
     const fileInputRef = useRef(null);
@@ -240,6 +242,15 @@ const ProfilePage = () => {
                                         <Edit2 size={18} />
                                         Edit Details
                                     </button>
+                                    {user.role === "PLAYER" && (
+                                        <button
+                                            onClick={() => setIsHistoryModalOpen(true)}
+                                            className="inline-flex items-center gap-2 px-8 py-3 bg-[#DD00B8]/10 hover:bg-[#DD00B8]/20 border border-[#DD00B8]/30 text-[#DD00B8] rounded-full font-medium transition-all"
+                                        >
+                                            <Receipt size={18} />
+                                            Payment History
+                                        </button>
+                                    )}
                                     <button
                                         onClick={handleLogout}
                                         className="inline-flex items-center gap-2 px-8 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 rounded-full font-medium transition-all"
@@ -445,6 +456,11 @@ const ProfilePage = () => {
                 description={descriptionModal.description}
                 onClose={() => setDescriptionModal({ open: false, title: "", description: "" })}
             />
+
+            {/* History Modal */}
+            {isHistoryModalOpen && (
+                <PaymentHistoryModal onClose={() => setIsHistoryModalOpen(false)} />
+            )}
 
             {/* Edit Modal */}
             {isModalOpen && (

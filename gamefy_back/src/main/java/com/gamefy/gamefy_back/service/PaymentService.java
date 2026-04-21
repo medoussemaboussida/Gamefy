@@ -412,6 +412,7 @@ public class PaymentService {
                             .userName(userName)
                             .paidFor(paidFor)
                             .totalPrice(payment.getTotalPrice())
+                            .createdAt(payment.getCreatedAt())
                             .build();
                 })
                 .toList();
@@ -439,6 +440,29 @@ public class PaymentService {
                             .userName(userName)
                             .paidFor(paidFor)
                             .totalPrice(payment.getTotalPrice())
+                            .createdAt(payment.getCreatedAt())
+                            .build();
+                })
+                .toList();
+    }
+
+    public List<PaymentDtos.AllPaymentResponse> getMyPaymentHistory(Integer userId) {
+        return paymentRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(payment -> {
+                    String paidFor = "Other";
+                    if (payment.getReservation() != null) {
+                        paidFor = "Reservation";
+                    } else if (payment.getPackGamefy() != null) {
+                        paidFor = "Pack Gamefy: " + payment.getPackGamefy().getName();
+                    } else if (payment.getPackCoaching() != null) {
+                        paidFor = "Pack Coaching: " + payment.getPackCoaching().getName();
+                    }
+
+                    return PaymentDtos.AllPaymentResponse.builder()
+                            .id(payment.getId())
+                            .paidFor(paidFor)
+                            .totalPrice(payment.getTotalPrice())
+                            .createdAt(payment.getCreatedAt())
                             .build();
                 })
                 .toList();

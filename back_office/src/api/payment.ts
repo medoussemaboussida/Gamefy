@@ -5,6 +5,7 @@ export interface AllPaymentResponseDto {
     userName: string;
     paidFor: string;
     totalPrice: number;
+    createdAt: string;
 }
 
 export const paymentApi = {

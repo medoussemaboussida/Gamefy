@@ -162,10 +162,10 @@ export default function PaymentManagement() {
                             <TableHeader>
                                 <TableRow className="bg-gray-50 dark:bg-white/5">
                                     <TableCell className="px-5 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                        ID
-                                    </TableCell>
-                                    <TableCell className="px-5 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                                         User
+                                    </TableCell>
+                                    <TableCell className="px-5 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 text-center">
+                                        Date
                                     </TableCell>
                                     <TableCell className="px-5 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 text-center">
                                         Paid For
@@ -192,12 +192,14 @@ export default function PaymentManagement() {
                                 ) : (
                                     currentPayments.map((payment) => (
                                         <TableRow key={payment.id}>
-                                            <TableCell className="px-5 py-4 text-theme-sm text-gray-500">
-                                                #{payment.id}
-                                            </TableCell>
                                             <TableCell className="px-5 py-4">
                                                 <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
                                                     {payment.userName}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="px-5 py-4 text-center">
+                                                <span className="text-gray-500 text-theme-sm dark:text-gray-400">
+                                                    {new Date(payment.createdAt + "Z").toLocaleString()}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="px-5 py-4 text-center">

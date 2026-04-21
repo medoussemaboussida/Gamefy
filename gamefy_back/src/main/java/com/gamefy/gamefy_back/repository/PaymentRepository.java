@@ -19,4 +19,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
            "WHERE LOWER(u.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Payment> searchByUserName(@Param("keyword") String keyword);
+
+    List<Payment> findByUserIdOrderByCreatedAtDesc(Integer userId);
 }

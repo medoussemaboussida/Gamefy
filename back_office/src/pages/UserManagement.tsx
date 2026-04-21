@@ -475,7 +475,7 @@ export default function UserManagement() {
                         <TableCell className="px-5 py-4 text-gray-900 text-start text-theme-sm dark:text-gray-400">
                           {(isAdmin || currentUserRole === "WEB_MASTER") &&
                             currentUserId !== user.id ? (
-                            <div className="relative">
+                            <div className="relative w-fit">
                               <button
                                 onClick={() =>
                                   setStatusDropdownOpen(
@@ -504,6 +504,7 @@ export default function UserManagement() {
                               <Dropdown
                                 isOpen={statusDropdownOpen === user.id}
                                 onClose={() => setStatusDropdownOpen(null)}
+                                className="w-32 mt-2"
                               >
                                 <DropdownItem
                                   className="text-white"

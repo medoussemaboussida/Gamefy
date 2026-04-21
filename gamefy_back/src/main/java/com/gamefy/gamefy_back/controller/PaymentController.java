@@ -256,4 +256,11 @@ public class PaymentController {
     public ResponseEntity<List<PaymentDtos.AllPaymentResponse>> searchPayments(@RequestParam String keyword) {
         return ResponseEntity.ok(paymentService.searchPayments(keyword));
     }
+
+    @GetMapping("/my-history")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<List<PaymentDtos.AllPaymentResponse>> getMyPaymentHistory(
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(paymentService.getMyPaymentHistory(currentUser.getId()));
+    }
 }

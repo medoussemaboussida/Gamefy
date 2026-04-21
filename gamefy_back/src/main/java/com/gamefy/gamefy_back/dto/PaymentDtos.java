@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 public class PaymentDtos {
 
@@ -33,6 +34,7 @@ public class PaymentDtos {
         private String userName;
         private String paidFor;
         private Double totalPrice;
+        private LocalDateTime createdAt;
     }
 
     @Data

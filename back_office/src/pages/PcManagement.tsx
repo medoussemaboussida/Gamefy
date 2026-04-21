@@ -397,7 +397,7 @@ export default function PCManagement() {
                       </TableCell>
                       <TableCell className="px-5 py-4 text-gray-900 text-start text-theme-sm dark:text-gray-400">
                         {isWebMasterOrAdmin ? (
-                          <div className="relative">
+                          <div className="relative w-fit">
                             <button
                               onClick={() =>
                                 setStatusDropdownOpen(
@@ -420,6 +420,7 @@ export default function PCManagement() {
                             <Dropdown
                               isOpen={statusDropdownOpen === pc.id}
                               onClose={() => setStatusDropdownOpen(null)}
+                              className="w-44 mt-2"
                             >
                               {statusOptions
                                 .filter((opt) => opt.value !== "ALL")

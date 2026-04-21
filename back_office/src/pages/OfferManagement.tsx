@@ -250,7 +250,7 @@ export default function OfferManagement() {
                       </TableCell>
                       <TableCell className="px-5 py-4 text-gray-900 text-start text-theme-sm dark:text-gray-400">
                         {canManage ? (
-                          <div className="relative">
+                          <div className="relative w-fit">
                             <button
                               onClick={() =>
                                 setStatusDropdownOpen(statusDropdownOpen === offer.id ? null : offer.id)
@@ -268,6 +268,7 @@ export default function OfferManagement() {
                             <Dropdown
                               isOpen={statusDropdownOpen === offer.id}
                               onClose={() => setStatusDropdownOpen(null)}
+                              className="w-32 mt-2"
                             >
                               {statusOptions
                                 .filter((opt) => opt.value !== "ALL")
