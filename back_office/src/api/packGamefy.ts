@@ -17,6 +17,13 @@ export interface PackGamefyDto {
     benefits: PackBenefitDto[];
 }
 
+export interface UserPackResponseDto {
+    firstName: string;
+    lastName: string;
+    email: string;
+    status: "ACTIVE" | "CONSUMED" | "EXPIRED";
+}
+
 export interface CreatePackGamefyDto {
     name: string;
     price: number;
@@ -66,5 +73,9 @@ export const packGamefyApi = {
 
     renewPackForPlayer: async (dto: AssignPackDto): Promise<string> => {
         return apiClient.post("/gamefy/pack-gamefies/renew-pack", dto);
+    },
+
+    getPackPlayers: async (id: number): Promise<UserPackResponseDto[]> => {
+        return apiClient.get(`/gamefy/pack-gamefies/${id}/players`);
     }
 };

@@ -2,6 +2,7 @@ package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.CreatePackGamefyDto;
 import com.gamefy.gamefy_back.dto.PackGamefyDto;
+import com.gamefy.gamefy_back.dto.UserPackResponseDto;
 import com.gamefy.gamefy_back.model.GamefyPackBenefit;
 import com.gamefy.gamefy_back.model.PackGamefy;
 import com.gamefy.gamefy_back.model.Payment;
@@ -118,6 +119,20 @@ public class PackGamefyService {
         userPackGamefyRepository.deleteAll(junctionRecords);
 
         repository.delete(pack);
+    }
+
+    public List<UserPackResponseDto> getPlayersByPackId(Integer packId) {
+        PackGamefy pack = repository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack not found with id: " + packId));
+
+        return userPackGamefyRepository.findByPackGamefy(pack).stream()
+                .map(up -> UserPackResponseDto.builder()
+                        .firstName(up.getUser().getFirstName())
+                        .lastName(up.getUser().getLastName())
+                        .email(up.getUser().getEmail())
+                        .status(up.getStatus())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private PackGamefyDto mapToDto(PackGamefy pack) {

@@ -3,6 +3,7 @@ package com.gamefy.gamefy_back.controller;
 import com.gamefy.gamefy_back.dto.AssignPackDto;
 import com.gamefy.gamefy_back.dto.PackCoachingAdminDto;
 import com.gamefy.gamefy_back.dto.PackCoachingDto;
+import com.gamefy.gamefy_back.dto.UserPackResponseDto;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.service.PackCoachingService;
 import jakarta.validation.Valid;
@@ -77,6 +78,12 @@ public class PackCoachingController {
     public ResponseEntity<String> renewCoachingPack(@RequestBody AssignPackDto request) {
         service.renewPackForUser(request.getPackId(), request.getUserId());
         return ResponseEntity.ok("Coaching pack renewed successfully for player");
+    }
+
+    @GetMapping("/{id}/players")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<List<UserPackResponseDto>> getPlayersByPackId(@PathVariable Integer id) {
+        return ResponseEntity.ok(service.getPlayersByPackId(id));
     }
 
     @DeleteMapping("/{id}")

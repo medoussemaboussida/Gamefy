@@ -2,6 +2,7 @@ package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.PackCoachingAdminDto;
 import com.gamefy.gamefy_back.dto.PackCoachingDto;
+import com.gamefy.gamefy_back.dto.UserPackResponseDto;
 import com.gamefy.gamefy_back.model.PackCoaching;
 import com.gamefy.gamefy_back.model.Payment;
 import com.gamefy.gamefy_back.model.User;
@@ -216,6 +217,20 @@ public class PackCoachingService {
     private double calculateHoursFromPack(PackCoaching pack) {
         if (pack.getHours() == null) return 0.0;
         return pack.getHours().getHour() + (pack.getHours().getMinute() / 60.0);
+    }
+
+    public List<UserPackResponseDto> getPlayersByPackId(Integer packId) {
+        PackCoaching pack = repository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack not found: " + packId));
+
+        return userPackCoachingRepository.findByPackCoaching(pack).stream()
+                .map(up -> UserPackResponseDto.builder()
+                        .firstName(up.getUser().getFirstName())
+                        .lastName(up.getUser().getLastName())
+                        .email(up.getUser().getEmail())
+                        .status(up.getStatus())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private PackCoachingDto mapToDto(PackCoaching pack) {

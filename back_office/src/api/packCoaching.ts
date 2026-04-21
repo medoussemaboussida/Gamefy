@@ -1,4 +1,5 @@
 import { apiClient } from "./apiClient";
+import { UserPackResponseDto } from "./packGamefy";
 
 export interface PackCoachingDto {
     id: number;
@@ -42,7 +43,11 @@ export const packCoachingApi = {
     /**
      * Renew a coaching pack for a player (Admin / WebMaster)
      */
-    renewPackForPlayer: async (dto: { userId: number; packId: number }): Promise<string> => {
-        return await apiClient.post("/gamefy/pack-coachings/renew-pack", dto);
+    renewPackForPlayer: async (dto: any): Promise<string> => {
+        return apiClient.post("/gamefy/pack-coachings/renew-pack", dto);
     },
+
+    getPackPlayers: async (id: number): Promise<UserPackResponseDto[]> => {
+        return apiClient.get(`/gamefy/pack-coachings/${id}/players`);
+    }
 };

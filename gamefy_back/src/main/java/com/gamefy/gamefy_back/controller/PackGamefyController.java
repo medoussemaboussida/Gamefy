@@ -3,6 +3,7 @@ package com.gamefy.gamefy_back.controller;
 import com.gamefy.gamefy_back.dto.AssignPackDto;
 import com.gamefy.gamefy_back.dto.CreatePackGamefyDto;
 import com.gamefy.gamefy_back.dto.PackGamefyDto;
+import com.gamefy.gamefy_back.dto.UserPackResponseDto;
 import com.gamefy.gamefy_back.service.PackGamefyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,12 @@ public class PackGamefyController {
     public ResponseEntity<Void> deletePack(@PathVariable Integer id) {
         service.deletePack(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/players")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<List<UserPackResponseDto>> getPlayersByPackId(@PathVariable Integer id) {
+        return ResponseEntity.ok(service.getPlayersByPackId(id));
     }
 
     @PostMapping("/assign-to-player")

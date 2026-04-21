@@ -17,9 +17,10 @@ import Pagination from "../components/ui/pagination/Pagination";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
-import { ChevronDownIcon, TrashBinIcon, InfoIcon } from "../icons";
+import { ChevronDownIcon, TrashBinIcon, InfoIcon, GroupIcon } from "../icons";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
 import PackDescriptionModal from "../components/modals/PackDescriptionModal";
+import CoachingPackPlayersModal from "../components/modals/CoachingPackPlayersModal";
 
 export default function CoachingPackManagement() {
     const [packs, setPacks] = useState<PackCoachingDto[]>([]);
@@ -38,6 +39,7 @@ export default function CoachingPackManagement() {
     const [deleteLoading, setDeleteLoading] = useState(false);
 
     const [isDescModalOpen, setIsDescModalOpen] = useState(false);
+    const [isPlayersModalOpen, setIsPlayersModalOpen] = useState(false);
     const [viewingPack, setViewingPack] = useState<PackCoachingDto | null>(null);
 
     const itemsPerPage = 8;
@@ -220,6 +222,16 @@ export default function CoachingPackManagement() {
                                                 <TableCell className="px-5 py-4 text-start">
                                                     <div className="flex items-center gap-2">
                                                         <button
+                                                            onClick={() => {
+                                                                setViewingPack(pack);
+                                                                setIsPlayersModalOpen(true);
+                                                            }}
+                                                            className="p-2 transition-colors duration-200 rounded-lg text-gray-500 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10"
+                                                            title="View Players"
+                                                        >
+                                                            <GroupIcon className="w-5 h-5" />
+                                                        </button>
+                                                        <button
                                                             onClick={() => handleShowDesc(pack)}
                                                             className="p-2 transition-colors duration-200 rounded-lg text-gray-500 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10"
                                                             title="View Description"
@@ -269,6 +281,16 @@ export default function CoachingPackManagement() {
                 onClose={() => setIsDescModalOpen(false)}
                 title={viewingPack?.name || ""}
                 description={viewingPack?.description || ""}
+            />
+
+            <CoachingPackPlayersModal
+                isOpen={isPlayersModalOpen}
+                onClose={() => {
+                    setIsPlayersModalOpen(false);
+                    setViewingPack(null);
+                }}
+                packId={viewingPack?.id || null}
+                packName={viewingPack?.name || ""}
             />
         </>
     );

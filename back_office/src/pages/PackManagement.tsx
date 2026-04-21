@@ -17,8 +17,9 @@ import toast from "react-hot-toast";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
-import { TrashBinIcon, PencilIcon, ChevronDownIcon, EyeIcon } from "../icons";
+import { TrashBinIcon, PencilIcon, ChevronDownIcon, EyeIcon, GroupIcon } from "../icons";
 import PackModal from "../components/modals/PackModal";
+import PackPlayersModal from "../components/modals/PackPlayersModal";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
 import Pagination from "../components/ui/pagination/Pagination";
 
@@ -30,6 +31,7 @@ export default function PackManagement() {
     const [isPackModalOpen, setIsPackModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
+    const [isPlayersModalOpen, setIsPlayersModalOpen] = useState(false);
     const [selectedPack, setSelectedPack] = useState<PackGamefyDto | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -100,6 +102,22 @@ export default function PackManagement() {
     const handleDelete = (pack: PackGamefyDto) => {
         setSelectedPack(pack);
         setIsDeleteModalOpen(true);
+    };
+
+    const getAggregatedBenefits = (benefits: any[]) => {
+        const counts: { [key: string]: { count: number; label: string } } = {};
+        benefits.forEach((b) => {
+            let detail = "";
+            if (b.rateRule === "DISCOUNT" && b.discountType && b.discountValue !== undefined) {
+                detail = b.discountType === "PERCENTAGE" ? ` (${b.discountValue}%)` : ` (${b.discountValue.toFixed(3)} TND)`;
+            }
+            const key = `${b.benefitType}_${b.rateRule}${detail}`;
+            if (!counts[key]) {
+                counts[key] = { count: 0, label: `${b.benefitType}_${b.rateRule}${detail}` };
+            }
+            counts[key].count++;
+        });
+        return Object.values(counts);
     };
 
     return (
@@ -226,9 +244,9 @@ export default function PackManagement() {
                                                 </TableCell>
                                                 <TableCell className="px-5 py-4 text-start">
                                                     <div className="flex flex-wrap gap-1">
-                                                        {pack.benefits.map((b, i) => (
+                                                        {getAggregatedBenefits(pack.benefits).map((b, i) => (
                                                             <Badge key={i} size="sm" color="info">
-                                                                {b.benefitType} - {b.rateRule}
+                                                                {b.label} {b.count > 1 ? `x ${b.count}` : ""}
                                                             </Badge>
                                                         ))}
                                                         {pack.benefits.length === 0 && (
@@ -249,6 +267,16 @@ export default function PackManagement() {
                                                     </button>
                                                 </TableCell>
                                                 <TableCell className="px-5 py-4 text-start flex items-center gap-3">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedPack(pack);
+                                                            setIsPlayersModalOpen(true);
+                                                        }}
+                                                        className="text-gray-500 hover:text-brand-500 transition-colors"
+                                                        title="View Players"
+                                                    >
+                                                        <GroupIcon className="w-5 h-5" />
+                                                    </button>
                                                     <button
                                                         onClick={() => handleEdit(pack)}
                                                         className="text-gray-500 hover:text-brand-500 transition-colors"
@@ -326,6 +354,16 @@ export default function PackManagement() {
                 onConfirm={handleConfirmDelete}
                 userName={selectedPack?.name || "this pack"}
                 loading={deleteLoading}
+            />
+
+            <PackPlayersModal
+                isOpen={isPlayersModalOpen}
+                onClose={() => {
+                    setIsPlayersModalOpen(false);
+                    setSelectedPack(null);
+                }}
+                packId={selectedPack?.id || null}
+                packName={selectedPack?.name || ""}
             />
         </>
     );
