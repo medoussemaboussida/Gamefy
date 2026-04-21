@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getWorkSchedule, getAvailablePCs, createReservation, getCoachSessions, getAllFixedPrices, getActiveOffer } from "../../api/reservation";
 import TimeSelectionModal from "../../modals/TimeSelectionModal";
+import toast from "react-hot-toast";
+import { ArrowLeft } from "lucide-react";
 
 import StepRoomType from "./reservation_form/StepRoomType";
 import StepGameSelection from "./reservation_form/StepGameSelection";
@@ -68,7 +70,6 @@ export default function ReservationPage() {
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
     const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
     const [fixedPrices, setFixedPrices] = useState([]);
     const [pricingLoading, setPricingLoading] = useState(false);
@@ -305,7 +306,21 @@ export default function ReservationPage() {
                 packDiscountIdsUsed: selectedDiscounts.length > 0 ? selectedDiscounts.map(d => d.id) : null,
                 coachingPackHoursUsed: coachingPackHoursUsed > 0 ? coachingPackHoursUsed : null,
             });
-            setSuccess(true);
+            
+            toast.success("Reservation created successfully!", {
+                style: {
+                    border: '1px solid #1CF3CA',
+                    padding: '16px',
+                    color: '#1CF3CA',
+                    background: '#24003E',
+                    boxShadow: '0 0 15px rgba(28, 243, 202, 0.4)',
+                },
+                iconTheme: {
+                    primary: '#1CF3CA',
+                    secondary: '#24003E',
+                },
+            });
+
             setTimeout(() => navigate("/player/dashboard"), 2000);
         } catch (e) {
             setError(e.message || "Failed to create reservation");
@@ -474,13 +489,16 @@ export default function ReservationPage() {
                         </div>
                     )}
 
-                    {success && (
-                        <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm text-center">
-                            🎉 Reservation created successfully! Redirecting...
-                        </div>
-                    )}
-
-                    {/* ─── STEP 1: Room Type ─── */}
+                    {/* Back Button */}
+                    <div className="max-w-4xl mx-auto mb-6">
+                        <button
+                            onClick={() => navigate("/player/rooms")}
+                            className="flex items-center gap-2 text-white/50 hover:text-[#1CF3CA] transition-colors font-bold font-['Inter'] uppercase tracking-widest text-[10px]"
+                        >
+                            <ArrowLeft size={16} />
+                            Exit
+                        </button>
+                    </div>
                     {step === 1 && (
                         <StepRoomType
                             reservationType={reservationType}
