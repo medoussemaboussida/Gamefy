@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
 import { packGamefyApi } from "../../api/packGamefy";
 import { packCoachingApi } from "../../api/packCoaching";
-import { Gift, Info, Check, CreditCard, Clock, User, RefreshCw } from "lucide-react";
+import { Gift, Info, Check, CreditCard, Clock, User, RefreshCw, Zap } from "lucide-react";
 import toast from "react-hot-toast";
 import PaymentModal from "../../components/payment/PaymentModal";
 import CoachingPaymentModal from "../../components/payment/CoachingPaymentModal";
 import PackDescriptionModal from "../../modals/PackDescriptionModal";
 import CoachingPackDescriptionModal from "../../modals/CoachingPackDescriptionModal";
+import PackBenefitsModal from "../../modals/PackBenefitsModal";
 
 const Packs = () => {
     const [packs, setPacks] = useState([]);
@@ -20,6 +21,9 @@ const Packs = () => {
     const [coachingLoading, setCoachingLoading] = useState(true);
     const [selectedCoachingPack, setSelectedCoachingPack] = useState(null);
     const [isCoachingModalOpen, setIsCoachingModalOpen] = useState(false);
+
+    // Benefits modal
+    const [isBenefitsModalOpen, setIsBenefitsModalOpen] = useState(false);
 
     // Payment states
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -86,6 +90,16 @@ const Packs = () => {
 
     const closeModal = () => {
         setIsModalOpen(false);
+        setSelectedPack(null);
+    };
+
+    const openBenefits = (pack) => {
+        setSelectedPack(pack);
+        setIsBenefitsModalOpen(true);
+    };
+
+    const closeBenefitsModal = () => {
+        setIsBenefitsModalOpen(false);
         setSelectedPack(null);
     };
 
@@ -220,54 +234,32 @@ const Packs = () => {
 
                                 <h3 className="text-xl font-bold mb-4 group-hover:text-[#FF89EB] transition-colors">{pack.name}</h3>
 
-                                <div className="flex-grow space-y-3 mb-6">
-                                    {pack.benefits?.length > 0 ? (() => {
-                                        const pcHoursCount = pack.benefits.filter(
-                                            b => b.benefitType === "PC" && b.rateRule === "HOURS"
-                                        ).length;
-                                        const otherBenefits = pack.benefits.filter(
-                                            b => !(b.benefitType === "PC" && b.rateRule === "HOURS")
-                                        );
-                                        return (
-                                            <>
-                                                {pcHoursCount > 0 && (
-                                                    <div className="flex items-center gap-3 text-sm text-gray-300">
-                                                        <div className="w-5 h-5 rounded-full bg-[#1CF3CA]/20 flex items-center justify-center flex-shrink-0">
-                                                            <Check size={12} className="text-[#1CF3CA]" />
-                                                        </div>
-                                                        <span>
-                                                            PC - HOURS
-                                                            {pcHoursCount > 1 && (
-                                                                <span className="ml-1 text-[#1CF3CA] font-semibold">
-                                                                    × {pcHoursCount}
-                                                                </span>
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                {otherBenefits.map((benefit, index) => (
-                                                    <div key={index} className="flex items-center gap-3 text-sm text-gray-300">
-                                                        <div className="w-5 h-5 rounded-full bg-[#1CF3CA]/20 flex items-center justify-center flex-shrink-0">
-                                                            <Check size={12} className="text-[#1CF3CA]" />
-                                                        </div>
-                                                        <span>{benefit.benefitType} - {benefit.rateRule}</span>
-                                                    </div>
-                                                ))}
-                                            </>
-                                        );
-                                    })() : (
-                                        <p className="text-sm text-gray-500 italic">No specific benefits listed.</p>
-                                    )}
+                                <div className="flex-grow flex flex-col justify-center py-6">
+                                    <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/[0.03] border border-white/5 group-hover:border-[#1CF3CA]/20 transition-all">
+                                        <Zap size={32} className="text-[#1CF3CA]/30 mb-2 group-hover:text-[#1CF3CA]/70 transition-colors" />
+                                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest text-center">
+                                            {pack.benefits?.length || 0} Exclusive Benefits
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-col gap-3">
-                                    <button
-                                        onClick={() => openDescription(pack)}
-                                        className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white font-semibold transition-all hover:bg-white/10 flex items-center justify-center gap-2"
-                                    >
-                                        <Info size={18} />
-                                        Show Description
-                                    </button>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => openDescription(pack)}
+                                            className="py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white font-semibold transition-all hover:bg-white/10 flex items-center justify-center gap-2 text-sm"
+                                        >
+                                            <Info size={16} />
+                                            Details
+                                        </button>
+                                        <button
+                                            onClick={() => openBenefits(pack)}
+                                            className="py-3 px-4 rounded-xl bg-[#1CF3CA]/5 border border-[#1CF3CA]/10 text-[#1CF3CA] font-semibold transition-all hover:bg-[#1CF3CA]/10 hover:border-[#1CF3CA]/30 flex items-center justify-center gap-2 text-sm"
+                                        >
+                                            <Zap size={16} />
+                                            Benefits
+                                        </button>
+                                    </div>
                                     {purchasedPackIds.includes(pack.id) ? (
                                         <div className="w-full py-3 px-4 rounded-xl bg-white/5 border border-[#1CF3CA]/30 text-[#1CF3CA] font-semibold flex items-center justify-center gap-2 cursor-default">
                                             <Check size={18} />
@@ -452,6 +444,13 @@ const Packs = () => {
                 onClose={closeModal}
                 packName={selectedPack?.name}
                 description={selectedPack?.description}
+            />
+
+            <PackBenefitsModal
+                isOpen={isBenefitsModalOpen}
+                onClose={closeBenefitsModal}
+                benefits={selectedPack?.benefits}
+                packName={selectedPack?.name}
             />
 
             <CoachingPackDescriptionModal
