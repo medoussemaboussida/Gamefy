@@ -38,6 +38,7 @@ public class ReservationService {
     private final PcGameRepository pcGameRepository;
     private final UserPackGamefyRepository userPackGamefyRepository;
     private final UserPackCoachingRepository userPackCoachingRepository;
+    private final NotificationService notificationService;
 
     /**
      * Create a reservation with multiple PCs.
@@ -451,6 +452,10 @@ public class ReservationService {
         }
 
         log.info("Admin updated reservation ID={} status to {}", reservationId, status);
+
+        // Send real-time notification to the player
+        notificationService.sendReservationStatusNotification(saved, oldStatus, status);
+
         return mapToDto(saved);
     }
 

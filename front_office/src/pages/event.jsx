@@ -4,6 +4,7 @@ import { Search, Bell, Calendar, MapPin, ExternalLink, Loader2, ChevronDown, Fil
 import { eventApi } from "../api/event";
 import toast from "react-hot-toast";
 import EventDescriptionModal from "../modals/EventDescriptionModal";
+import NotificationBell from "../components/NotificationBell";
 
 const EventsPage = () => {
     const [events, setEvents] = useState([]);
@@ -139,49 +140,93 @@ const EventsPage = () => {
         <div className="h-screen bg-[#24003E] flex overflow-hidden font-sans">
             <Sidebar />
 
-            <main className="flex-1 px-10 md:px-12 pt-8 pb-12 transition-all duration-300 overflow-y-auto">
+            <main className="flex-1 px-4 md:px-12 pt-6 pb-12 transition-all duration-300 overflow-y-auto">
                 <div className="max-w-[1400px] mx-auto space-y-12">
 
                     {/* Header Section */}
-                    <header className="flex flex-col md:flex-row items-center justify-between w-full gap-6">
-                        <div className="pl-16 md:pl-0 self-start md:self-auto">
-                            <h1 className="text-3xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
-                            E-sport events and tournaments
+                    <header className="flex items-center justify-between w-full mb-6">
+                        <div className="pl-14 md:pl-0">
+                            <h1 className="text-2xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
+                                E-sport events
                             </h1>
-                            <p className="text-gray-400">Making memories, Good times and great vibes</p>
+                            <p className="text-gray-400 hidden md:block text-sm">Tournaments and community gatherings</p>
                         </div>
 
-                        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
+                        <div className="flex items-center gap-3">
+                            {/* Desktop Filter */}
+                            <div className="hidden md:flex items-center gap-3 mr-2">
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsStatusOpen(!isStatusOpen)}
+                                        className="bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8] px-6 h-[40px] rounded-[18px] text-white font-medium flex items-center gap-2 hover:opacity-90 transition-all text-[15px] whitespace-nowrap"
+                                    >
+                                        <Filter size={18} />
+                                        <span>{statusOptions.find(opt => opt.value === selectedStatus)?.label}</span>
+                                        <ChevronDown size={18} className={`transition-transform duration-300 ${isStatusOpen ? "rotate-180" : ""}`} />
+                                    </button>
 
-                            {/* Status Filter Dropdown */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsStatusOpen(!isStatusOpen)}
-                                    className="bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8] px-6 h-[40px] rounded-[18px] text-white font-medium flex items-center gap-2 hover:opacity-90 transition-all text-[15px]"
-                                >
-                                    <Filter size={18} />
-                                    <span>{statusOptions.find(opt => opt.value === selectedStatus)?.label}</span>
-                                    <ChevronDown size={18} className={`transition-transform duration-300 ${isStatusOpen ? "rotate-180" : ""}`} />
-                                </button>
+                                    {isStatusOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-10"
+                                                onClick={() => setIsStatusOpen(false)}
+                                            ></div>
+                                            <div className="absolute right-0 mt-3 w-56 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
+                                                {statusOptions.map((option) => (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => {
+                                                            setSelectedStatus(option.value);
+                                                            setIsStatusOpen(false);
+                                                        }}
+                                                        className={`w-full flex items-center px-5 py-3 rounded-2xl text-[14px] font-medium transition-all ${selectedStatus === option.value
+                                                            ? "bg-[#1CF3CA] text-black"
+                                                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                                                            }`}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
 
-                                {isStatusOpen && (
-                                    <>
-                                        <div
-                                            className="fixed inset-0 z-10"
-                                            onClick={() => setIsStatusOpen(false)}
-                                        ></div>
-                                        <div className="absolute right-0 mt-3 w-56 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
-                                            {statusOptions.map((option) => (
-                                                <button
-                                                    key={option.value}
-                                                    onClick={() => {
-                                                        setSelectedStatus(option.value);
-                                                        setIsStatusOpen(false);
-                                                    }}
-                                                    className={`w-full flex items-center px-5 py-3 rounded-2xl text-[14px] font-medium transition-all ${selectedStatus === option.value
-                                                        ? "bg-[#1CF3CA] text-black"
-                                                        : "text-white/70 hover:bg-white/5 hover:text-white"
-                                                        }`}
+                            <NotificationBell />
+                        </div>
+                    </header>
+
+                    {/* Mobile Filter Row (Visible ONLY on mobile) */}
+                    <div className="flex md:hidden flex-row items-center justify-start gap-4 w-full pl-13 mb-8">
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsStatusOpen(!isStatusOpen)}
+                                className="bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8] px-4 h-[36px] rounded-full text-white font-medium flex items-center gap-2 hover:opacity-90 transition-all text-[13px] whitespace-nowrap shadow-lg shadow-black/20"
+                            >
+                                <Filter size={16} />
+                                <span>{statusOptions.find(opt => opt.value === selectedStatus)?.label}</span>
+                                <ChevronDown size={16} className={`transition-transform duration-300 ${isStatusOpen ? "rotate-180" : ""}`} />
+                            </button>
+
+                            {isStatusOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-10"
+                                        onClick={() => setIsStatusOpen(false)}
+                                    ></div>
+                                    <div className="absolute left-0 mt-3 w-56 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
+                                        {statusOptions.map((option) => (
+                                            <button
+                                                key={option.value}
+                                                onClick={() => {
+                                                    setSelectedStatus(option.value);
+                                                    setIsStatusOpen(false);
+                                                }}
+                                                className={`w-full flex items-center px-5 py-3 rounded-2xl text-[14px] font-medium transition-all ${selectedStatus === option.value
+                                                    ? "bg-[#1CF3CA] text-black"
+                                                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                                                    }`}
                                                 >
                                                     {option.label}
                                                 </button>
@@ -189,9 +234,8 @@ const EventsPage = () => {
                                         </div>
                                     </>
                                 )}
-                            </div>
                         </div>
-                    </header>
+                    </div>
 
                     {/* Events Horizontal Scroll Section */}
                     <div className="space-y-8">

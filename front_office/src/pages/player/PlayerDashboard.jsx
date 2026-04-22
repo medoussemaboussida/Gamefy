@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
-import { Search, Bell, CircleDot } from 'lucide-react';
+import { Search, CircleDot } from 'lucide-react';
+import NotificationBell from '../../components/NotificationBell';
 import roomImg from '../../assets/images/room.png';
 import eventImg from '../../assets/images/event.png';
 import { getUserId } from '../../utils/jwt';
@@ -65,21 +66,14 @@ const PlayerDashboard = () => {
     return (
         <div className="h-screen bg-[#24003E] flex overflow-hidden">
             <Sidebar />
-            <main className="flex-1 px-10 md:px-12 pt-8 pb-12 transition-all duration-300 overflow-y-auto">
+            <main className="flex-1 px-4 md:px-12 pt-6 pb-12 transition-all duration-300 overflow-y-auto">
                 <div className="max-w-[1400px] mx-auto space-y-10 md:space-y-16 flex flex-col items-center">
-                    {/* Header Section */}
-                    <header className="flex flex-col md:flex-row items-center justify-between w-full gap-6 md:gap-0">
-                        <h2 className="text-white text-[18px] font-bold font-['Inter'] self-start md:self-auto pl-14 md:pl-0">
+                    <header className="flex items-center justify-between w-full h-10">
+                        <h2 className="text-white text-[18px] font-bold font-['Inter'] pl-14 md:pl-0">
                             Player Dashboard
                         </h2>
-
-                        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
-
-                            {/* Notification Icon */}
-                            <button className="relative p-2 text-[#1CF3CA] hover:bg-white/5 rounded-full transition-all flex-shrink-0">
-                                <Bell size={24} />
-                                <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF89EB] rounded-full"></span>
-                            </button>
+                        <div className="flex items-center gap-4 md:gap-6">
+                            <NotificationBell />
                         </div>
                     </header>
 

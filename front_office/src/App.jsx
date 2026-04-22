@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import VitrinePage from "./pages/vitrine/VitrinePage";
@@ -19,6 +19,10 @@ import EventsPage from "./pages/event";
 import PlayerPacks from "./pages/player/Packs";
 import ReservationPage from "./pages/player/ReservationPage";
 import CoachPacks from "./pages/coach/CoachPacks";
+import NotificationBell from "./components/NotificationBell";
+
+// Pages where the floating bell should NOT appear
+const PUBLIC_ROUTES = ["/", "/signin", "/signup", "/become-coach", "/forgot-password", "/reset-password", "/verify-2fa"];
 
 function App() {
   return (
@@ -62,3 +66,4 @@ function App() {
 }
 
 export default App
+

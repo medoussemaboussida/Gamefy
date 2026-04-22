@@ -9,6 +9,7 @@ import CoachingPaymentModal from "../../components/payment/CoachingPaymentModal"
 import PackDescriptionModal from "../../modals/PackDescriptionModal";
 import CoachingPackDescriptionModal from "../../modals/CoachingPackDescriptionModal";
 import PackBenefitsModal from "../../modals/PackBenefitsModal";
+import NotificationBell from "../../components/NotificationBell";
 
 const Packs = () => {
     const [packs, setPacks] = useState([]);
@@ -194,14 +195,17 @@ const Packs = () => {
             <Sidebar />
 
             <main className="flex-1 overflow-y-auto">
-                <div className="max-w-[1400px] mx-auto px-10 md:px-12 pt-8 pb-12 transition-all duration-300">
+                <div className="max-w-[1400px] mx-auto px-4 md:px-12 pt-6 pb-12 transition-all duration-300">
 
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                    <div className="flex items-center justify-between w-full mb-8">
                         <div className="pl-16 md:pl-0">
-                            <h1 className="text-3xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
-                            Gaming packs
+                            <h1 className="text-2xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
+                                Gamefy packs
                             </h1>
-                         <p className="text-gray-400">Exclusive bundles designed to level up your experience.</p>
+                            <p className="text-gray-400 hidden md:block text-sm">Exclusive bundles designed to level up your experience.</p>
+                        </div>
+                        <div className="flex items-center gap-4 md:gap-6">
+                            <NotificationBell />
                         </div>
                     </div>
 
@@ -302,14 +306,24 @@ const Packs = () => {
                     </div>
                 )}
 
+                {/* ── Section Separator ── */}
+                <div className="my-16 relative">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-transparent bg-gradient-to-r from-transparent via-[#2BDFC8]/30 to-transparent"></div>
+                    </div>
+                    <div className="relative flex justify-center">
+                        <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#2BDFC8] to-transparent shadow-[0_0_20px_rgba(43,223,200,0.5)]"></div>
+                    </div>
+                </div>
+
                 {/* ── Coaching Packs Section ── */}
-                <div className="mb-12">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
-                        <div className="pl-16 md:pl-0">
-                            <h1 className="text-3xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#FF89EB]">
+                <div className="mt-16 mb-12">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                        <div className="pl-8 md:pl-0">
+                            <h1 className="text-2xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#FF89EB]">
                                 Coaching Packs
                             </h1>
-                            <p className="text-gray-400">Level up your skills with personal coaching sessions.</p>
+                            <p className="text-gray-400 hidden md:block text-sm">Level up your skills with personal coaching sessions.</p>
                         </div>
                     </div>
 
