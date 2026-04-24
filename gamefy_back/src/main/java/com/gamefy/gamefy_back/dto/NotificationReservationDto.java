@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NotificationDto {
+public class NotificationReservationDto {
     private Integer id;
     private Integer userId;
     private String title;

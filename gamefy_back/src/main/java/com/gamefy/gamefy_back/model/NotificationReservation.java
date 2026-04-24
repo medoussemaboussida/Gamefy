@@ -9,12 +9,12 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "notification")
+@Table(name = "notification_reservation")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Notification {
+public class NotificationReservation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

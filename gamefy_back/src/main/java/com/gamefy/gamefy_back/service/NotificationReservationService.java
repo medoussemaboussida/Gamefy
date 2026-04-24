@@ -1,11 +1,11 @@
 package com.gamefy.gamefy_back.service;
 
-import com.gamefy.gamefy_back.dto.NotificationDto;
-import com.gamefy.gamefy_back.model.Notification;
+import com.gamefy.gamefy_back.dto.NotificationReservationDto;
+import com.gamefy.gamefy_back.model.NotificationReservation;
 import com.gamefy.gamefy_back.model.Reservation;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.enums.Reservation_Status;
-import com.gamefy.gamefy_back.repository.NotificationRepository;
+import com.gamefy.gamefy_back.repository.NotificationReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -18,9 +18,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class NotificationService {
+public class NotificationReservationService {
 
-    private final NotificationRepository notificationRepository;
+    private final NotificationReservationRepository notificationReservationRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
 
@@ -51,7 +51,7 @@ public class NotificationService {
         };
 
         // Persist
-        Notification notification = Notification.builder()
+        NotificationReservation notification = NotificationReservation.builder()
                 .user(player)
                 .title(title)
                 .message(message)
@@ -61,8 +61,8 @@ public class NotificationService {
                 .isRead(false)
                 .build();
 
-        Notification saved = notificationRepository.save(notification);
-        NotificationDto dto = mapToDto(saved);
+        NotificationReservation saved = notificationReservationRepository.save(notification);
+        NotificationReservationDto dto = mapToDto(saved);
 
         // Push via WebSocket to the specific user
         String destination = "/queue/notifications";
@@ -76,8 +76,8 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationDto> getNotifications(Integer userId) {
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)
+    public List<NotificationReservationDto> getNotifications(Integer userId) {
+        return notificationReservationRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -85,12 +85,12 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public long getUnreadCount(Integer userId) {
-        return notificationRepository.countByUserIdAndIsReadFalse(userId);
+        return notificationReservationRepository.countByUserIdAndIsReadFalse(userId);
     }
 
     @Transactional
     public void markAsRead(Integer notificationId, Integer userId) {
-        Notification notification = notificationRepository.findById(notificationId)
+        NotificationReservation notification = notificationReservationRepository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
 
         if (!notification.getUser().getId().equals(userId)) {
@@ -98,18 +98,36 @@ public class NotificationService {
         }
 
         notification.setRead(true);
-        notificationRepository.save(notification);
+        notificationReservationRepository.save(notification);
     }
 
     @Transactional
     public void markAllAsRead(Integer userId) {
-        List<Notification> unread = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
+        List<NotificationReservation> unread = notificationReservationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
         unread.forEach(n -> n.setRead(true));
-        notificationRepository.saveAll(unread);
+        notificationReservationRepository.saveAll(unread);
     }
 
-    private NotificationDto mapToDto(Notification notification) {
-        return NotificationDto.builder()
+    @Transactional
+    public void deleteNotification(Integer notificationId, Integer userId) {
+        NotificationReservation notification = notificationReservationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        if (!notification.getUser().getId().equals(userId)) {
+            throw new RuntimeException("This notification does not belong to you");
+        }
+
+        notificationReservationRepository.delete(notification);
+    }
+
+    @Transactional
+    public void deleteAllNotifications(Integer userId) {
+        List<NotificationReservation> all = notificationReservationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        notificationReservationRepository.deleteAll(all);
+    }
+
+    private NotificationReservationDto mapToDto(NotificationReservation notification) {
+        return NotificationReservationDto.builder()
                 .id(notification.getId())
                 .userId(notification.getUser().getId())
                 .title(notification.getTitle())

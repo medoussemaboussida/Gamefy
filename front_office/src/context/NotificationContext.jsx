@@ -60,6 +60,33 @@ export const NotificationProvider = ({ children }) => {
         }
     }, []);
 
+    // Delete single notification
+    const deleteNotification = useCallback(async (id) => {
+        try {
+            await notificationApi.deleteNotification(id);
+            setNotifications((prev) => {
+                const target = prev.find((n) => n.id === id);
+                if (target && !target.read) {
+                    setUnreadCount((c) => Math.max(0, c - 1));
+                }
+                return prev.filter((n) => n.id !== id);
+            });
+        } catch (err) {
+            console.error("Failed to delete notification", err);
+        }
+    }, []);
+
+    // Delete all notifications
+    const deleteAllNotifications = useCallback(async () => {
+        try {
+            await notificationApi.deleteAllNotifications();
+            setNotifications([]);
+            setUnreadCount(0);
+        } catch (err) {
+            console.error("Failed to delete all notifications", err);
+        }
+    }, []);
+
     // Connect WebSocket
     useEffect(() => {
         const userId = getUserId();
@@ -162,6 +189,8 @@ export const NotificationProvider = ({ children }) => {
                 fetchUnreadCount,
                 markAsRead,
                 markAllAsRead,
+                deleteNotification,
+                deleteAllNotifications,
             }}
         >
             {children}

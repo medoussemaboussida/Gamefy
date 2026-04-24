@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Check, CheckCheck, MessageSquare } from "lucide-react";
+import { Bell, Check, CheckCheck, MessageSquare, Trash2, X } from "lucide-react";
 import { useNotifications } from "../context/NotificationContext";
 
 const NotificationBell = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const [dismissingIds, setDismissingIds] = useState(new Set());
+    const [clearingAll, setClearingAll] = useState(false);
     const dropdownRef = useRef(null);
     const {
         notifications,
@@ -11,6 +13,8 @@ const NotificationBell = () => {
         fetchNotifications,
         markAsRead,
         markAllAsRead,
+        deleteNotification,
+        deleteAllNotifications,
     } = useNotifications();
 
     // Fetch full list when dropdown opens
@@ -51,6 +55,27 @@ const NotificationBell = () => {
         });
     };
 
+    const handleDeleteOne = (e, id) => {
+        e.stopPropagation(); // prevent triggering markAsRead
+        setDismissingIds((prev) => new Set(prev).add(id));
+        setTimeout(() => {
+            deleteNotification(id);
+            setDismissingIds((prev) => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }, 350);
+    };
+
+    const handleClearAll = () => {
+        setClearingAll(true);
+        setTimeout(() => {
+            deleteAllNotifications();
+            setClearingAll(false);
+        }, 400);
+    };
+
     return (
         <div ref={dropdownRef} className="relative">
             {/* Bell Button */}
@@ -83,15 +108,27 @@ const NotificationBell = () => {
                                 </span>
                             )}
                         </div>
-                        {unreadCount > 0 && (
-                            <button
-                                onClick={() => markAllAsRead()}
-                                className="flex items-center gap-1.5 text-[#1CF3CA]/70 hover:text-[#1CF3CA] text-[12px] font-medium transition-colors"
-                            >
-                                <CheckCheck size={14} />
-                                Mark all read
-                            </button>
-                        )}
+                        <div className="flex items-center gap-3">
+                            {unreadCount > 0 && (
+                                <button
+                                    onClick={() => markAllAsRead()}
+                                    className="flex items-center gap-1.5 text-[#1CF3CA]/70 hover:text-[#1CF3CA] text-[12px] font-medium transition-colors"
+                                >
+                                    <CheckCheck size={14} />
+                                    Mark all read
+                                </button>
+                            )}
+                            {notifications.length > 0 && (
+                                <button
+                                    onClick={handleClearAll}
+                                    className="flex items-center gap-1 text-red-400/70 hover:text-red-400 text-[12px] font-medium transition-colors"
+                                    title="Clear all notifications"
+                                >
+                                    <Trash2 size={13} />
+                                    Clear all
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Notification List */}
@@ -104,17 +141,24 @@ const NotificationBell = () => {
                                 </p>
                             </div>
                         ) : (
-                            notifications.map((n) => (
-                                <button
+                            notifications.map((n, index) => (
+                                <div
                                     key={n.id}
                                     onClick={() => {
                                         if (!n.read) markAsRead(n.id);
                                     }}
-                                    className={`w-full text-left px-5 py-4 flex gap-3 transition-all duration-200 border-b border-white/[0.03] hover:bg-white/[0.04] ${
+                                    className={`group relative w-full text-left px-5 py-4 flex gap-3 border-b border-white/[0.03] hover:bg-white/[0.04] cursor-pointer ${
                                         !n.read
                                             ? "bg-[#1CF3CA]/[0.04]"
                                             : ""
+                                    } ${
+                                        dismissingIds.has(n.id)
+                                            ? "notif-slide-out"
+                                            : clearingAll
+                                            ? "notif-slide-out"
+                                            : "notif-enter"
                                     }`}
+                                    style={clearingAll ? { animationDelay: `${index * 50}ms` } : {}}
                                 >
                                     {/* Icon */}
                                     <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-lg">
@@ -142,7 +186,16 @@ const NotificationBell = () => {
                                             {formatTime(n.createdAt)}
                                         </p>
                                     </div>
-                                </button>
+
+                                    {/* Delete button — visible on hover */}
+                                    <button
+                                        onClick={(e) => handleDeleteOne(e, n.id)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-red-500/0 hover:bg-red-500/20 text-white/0 group-hover:text-red-400/70 hover:!text-red-400 transition-all duration-200"
+                                        title="Delete notification"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
                             ))
                         )}
                     </div>
@@ -158,12 +211,29 @@ const NotificationBell = () => {
                 </div>
             )}
 
-            {/* Scrollbar styles */}
+            {/* Animations & scrollbar styles */}
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(28, 243, 202, 0.15); border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(28, 243, 202, 0.3); }
+
+                @keyframes notifSlideOut {
+                    0% { opacity: 1; transform: translateX(0); max-height: 120px; }
+                    60% { opacity: 0; transform: translateX(60px); }
+                    100% { opacity: 0; transform: translateX(60px); max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0; border: none; overflow: hidden; }
+                }
+                .notif-slide-out {
+                    animation: notifSlideOut 350ms ease-in forwards;
+                }
+
+                @keyframes notifEnter {
+                    from { opacity: 0; transform: translateX(-10px); }
+                    to { opacity: 1; transform: translateX(0); }
+                }
+                .notif-enter {
+                    animation: notifEnter 200ms ease-out;
+                }
             `}</style>
         </div>
     );

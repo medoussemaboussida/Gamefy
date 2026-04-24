@@ -5,7 +5,7 @@ import { apiClient } from "./apiClient";
  * @returns {Promise<Object[]>}
  */
 export const getNotifications = () => {
-    return apiClient.get("/gamefy/notifications");
+    return apiClient.get("/gamefy/notification-reservations");
 };
 
 /**
@@ -13,7 +13,7 @@ export const getNotifications = () => {
  * @returns {Promise<{count: number}>}
  */
 export const getUnreadCount = () => {
-    return apiClient.get("/gamefy/notifications/unread-count");
+    return apiClient.get("/gamefy/notification-reservations/unread-count");
 };
 
 /**
@@ -22,7 +22,7 @@ export const getUnreadCount = () => {
  * @returns {Promise<void>}
  */
 export const markAsRead = (id) => {
-    return apiClient.put(`/gamefy/notifications/${id}/read`);
+    return apiClient.put(`/gamefy/notification-reservations/${id}/read`);
 };
 
 /**
@@ -30,5 +30,22 @@ export const markAsRead = (id) => {
  * @returns {Promise<void>}
  */
 export const markAllAsRead = () => {
-    return apiClient.put("/gamefy/notifications/read-all");
+    return apiClient.put("/gamefy/notification-reservations/read-all");
+};
+
+/**
+ * Delete a single notification.
+ * @param {number} id
+ * @returns {Promise<void>}
+ */
+export const deleteNotification = (id) => {
+    return apiClient.delete(`/gamefy/notification-reservations/${id}`);
+};
+
+/**
+ * Delete all notifications for the current user.
+ * @returns {Promise<void>}
+ */
+export const deleteAllNotifications = () => {
+    return apiClient.delete("/gamefy/notification-reservations");
 };

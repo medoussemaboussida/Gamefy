@@ -1,8 +1,8 @@
 package com.gamefy.gamefy_back.controller;
 
-import com.gamefy.gamefy_back.dto.NotificationDto;
+import com.gamefy.gamefy_back.dto.NotificationReservationDto;
 import com.gamefy.gamefy_back.model.User;
-import com.gamefy.gamefy_back.service.NotificationService;
+import com.gamefy.gamefy_back.service.NotificationReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,24 +13,24 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/gamefy/notifications")
+@RequestMapping("/gamefy/notification-reservations")
 @RequiredArgsConstructor
-public class NotificationController {
+public class NotificationReservationController {
 
-    private final NotificationService notificationService;
+    private final NotificationReservationService notificationReservationService;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
-    public ResponseEntity<List<NotificationDto>> getNotifications(Authentication authentication) {
+    public ResponseEntity<List<NotificationReservationDto>> getNotifications(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(notificationService.getNotifications(user.getId()));
+        return ResponseEntity.ok(notificationReservationService.getNotifications(user.getId()));
     }
 
     @GetMapping("/unread-count")
     @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
     public ResponseEntity<Map<String, Long>> getUnreadCount(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        long count = notificationService.getUnreadCount(user.getId());
+        long count = notificationReservationService.getUnreadCount(user.getId());
         return ResponseEntity.ok(Map.of("count", count));
     }
 
@@ -40,7 +40,7 @@ public class NotificationController {
             @PathVariable Integer id,
             Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        notificationService.markAsRead(id, user.getId());
+        notificationReservationService.markAsRead(id, user.getId());
         return ResponseEntity.ok().build();
     }
 
@@ -48,7 +48,25 @@ public class NotificationController {
     @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
     public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        notificationService.markAllAsRead(user.getId());
+        notificationReservationService.markAllAsRead(user.getId());
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<Void> deleteNotification(
+            @PathVariable Integer id,
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        notificationReservationService.deleteNotification(id, user.getId());
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<Void> deleteAllNotifications(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        notificationReservationService.deleteAllNotifications(user.getId());
         return ResponseEntity.ok().build();
     }
 }
