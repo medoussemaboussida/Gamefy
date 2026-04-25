@@ -4,6 +4,7 @@ import { ChevronDown, Monitor, Clock, Tag, User, Filter } from "lucide-react";
 import { getMyCoachingReservations } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
 import Pagination from "../../components/pagination/Pagination";
+import NotificationBell from "../../components/NotificationBell";
 
 const CoachRoom = () => {
     const [reservations, setReservations] = useState([]);
@@ -74,63 +75,61 @@ const CoachRoom = () => {
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
 
                     {/* ─── Header ─── */}
-                    <div className="mb-8 md:mb-10">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
-                            <div className="pl-16 md:pl-0">
-                                <h1 className="text-3xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#FF89EB]">
+                        <div className="flex items-center justify-between w-full mb-8">
+                            <div className="pl-14 md:pl-0">
+                                <h1 className="text-2xl md:text-3xl font-black uppercase font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#FF89EB]">
                                     My Coaching Sessions
                                 </h1>
-                                <p className="text-gray-400">
+                                <p className="text-gray-400 hidden md:block text-sm">
                                     View reservations booked with you
                                 </p>
                             </div>
-                
+                            <div className="flex items-center gap-4">
+                                {/* Sort Dropdown */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsSortOpen(!isSortOpen)}
+                                        className="bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8] text-white px-5 h-[40px] rounded-[18px] text-[15px] font-medium flex items-center gap-2 hover:opacity-90 transition-all whitespace-nowrap shadow-lg shadow-black/20"
+                                    >
+                                        <Filter size={18} className="text-[#FF89EB]" />
+                                        <span className="hidden sm:inline">{sortBy === "newest" ? "Sort by newest" : "Sort by oldest"}</span>
+                                        <span className="sm:hidden">{sortBy === "newest" ? "Newest" : "Oldest"}</span>
+                                        <ChevronDown size={18} className={`transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`} />
+                                    </button>
 
-                        {/* Sort Row */}
-                        <div className="flex items-center gap-3 self-end md:self-auto">
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsSortOpen(!isSortOpen)}
-                                    className="bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8] px-6 h-[40px] rounded-[18px] text-white font-medium flex items-center gap-2 hover:opacity-90 transition-all text-[15px]"
-                                >
-                                    <Filter size={18} />
-                                    <span>{sortBy === "newest" ? "Sort by newest" : "Sort by oldest"}</span>
-                                    <ChevronDown size={18} className={`transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`} />
-                                </button>
-
-                                {isSortOpen && (
-                                    <>
-                                        <div
-                                            className="fixed inset-0 z-10"
-                                            onClick={() => setIsSortOpen(false)}
-                                        ></div>
-                                        <div className="absolute right-0 mt-3 w-56 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
-                                            {[
-                                                { value: "newest", label: "Sort by newest" },
-                                                { value: "oldest", label: "Sort by oldest" },
-                                            ].map((option) => (
-                                                <button
-                                                    key={option.value}
-                                                    onClick={() => {
-                                                        setSortBy(option.value);
-                                                        setIsSortOpen(false);
-                                                        setCurrentPage(1);
-                                                    }}
-                                                    className={`w-full flex items-center px-5 py-3 rounded-2xl text-[14px] font-medium transition-all ${sortBy === option.value
-                                                        ? "bg-[#1CF3CA] text-black"
-                                                        : "text-white/70 hover:bg-white/5 hover:text-white"
-                                                        }`}
-                                                >
-                                                    {option.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
+                                    {isSortOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-10"
+                                                onClick={() => setIsSortOpen(false)}
+                                            ></div>
+                                            <div className="absolute right-0 mt-3 w-56 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
+                                                {[
+                                                    { value: "newest", label: "Sort by newest" },
+                                                    { value: "oldest", label: "Sort by oldest" },
+                                                ].map((option) => (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => {
+                                                            setSortBy(option.value);
+                                                            setIsSortOpen(false);
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className={`w-full flex items-center px-5 py-3 rounded-2xl text-[14px] font-medium transition-all ${sortBy === option.value
+                                                            ? "bg-[#1CF3CA] text-black"
+                                                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                                                            }`}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                <NotificationBell />
                             </div>
                         </div>
-                    </div>
-                    </div>
 
                     {/* ─── Content ─── */}
                     <div className="bg-[#320141]/40 border border-white/5 rounded-[28px] sm:rounded-[32px] overflow-hidden shadow-2xl backdrop-blur-xl">

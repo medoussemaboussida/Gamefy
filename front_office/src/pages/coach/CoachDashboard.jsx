@@ -7,6 +7,8 @@ import CoachProfileForm from "../../modals/CoachProfileForm";
 import CoachScheduleModal from "../../modals/CoachScheduleModal";
 import toast from "react-hot-toast";
 
+import NotificationBell from "../../components/NotificationBell";
+
 const CoachDashboard = () => {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,10 +92,7 @@ const CoachDashboard = () => {
                 <CalendarDays size={20} />
               </button>
 
-              <button className="relative p-2 text-[#1CF3CA] hover:bg-white/5 rounded-full transition-all flex-shrink-0">
-                <Bell size={24} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF89EB] rounded-full"></span>
-              </button>
+              <NotificationBell />
             </div>
           </header>
 

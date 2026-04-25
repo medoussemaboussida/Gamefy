@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
+import NotificationBell from "../../components/NotificationBell";
 import { 
     Package, 
     Plus, 
@@ -101,65 +102,80 @@ const CoachPacks = () => {
                             <p className="text-gray-400">Create and manage your specialized coaching offers</p>
                         </div>
 
-                        <div className="flex items-center gap-4 w-full md:w-auto">
-                            {/* Search bar */}
-                            <div className="relative flex-1 md:w-64 group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-hover:text-[#1CF3CA] transition-colors" size={18} />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search packs..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full h-[40px] bg-white/5 border border-white/10 rounded-[18px] pl-11 pr-4 text-white text-sm focus:outline-none focus:border-[#1CF3CA]/50 focus:bg-white/10 transition-all"
-                                />
+                        <div className="flex flex-wrap md:flex-nowrap items-center gap-4 w-full md:w-auto">
+                            {/* Group 1: Search & Bell (Mobile) */}
+                            <div className="flex items-center gap-4 w-full md:w-auto order-1">
+                                <div className="relative flex-1 md:w-64 group">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-hover:text-[#1CF3CA] transition-colors" size={18} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search packs..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full h-[40px] bg-white/5 border border-white/10 rounded-[18px] pl-11 pr-4 text-white text-sm focus:outline-none focus:border-[#1CF3CA]/50 focus:bg-white/10 transition-all"
+                                    />
+                                </div>
+                                <div className="md:hidden">
+                                    <NotificationBell />
+                                </div>
                             </div>
 
-                            {/* Sort Dropdown */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsSortOpen(!isSortOpen)}
-                                    className="bg-white/5 border border-white/10 text-white px-5 h-[40px] rounded-[18px] text-[15px] font-medium flex items-center gap-2 hover:bg-white/10 transition-all"
-                                >
-                                    <Filter size={18} className="text-[#FF89EB]" />
-                                    <span>{sortBy === "NEWEST" ? "Newest" : "Oldest"}</span>
-                                    <ChevronDown size={18} className={`transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`} />
-                                </button>
+                            {/* Group 2: Add Pack & Sort */}
+                            <div className="flex items-center gap-4 w-full md:w-auto order-2">
+                                {/* Sort Dropdown */}
+                                <div className="relative flex-1 md:flex-none order-2 md:order-1">
+                                    <button
+                                        onClick={() => setIsSortOpen(!isSortOpen)}
+                                        className="w-full md:w-auto bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8] text-white px-5 h-[40px] rounded-[18px] text-[15px] font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-black/20"
+                                    >
+                                        <Filter size={18} className="text-[#FF89EB]" />
+                                        <span>{sortBy === "NEWEST" ? "Newest" : "Oldest"}</span>
+                                        <ChevronDown size={18} className={`transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`} />
+                                    </button>
 
-                                {isSortOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-10" onClick={() => setIsSortOpen(false)}></div>
-                                        <div className="absolute right-0 mt-3 w-48 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
-                                            {["NEWEST", "OLDEST"].map((option) => (
-                                                <button
-                                                    key={option}
-                                                    onClick={() => {
-                                                        setSortBy(option);
-                                                        setIsSortOpen(false);
-                                                    }}
-                                                    className={`w-full flex items-center px-4 py-3 rounded-xl text-[14px] font-medium transition-all ${sortBy === option
-                                                        ? "bg-[#1CF3CA] text-black"
-                                                        : "text-white/70 hover:bg-white/5 hover:text-white"
-                                                    }`}
-                                                >
-                                                    {option === "NEWEST" ? "Newest First" : "Oldest First"}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
+                                    {isSortOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-10" onClick={() => setIsSortOpen(false)}></div>
+                                            <div className="absolute right-0 mt-3 w-48 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
+                                                {["NEWEST", "OLDEST"].map((option) => (
+                                                    <button
+                                                        key={option}
+                                                        onClick={() => {
+                                                            setSortBy(option);
+                                                            setIsSortOpen(false);
+                                                        }}
+                                                        className={`w-full flex items-center px-4 py-3 rounded-xl text-[14px] font-medium transition-all ${sortBy === option
+                                                            ? "bg-[#1CF3CA] text-black"
+                                                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                                                        }`}
+                                                    >
+                                                        {option === "NEWEST" ? "Newest First" : "Oldest First"}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Add Button */}
+                                <div className="flex-1 md:flex-none order-1 md:order-2">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedPack(null);
+                                            setIsAddEditOpen(true);
+                                        }}
+                                        className="w-full md:w-auto bg-[#1CF3CA] hover:bg-[#19d4b0] text-black px-6 h-[40px] rounded-[18px] font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-[0_0_20_rgba(28,243,202,0.3)] whitespace-nowrap"
+                                    >
+                                        <Plus size={20} />
+                                        <span>Add Pack</span>
+                                    </button>
+                                </div>
                             </div>
-
-                            {/* Add Button */}
-                            <button
-                                onClick={() => {
-                                    setSelectedPack(null);
-                                    setIsAddEditOpen(true);
-                                }}
-                                className="bg-[#1CF3CA] hover:bg-[#19d4b0] text-black px-6 h-[40px] rounded-[18px] font-bold flex items-center gap-2 transition-all active:scale-95 shadow-[0_0_20px_rgba(28,243,202,0.3)]"
-                            >
-                                <Plus size={20} />
-                                <span>Add Pack</span>
-                            </button>
+                            
+                            {/* Desktop Bell */}
+                            <div className="hidden md:block order-3">
+                                <NotificationBell />
+                            </div>
                         </div>
                     </header>
 

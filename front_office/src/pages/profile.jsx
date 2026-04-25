@@ -9,6 +9,7 @@ import { eventApi } from "../api/event";
 import ProfileForm from "../modals/ProfileForm";
 import EventDescriptionModal from "../modals/EventDescriptionModal";
 import PaymentHistoryModal from "../modals/PaymentHistoryModal";
+import NotificationBell from "../components/NotificationBell";
 import { useUser } from "../context/UserContext";
 
 const ProfilePage = () => {
@@ -190,6 +191,9 @@ const ProfilePage = () => {
                         <h2 className="text-white text-[18px] font-bold font-['Inter'] self-start md:self-auto pl-14 md:pl-0">
                             User Profile
                         </h2>
+                        <div className="flex items-center gap-4">
+                            <NotificationBell />
+                        </div>
                     </header>
 
                     {/* Profile Banner Section */}
