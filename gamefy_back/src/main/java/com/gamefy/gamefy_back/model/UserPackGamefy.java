@@ -51,6 +51,14 @@ public class UserPackGamefy {
     @Column(name = "available_discount_ids", columnDefinition = "TEXT")
     private String availableDiscountIds;
 
+    /**
+     * JSON map of consumed quantities per FREE_ITEM benefit.
+     * Format: {"benefitId": consumedCount, ...}
+     * e.g. {"3":1,"7":2} — benefit 3 has 1 unit consumed, benefit 7 has 2 units consumed.
+     */
+    @Column(name = "consumed_item_quantities", columnDefinition = "TEXT")
+    private String consumedItemQuantities;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserPackStatus status;
@@ -86,6 +94,48 @@ public class UserPackGamefy {
         }
     }
 
+    // --- Helper methods for consumed item quantities (JSON map) ---
+
+    public java.util.Map<Integer, Integer> getConsumedItemQuantitiesMap() {
+        java.util.Map<Integer, Integer> map = new java.util.LinkedHashMap<>();
+        if (consumedItemQuantities == null || consumedItemQuantities.isBlank()
+                || consumedItemQuantities.equals("{}")) {
+            return map;
+        }
+        // Simple JSON map parser for {"3":1,"7":2}
+        String trimmed = consumedItemQuantities.replaceAll("[{}\\s]", "");
+        if (trimmed.isEmpty()) return map;
+        for (String entry : trimmed.split(",")) {
+            String[] kv = entry.split(":");
+            if (kv.length == 2) {
+                int key = Integer.parseInt(kv[0].replaceAll("\"", "").trim());
+                int val = Integer.parseInt(kv[1].trim());
+                map.put(key, val);
+            }
+        }
+        return map;
+    }
+
+    public void setConsumedItemQuantitiesMap(java.util.Map<Integer, Integer> map) {
+        if (map == null || map.isEmpty()) {
+            this.consumedItemQuantities = "{}";
+        } else {
+            StringBuilder sb = new StringBuilder("{");
+            boolean first = true;
+            for (var entry : map.entrySet()) {
+                if (!first) sb.append(",");
+                sb.append("\"").append(entry.getKey()).append("\":").append(entry.getValue());
+                first = false;
+            }
+            sb.append("}");
+            this.consumedItemQuantities = sb.toString();
+        }
+    }
+
+    public int getConsumedQuantity(Integer benefitId) {
+        return getConsumedItemQuantitiesMap().getOrDefault(benefitId, 0);
+    }
+
     @Override
     public String toString() {
         return "UserPackGamefy{" +
@@ -96,6 +146,7 @@ public class UserPackGamefy {
                 ", remainingVipHours=" + remainingVipHours +
                 ", remainingCoachingHours=" + remainingCoachingHours +
                 ", availableDiscountIds=" + availableDiscountIds +
+                ", consumedItemQuantities=" + consumedItemQuantities +
                 ", status=" + status +
                 '}';
     }

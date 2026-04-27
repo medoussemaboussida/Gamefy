@@ -24,7 +24,7 @@ public class GamefyPackBenefit {
     private PackGamefy packGamefy;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "benefit_type", nullable = false)
+    @Column(name = "benefit_type")
     private Benefit_type benefitType;
 
     @Enumerated(EnumType.STRING)
@@ -38,6 +38,12 @@ public class GamefyPackBenefit {
     @Column(name = "discount_value")
     private Double discountValue;
 
+    @Column(name = "item_name")
+    private String itemName;
+
+    @Column(name = "item_quantity")
+    private Integer itemQuantity;
+
     @Override
     public String toString() {
         return "GamefyPackBenefit{" +
@@ -46,7 +52,8 @@ public class GamefyPackBenefit {
                 ", rateRule=" + rateRule +
                 ", discountType=" + discountType +
                 ", discountValue=" + discountValue +
+                ", itemName='" + itemName + '\'' +
+                ", itemQuantity=" + itemQuantity +
                 '}';
     }
 }
-

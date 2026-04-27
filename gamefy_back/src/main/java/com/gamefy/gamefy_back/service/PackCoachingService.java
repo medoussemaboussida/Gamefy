@@ -32,6 +32,7 @@ public class PackCoachingService {
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
     private final UserPackCoachingRepository userPackCoachingRepository;
+    private final NotificationPackService notificationPackService;
 
     public List<PackCoachingDto> getPacksByCoachId(Integer coachId) {
         return repository.findByCoachId(coachId).stream()
@@ -109,8 +110,8 @@ public class PackCoachingService {
     public void assignPackToPlayer(Integer packId, Integer userId) {
         log.info("Service: Assigning coaching packId {} to userId {}", packId, userId);
         
-        // Ensure only one active coaching pack at a time
-        removePackFromPlayer(userId);
+        // Ensure only one active coaching pack at a time (silent — no notification for internal removal)
+        removePackFromPlayerSilent(userId);
 
         PackCoaching pack = repository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Coaching pack not found with id: " + packId));
@@ -134,6 +135,9 @@ public class PackCoachingService {
         payment.setPackCoaching(pack);
         payment.setTotalPrice(pack.getPrice());
         paymentRepository.save(payment);
+
+        // Notify the player
+        notificationPackService.sendPackNotification(user, pack.getName(), "PACK_COACHING_ASSIGNED", userPack.getId());
     }
 
     @Transactional
@@ -143,7 +147,23 @@ public class PackCoachingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-    // Find and delete active junction records for this user
+        // Find and delete active junction records for this user
+        List<UserPackCoaching> activeRecords = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+
+        // Notify the player for each removed pack
+        for (UserPackCoaching record : activeRecords) {
+            notificationPackService.sendPackNotification(user, record.getPackCoaching().getName(), "PACK_COACHING_REMOVED", record.getId());
+        }
+
+        userPackCoachingRepository.deleteAll(activeRecords);
+    }
+
+    /** Silent removal — used internally during reassignment to avoid double notifications */
+    @Transactional
+    @CacheEvict(value = {"users"}, allEntries = true)
+    private void removePackFromPlayerSilent(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         List<UserPackCoaching> activeRecords = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
         userPackCoachingRepository.deleteAll(activeRecords);
     }
@@ -208,6 +228,9 @@ public class PackCoachingService {
         payment.setPackCoaching(pack);
         payment.setTotalPrice(pack.getPrice());
         paymentRepository.save(payment);
+
+        // Notify the player
+        notificationPackService.sendPackNotification(user, pack.getName(), "PACK_COACHING_RENEWED", userPack.getId());
     }
 
     /**

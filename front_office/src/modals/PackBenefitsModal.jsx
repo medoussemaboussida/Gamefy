@@ -19,6 +19,15 @@ const PackBenefitsModal = ({ isOpen, onClose, benefits, packName }) => {
     // Individual Discount benefits
     const discountBenefits = benefits?.filter(b => b.rateRule === "DISCOUNT") || [];
 
+    // FREE_ITEM benefits (grouped by itemName)
+    const itemBenefits = benefits?.filter(b => b.rateRule === "FREE_ITEM") || [];
+    const groupedItems = itemBenefits.reduce((acc, b) => {
+        const key = b.itemName || "Item";
+        if (!acc[key]) acc[key] = { name: key, totalQuantity: 0 };
+        acc[key].totalQuantity += (b.itemQuantity || 1);
+        return acc;
+    }, {});
+
     return (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <div className="relative w-full max-w-lg bg-[#1a0b2e] border border-white/10 rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
@@ -81,6 +90,26 @@ const PackBenefitsModal = ({ isOpen, onClose, benefits, packName }) => {
                                         <p className="text-[#FF89EB] font-black text-sm mt-0.5">
                                             {benefit.discountValue}{benefit.discountType === "PERCENTAGE" ? "%" : " DT"} Off
                                         </p>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* FREE ITEM Benefits Display */}
+                            {Object.values(groupedItems).map((item) => (
+                                <div key={`item-${item.name}`} className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all group">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 transition-colors group-hover:bg-amber-500/20">
+                                        <span className="text-lg">🎁</span>
+                                    </div>
+                                    <div className="flex-grow">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-white font-bold uppercase tracking-tight">
+                                                {item.name}
+                                            </p>
+                                            <span className="px-2.5 py-0.5 rounded-lg bg-amber-500 text-black text-[10px] font-black uppercase">
+                                                × {item.totalQuantity}
+                                            </span>
+                                        </div>
+                                        <p className="text-amber-400/60 text-[10px] font-bold uppercase tracking-[0.1em] mt-0.5">Free Item Included</p>
                                     </div>
                                 </div>
                             ))}

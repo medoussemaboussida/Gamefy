@@ -36,6 +36,7 @@ public class PaymentService {
     private final PackCoachingRepository packCoachingRepository;
     private final PackGamefyService packGamefyService;
     private final UserPackCoachingRepository userPackCoachingRepository;
+    private final NotificationAdminService notificationAdminService;
 
     @Value("${stripe.publishable.key}")
     private String stripePublishableKey;
@@ -223,6 +224,10 @@ public class PaymentService {
         payment.setTotalPrice(pack.getPrice());
         payment.setUser(user);
         paymentRepository.save(payment);
+
+        // Notify admins
+        String playerName = user.getFirstName() + " " + user.getLastName();
+        notificationAdminService.sendAdminNotification(playerName, pack.getName(), "PACK_GAMEFY_PURCHASED", payment.getId());
     }
 
     /**
@@ -240,6 +245,14 @@ public class PaymentService {
         Integer packId = Integer.parseInt(packIdStr);
         Integer userId = Integer.parseInt(userIdStr);
         packGamefyService.renewPackForUser(packId, userId);
+
+        // Notify admins
+        User user = userRepository.findById(userId).orElse(null);
+        PackGamefy pack = packGamefyRepository.findById(packId).orElse(null);
+        if (user != null && pack != null) {
+            String playerName = user.getFirstName() + " " + user.getLastName();
+            notificationAdminService.sendAdminNotification(playerName, pack.getName(), "PACK_GAMEFY_RENEWED", null);
+        }
     }
 
     /**
@@ -257,6 +270,14 @@ public class PaymentService {
         Integer packId = Integer.parseInt(packIdStr);
         Integer userId = Integer.parseInt(userIdStr);
         packCoachingService.renewPackForUser(packId, userId);
+
+        // Notify admins
+        User user = userRepository.findById(userId).orElse(null);
+        PackCoaching pack = packCoachingRepository.findById(packId).orElse(null);
+        if (user != null && pack != null) {
+            String playerName = user.getFirstName() + " " + user.getLastName();
+            notificationAdminService.sendAdminNotification(playerName, pack.getName(), "PACK_COACHING_RENEWED", null);
+        }
     }
 
     /**
@@ -275,12 +296,28 @@ public class PaymentService {
         Integer userId = Integer.parseInt(userIdStr);
 
         packCoachingService.assignPackToPlayer(packId, userId);
+
+        // Notify admins
+        User user = userRepository.findById(userId).orElse(null);
+        PackCoaching pack = packCoachingRepository.findById(packId).orElse(null);
+        if (user != null && pack != null) {
+            String playerName = user.getFirstName() + " " + user.getLastName();
+            notificationAdminService.sendAdminNotification(playerName, pack.getName(), "PACK_COACHING_PURCHASED", null);
+        }
     }
 
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
     public void fulfillCoachingPackPurchase(Integer packId, Integer userId) {
         packCoachingService.assignPackToPlayer(packId, userId);
+
+        // Notify admins
+        User user = userRepository.findById(userId).orElse(null);
+        PackCoaching pack = packCoachingRepository.findById(packId).orElse(null);
+        if (user != null && pack != null) {
+            String playerName = user.getFirstName() + " " + user.getLastName();
+            notificationAdminService.sendAdminNotification(playerName, pack.getName(), "PACK_COACHING_PURCHASED", null);
+        }
     }
 
     @Transactional
@@ -314,18 +351,38 @@ public class PaymentService {
         payment.setTotalPrice(pack.getPrice());
         payment.setUser(user);
         paymentRepository.save(payment);
+
+        // Notify admins
+        String playerName = user.getFirstName() + " " + user.getLastName();
+        notificationAdminService.sendAdminNotification(playerName, pack.getName(), "PACK_GAMEFY_PURCHASED", payment.getId());
     }
 
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
     public void fulfillPackRenewal(Integer packId, Integer userId) {
         packGamefyService.renewPackForUser(packId, userId);
+
+        // Notify admins
+        User user = userRepository.findById(userId).orElse(null);
+        PackGamefy pack = packGamefyRepository.findById(packId).orElse(null);
+        if (user != null && pack != null) {
+            String playerName = user.getFirstName() + " " + user.getLastName();
+            notificationAdminService.sendAdminNotification(playerName, pack.getName(), "PACK_GAMEFY_RENEWED", null);
+        }
     }
 
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
     public void fulfillCoachingPackRenewal(Integer packId, Integer userId) {
         packCoachingService.renewPackForUser(packId, userId);
+
+        // Notify admins
+        User user = userRepository.findById(userId).orElse(null);
+        PackCoaching pack = packCoachingRepository.findById(packId).orElse(null);
+        if (user != null && pack != null) {
+            String playerName = user.getFirstName() + " " + user.getLastName();
+            notificationAdminService.sendAdminNotification(playerName, pack.getName(), "PACK_COACHING_RENEWED", null);
+        }
     }
 
     public PaymentDtos.MyPackStatusResponse getMyPackStatus(Integer userId) {

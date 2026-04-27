@@ -10,6 +10,7 @@ import com.gamefy.gamefy_back.model.UserPackGamefy;
 import com.gamefy.gamefy_back.model.enums.Benefit_type;
 import com.gamefy.gamefy_back.model.enums.DiscountType;
 import com.gamefy.gamefy_back.model.enums.Rate_Rule;
+import com.gamefy.gamefy_back.repository.GamefyPackBenefitRepository;
 import com.gamefy.gamefy_back.model.enums.UserPackStatus;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.repository.PackGamefyRepository;
@@ -36,6 +37,8 @@ public class PackGamefyService {
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
     private final UserPackGamefyRepository userPackGamefyRepository;
+    private final NotificationPackService notificationPackService;
+    private final GamefyPackBenefitRepository gamefyPackBenefitRepository;
 
     public List<PackGamefyDto> getAllPacks() {
         return repository.findAll().stream()
@@ -61,12 +64,16 @@ public class PackGamefyService {
             List<GamefyPackBenefit> benefits = dto.getBenefits().stream()
                     .map(b -> {
                         GamefyPackBenefit benefit = new GamefyPackBenefit();
-                        benefit.setBenefitType(Benefit_type.valueOf(b.getBenefitType()));
+                        if (b.getBenefitType() != null && !b.getBenefitType().isEmpty()) {
+                            benefit.setBenefitType(Benefit_type.valueOf(b.getBenefitType()));
+                        }
                         benefit.setRateRule(Rate_Rule.valueOf(b.getRateRule()));
                         if (b.getDiscountType() != null) {
                             benefit.setDiscountType(DiscountType.valueOf(b.getDiscountType()));
                         }
                         benefit.setDiscountValue(b.getDiscountValue());
+                        benefit.setItemName(b.getItemName());
+                        benefit.setItemQuantity(b.getItemQuantity());
                         benefit.setPackGamefy(pack);
                         return benefit;
                     }).collect(Collectors.toList());
@@ -94,12 +101,16 @@ public class PackGamefyService {
             List<GamefyPackBenefit> benefits = dto.getBenefits().stream()
                     .map(b -> {
                         GamefyPackBenefit benefit = new GamefyPackBenefit();
-                        benefit.setBenefitType(Benefit_type.valueOf(b.getBenefitType()));
+                        if (b.getBenefitType() != null && !b.getBenefitType().isEmpty()) {
+                            benefit.setBenefitType(Benefit_type.valueOf(b.getBenefitType()));
+                        }
                         benefit.setRateRule(Rate_Rule.valueOf(b.getRateRule()));
                         if (b.getDiscountType() != null) {
                             benefit.setDiscountType(DiscountType.valueOf(b.getDiscountType()));
                         }
                         benefit.setDiscountValue(b.getDiscountValue());
+                        benefit.setItemName(b.getItemName());
+                        benefit.setItemQuantity(b.getItemQuantity());
                         benefit.setPackGamefy(pack);
                         return benefit;
                     }).collect(Collectors.toList());
@@ -125,13 +136,32 @@ public class PackGamefyService {
         PackGamefy pack = repository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Pack not found with id: " + packId));
 
+        // Get FREE_ITEM benefit IDs for this pack
+        List<GamefyPackBenefit> itemBenefits = pack.getBenefits().stream()
+                .filter(b -> b.getRateRule() == Rate_Rule.FREE_ITEM)
+                .collect(Collectors.toList());
+
         return userPackGamefyRepository.findByPackGamefy(pack).stream()
-                .map(up -> UserPackResponseDto.builder()
-                        .firstName(up.getUser().getFirstName())
-                        .lastName(up.getUser().getLastName())
-                        .email(up.getUser().getEmail())
-                        .status(up.getStatus())
-                        .build())
+                .map(up -> {
+                    java.util.Map<Integer, Integer> consumedMap = up.getConsumedItemQuantitiesMap();
+                    List<UserPackResponseDto.ItemBenefitStatus> items = itemBenefits.stream()
+                            .map(b -> UserPackResponseDto.ItemBenefitStatus.builder()
+                                    .benefitId(b.getId())
+                                    .itemName(b.getItemName())
+                                    .itemQuantity(b.getItemQuantity() != null ? b.getItemQuantity() : 1)
+                                    .consumedQuantity(consumedMap.getOrDefault(b.getId(), 0))
+                                    .build())
+                            .collect(Collectors.toList());
+                    return UserPackResponseDto.builder()
+                            .firstName(up.getUser().getFirstName())
+                            .lastName(up.getUser().getLastName())
+                            .email(up.getUser().getEmail())
+                            .status(up.getStatus())
+                            .userId(up.getUser().getId())
+                            .userPackId(up.getId())
+                            .itemBenefits(items)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -140,10 +170,12 @@ public class PackGamefyService {
                 .map(b -> {
                     PackGamefyDto.PackBenefitDto dto = new PackGamefyDto.PackBenefitDto();
                     dto.setId(b.getId());
-                    dto.setBenefitType(b.getBenefitType().name());
+                    dto.setBenefitType(b.getBenefitType() != null ? b.getBenefitType().name() : null);
                     dto.setRateRule(b.getRateRule().name());
                     dto.setDiscountType(b.getDiscountType() != null ? b.getDiscountType().name() : null);
                     dto.setDiscountValue(b.getDiscountValue());
+                    dto.setItemName(b.getItemName());
+                    dto.setItemQuantity(b.getItemQuantity());
                     return dto;
                 }).collect(Collectors.toList());
 
@@ -162,8 +194,8 @@ public class PackGamefyService {
     public void assignPackToUser(Integer packId, Integer userId) {
         log.info("Service: Assigning packId {} to userId {}", packId, userId);
         
-        // Ensure only one active Gamefy pack at a time
-        removePackFromUser(userId);
+        // Ensure only one active Gamefy pack at a time (silent — no notification for internal removal)
+        removePackFromUserSilent(userId);
 
         PackGamefy pack = repository.findById(packId)
                 .orElseThrow(() -> new RuntimeException("Pack not found with id: " + packId));
@@ -180,6 +212,7 @@ public class PackGamefyService {
         userPack.setRemainingVipHours(calculateHours(pack, Benefit_type.VIP));
         userPack.setRemainingCoachingHours(calculateHours(pack, Benefit_type.COACH));
         userPack.setAvailableDiscountIdsList(calculateAllDiscountIds(pack));
+        userPack.setConsumedItemQuantitiesMap(new java.util.LinkedHashMap<>());
         userPack.setStatus(UserPackStatus.ACTIVE);
         userPackGamefyRepository.save(userPack);
 
@@ -189,6 +222,9 @@ public class PackGamefyService {
         payment.setPackGamefy(pack);
         payment.setTotalPrice(pack.getPrice());
         paymentRepository.save(payment);
+
+        // Notify the player
+        notificationPackService.sendPackNotification(user, pack.getName(), "PACK_GAMEFY_ASSIGNED", userPack.getId());
     }
 
     @Transactional
@@ -199,6 +235,22 @@ public class PackGamefyService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
         // Find and delete active junction records for this user
+        List<UserPackGamefy> activeRecords = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
+
+        // Notify the player for each removed pack
+        for (UserPackGamefy record : activeRecords) {
+            notificationPackService.sendPackNotification(user, record.getPackGamefy().getName(), "PACK_GAMEFY_REMOVED", record.getId());
+        }
+
+        userPackGamefyRepository.deleteAll(activeRecords);
+    }
+
+    /** Silent removal — used internally during reassignment to avoid double notifications */
+    @Transactional
+    @CacheEvict(value = {"users", "payments"}, allEntries = true)
+    private void removePackFromUserSilent(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         List<UserPackGamefy> activeRecords = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
         userPackGamefyRepository.deleteAll(activeRecords);
     }
@@ -214,12 +266,26 @@ public class PackGamefyService {
                 pack.setStatus(UserPackStatus.EXPIRED);
                 return userPackGamefyRepository.save(pack);
             }
-            // Check consumed: all hours and discounts are 0
+            // Check all item benefits fully consumed (consumed qty >= total qty for each)
+            List<GamefyPackBenefit> itemBenefits = pack.getPackGamefy().getBenefits() == null
+                    ? java.util.Collections.emptyList()
+                    : pack.getPackGamefy().getBenefits().stream()
+                        .filter(b -> b.getRateRule() == Rate_Rule.FREE_ITEM)
+                        .collect(Collectors.toList());
+            java.util.Map<Integer, Integer> consumedMap = pack.getConsumedItemQuantitiesMap();
+            boolean allItemsConsumed = itemBenefits.stream().allMatch(b -> {
+                int totalQty = b.getItemQuantity() != null ? b.getItemQuantity() : 1;
+                int consumedQty = consumedMap.getOrDefault(b.getId(), 0);
+                return consumedQty >= totalQty;
+            });
+
+            // Check consumed: all hours, discounts, AND items are done
             boolean allConsumed =
                     (pack.getRemainingPcHours() == null || pack.getRemainingPcHours() <= 0) &&
                     (pack.getRemainingVipHours() == null || pack.getRemainingVipHours() <= 0) &&
                     (pack.getRemainingCoachingHours() == null || pack.getRemainingCoachingHours() <= 0) &&
-                    (pack.getAvailableDiscountIdsList().isEmpty());
+                    (pack.getAvailableDiscountIdsList().isEmpty()) &&
+                    allItemsConsumed;
             if (allConsumed) {
                 pack.setStatus(UserPackStatus.CONSUMED);
                 return userPackGamefyRepository.save(pack);
@@ -259,6 +325,7 @@ public class PackGamefyService {
         userPack.setRemainingVipHours(calculateHours(pack, Benefit_type.VIP));
         userPack.setRemainingCoachingHours(calculateHours(pack, Benefit_type.COACH));
         userPack.setAvailableDiscountIdsList(calculateAllDiscountIds(pack));
+        userPack.setConsumedItemQuantitiesMap(new java.util.LinkedHashMap<>());
         userPack.setStatus(UserPackStatus.ACTIVE);
         userPackGamefyRepository.save(userPack);
 
@@ -268,6 +335,9 @@ public class PackGamefyService {
         payment.setPackGamefy(pack);
         payment.setTotalPrice(pack.getPrice());
         paymentRepository.save(payment);
+
+        // Notify the player
+        notificationPackService.sendPackNotification(user, pack.getName(), "PACK_GAMEFY_RENEWED", userPack.getId());
     }
 
     /**
@@ -290,5 +360,59 @@ public class PackGamefyService {
                 .filter(b -> b.getRateRule() == Rate_Rule.DISCOUNT)
                 .map(GamefyPackBenefit::getId)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Consume one unit of a FREE_ITEM benefit for a specific user pack.
+     * Called by admin/webmaster from the back office.
+     */
+    @Transactional
+    public void consumeItemBenefit(Integer userPackId, Integer benefitId) {
+        UserPackGamefy userPack = userPackGamefyRepository.findById(userPackId)
+                .orElseThrow(() -> new RuntimeException("UserPackGamefy not found with id: " + userPackId));
+
+        // Verify the benefit exists and is FREE_ITEM
+        GamefyPackBenefit benefit = gamefyPackBenefitRepository.findById(benefitId)
+                .orElseThrow(() -> new RuntimeException("Benefit not found with id: " + benefitId));
+        if (benefit.getRateRule() != Rate_Rule.FREE_ITEM) {
+            throw new RuntimeException("Benefit " + benefitId + " is not a FREE_ITEM benefit");
+        }
+
+        int maxQty = benefit.getItemQuantity() != null ? benefit.getItemQuantity() : 1;
+        java.util.Map<Integer, Integer> consumedMap = userPack.getConsumedItemQuantitiesMap();
+        int currentConsumed = consumedMap.getOrDefault(benefitId, 0);
+
+        if (currentConsumed < maxQty) {
+            consumedMap.put(benefitId, currentConsumed + 1);
+            userPack.setConsumedItemQuantitiesMap(consumedMap);
+            userPackGamefyRepository.save(userPack);
+            // Check if pack is now fully consumed
+            checkAndUpdatePackStatus(userPack);
+        }
+    }
+
+    /**
+     * Un-consume one unit of a FREE_ITEM benefit (undo).
+     */
+    @Transactional
+    public void unconsumeItemBenefit(Integer userPackId, Integer benefitId) {
+        UserPackGamefy userPack = userPackGamefyRepository.findById(userPackId)
+                .orElseThrow(() -> new RuntimeException("UserPackGamefy not found with id: " + userPackId));
+
+        java.util.Map<Integer, Integer> consumedMap = userPack.getConsumedItemQuantitiesMap();
+        int currentConsumed = consumedMap.getOrDefault(benefitId, 0);
+
+        if (currentConsumed > 0) {
+            consumedMap.put(benefitId, currentConsumed - 1);
+            if (consumedMap.get(benefitId) == 0) {
+                consumedMap.remove(benefitId);
+            }
+            userPack.setConsumedItemQuantitiesMap(consumedMap);
+            // If pack was CONSUMED, revert to ACTIVE since item was un-consumed
+            if (userPack.getStatus() == UserPackStatus.CONSUMED) {
+                userPack.setStatus(UserPackStatus.ACTIVE);
+            }
+            userPackGamefyRepository.save(userPack);
+        }
     }
 }

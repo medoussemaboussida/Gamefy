@@ -287,7 +287,7 @@ const Rooms = () => {
                                         className="flex items-center justify-center gap-2 px-5 py-3 bg-[#1CF3CA] text-black font-bold font-['Inter'] text-sm tracking-tight rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-[0_0_20px_rgba(28,243,202,0.3)] whitespace-nowrap"
                                     >
                                         <Plus size={16} />
-                                        <span>Book Now</span>
+                                        <span>Book</span>
                                     </button>
                                 </div>
 
@@ -340,7 +340,7 @@ const Rooms = () => {
                                 className="flex items-center justify-center gap-2 px-5 h-[36px] bg-[#1CF3CA] text-black font-bold font-['Inter'] text-[13px] tracking-tight rounded-full hover:bg-[#19d4b0] active:scale-95 transition-all shadow-lg shadow-[#1CF3CA]/20 whitespace-nowrap"
                             >
                                 <Plus size={16} />
-                                <span>Book Now</span>
+                                <span>Book</span>
                             </button>
                         </div>
                     </div>

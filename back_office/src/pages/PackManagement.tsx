@@ -111,6 +111,15 @@ export default function PackManagement() {
             if (b.rateRule === "DISCOUNT" && b.discountType && b.discountValue !== undefined) {
                 detail = b.discountType === "PERCENTAGE" ? ` (${b.discountValue}%)` : ` (${b.discountValue.toFixed(3)} TND)`;
             }
+            if (b.rateRule === "FREE_ITEM" && b.itemName) {
+                const qty = b.itemQuantity || 1;
+                const key = `FREE_ITEM_${b.itemName}_${qty}`;
+                if (!counts[key]) {
+                    counts[key] = { count: 0, label: `🎁 ${b.itemName} × ${qty}` };
+                }
+                counts[key].count++;
+                return;
+            }
             const key = `${b.benefitType}_${b.rateRule}${detail}`;
             if (!counts[key]) {
                 counts[key] = { count: 0, label: `${b.benefitType}_${b.rateRule}${detail}` };

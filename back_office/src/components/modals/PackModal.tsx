@@ -24,6 +24,7 @@ const BENEFIT_TYPES = [
 const RATE_RULES = [
     { value: "HOURS", label: "Hours Based" },
     { value: "DISCOUNT", label: "Discount Based" },
+    { value: "FREE_ITEM", label: "Free Item" },
 ];
 
 const DISCOUNT_TYPES = [
@@ -75,7 +76,7 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
     const addBenefit = () => {
         setFormData(prev => ({
             ...prev,
-            benefits: [...prev.benefits, { benefitType: "PC", rateRule: "HOURS", discountType: undefined, discountValue: undefined }]
+            benefits: [...prev.benefits, { benefitType: "PC", rateRule: "HOURS", discountType: undefined, discountValue: undefined, itemName: undefined, itemQuantity: undefined }]
         }));
     };
 
@@ -198,14 +199,16 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                 formData.benefits.map((benefit, index) => (
                                     <div key={index} className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5">
                                         <div className="flex items-end gap-3">
-                                            <div className="flex-1">
-                                                <Label className="text-[10px] mb-1">Type</Label>
-                                                <Select
-                                                    options={BENEFIT_TYPES}
-                                                    defaultValue={benefit.benefitType}
-                                                    onChange={(val) => updateBenefit(index, "benefitType", val)}
-                                                />
-                                            </div>
+                                            {benefit.rateRule !== "FREE_ITEM" && (
+                                                <div className="flex-1">
+                                                    <Label className="text-[10px] mb-1">Type</Label>
+                                                    <Select
+                                                        options={BENEFIT_TYPES}
+                                                        defaultValue={benefit.benefitType}
+                                                        onChange={(val) => updateBenefit(index, "benefitType", val)}
+                                                    />
+                                                </div>
+                                            )}
                                             <div className="flex-1">
                                                 <Label className="text-[10px] mb-1">Rule</Label>
                                                 <Select
@@ -214,11 +217,11 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                                      onChange={(val) => {
                                                         updateBenefit(index, "rateRule", val);
                                                         if (val === "HOURS") {
-                                                            // Clear discount fields when switching to HOURS
+                                                            // Clear discount and item fields when switching to HOURS
                                                             setFormData(prev => ({
                                                                 ...prev,
                                                                 benefits: prev.benefits.map((b, i) => i === index
-                                                                    ? { ...b, rateRule: val, discountType: undefined, discountValue: undefined }
+                                                                    ? { ...b, rateRule: val, discountType: undefined, discountValue: undefined, itemName: undefined, itemQuantity: undefined }
                                                                     : b)
                                                             }));
                                                         } else if (val === "DISCOUNT") {
@@ -226,7 +229,15 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                                             setFormData(prev => ({
                                                                 ...prev,
                                                                 benefits: prev.benefits.map((b, i) => i === index
-                                                                    ? { ...b, rateRule: val, discountType: "PERCENTAGE", discountValue: 0 }
+                                                                    ? { ...b, rateRule: val, discountType: "PERCENTAGE", discountValue: 0, itemName: undefined, itemQuantity: undefined }
+                                                                    : b)
+                                                            }));
+                                                        } else if (val === "FREE_ITEM") {
+                                                            // Set default item values when switching to FREE_ITEM, clear benefitType
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                benefits: prev.benefits.map((b, i) => i === index
+                                                                    ? { ...b, rateRule: val, benefitType: undefined, discountType: undefined, discountValue: undefined, itemName: "", itemQuantity: 1 }
                                                                     : b)
                                                             }));
                                                         }
@@ -261,6 +272,33 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                                             updateBenefit(index, "discountValue", e.target.value)
                                                         }
                                                         min={"0"}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                        {benefit.rateRule === "FREE_ITEM" && (
+                                            <div className="flex items-end gap-3 pt-1 pl-2 border-l-2 border-success-300 dark:border-success-600 ml-1">
+                                                <div className="flex-1">
+                                                    <Label className="text-[10px] mb-1">Item Name</Label>
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="e.g. Cookie, Soda"
+                                                        value={benefit.itemName ?? ""}
+                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                            updateBenefit(index, "itemName", e.target.value)
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <Label className="text-[10px] mb-1">Quantity</Label>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="1"
+                                                        value={benefit.itemQuantity ?? ""}
+                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                            updateBenefit(index, "itemQuantity", e.target.value)
+                                                        }
+                                                        min={"1"}
                                                     />
                                                 </div>
                                             </div>
