@@ -79,4 +79,24 @@ public class PackGamefyController {
         service.renewPackForUser(request.getPackId(), request.getUserId());
         return ResponseEntity.ok("Pack renewed successfully for player");
     }
+
+    @PutMapping("/user-packs/{userPackId}/consume-item/{benefitId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<String> consumeItemBenefit(
+            @PathVariable Integer userPackId,
+            @PathVariable Integer benefitId) {
+        log.info("Consuming item benefit {} for user pack {}", benefitId, userPackId);
+        service.consumeItemBenefit(userPackId, benefitId);
+        return ResponseEntity.ok("Item benefit marked as consumed");
+    }
+
+    @PutMapping("/user-packs/{userPackId}/unconsume-item/{benefitId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<String> unconsumeItemBenefit(
+            @PathVariable Integer userPackId,
+            @PathVariable Integer benefitId) {
+        log.info("Un-consuming item benefit {} for user pack {}", benefitId, userPackId);
+        service.unconsumeItemBenefit(userPackId, benefitId);
+        return ResponseEntity.ok("Item benefit marked as not consumed");
+    }
 }

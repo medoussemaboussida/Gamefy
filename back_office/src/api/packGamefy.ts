@@ -6,6 +6,8 @@ export interface PackBenefitDto {
     rateRule: string;
     discountType?: string;
     discountValue?: number;
+    itemName?: string;
+    itemQuantity?: number;
 }
 
 export interface PackGamefyDto {
@@ -17,11 +19,21 @@ export interface PackGamefyDto {
     benefits: PackBenefitDto[];
 }
 
+export interface ItemBenefitStatus {
+    benefitId: number;
+    itemName: string;
+    itemQuantity: number;
+    consumedQuantity: number;
+}
+
 export interface UserPackResponseDto {
     firstName: string;
     lastName: string;
     email: string;
     status: "ACTIVE" | "CONSUMED" | "EXPIRED";
+    userId: number;
+    userPackId: number;
+    itemBenefits: ItemBenefitStatus[];
 }
 
 export interface CreatePackGamefyDto {
@@ -30,10 +42,12 @@ export interface CreatePackGamefyDto {
     description: string;
     durationMonths?: number;
     benefits: {
-        benefitType: string;
+        benefitType?: string;
         rateRule: string;
         discountType?: string;
         discountValue?: number;
+        itemName?: string;
+        itemQuantity?: number;
     }[];
 }
 
@@ -77,5 +91,13 @@ export const packGamefyApi = {
 
     getPackPlayers: async (id: number): Promise<UserPackResponseDto[]> => {
         return apiClient.get(`/gamefy/pack-gamefies/${id}/players`);
-    }
+    },
+
+    consumeItemBenefit: async (userPackId: number, benefitId: number): Promise<string> => {
+        return apiClient.put(`/gamefy/pack-gamefies/user-packs/${userPackId}/consume-item/${benefitId}`);
+    },
+
+    unconsumeItemBenefit: async (userPackId: number, benefitId: number): Promise<string> => {
+        return apiClient.put(`/gamefy/pack-gamefies/user-packs/${userPackId}/unconsume-item/${benefitId}`);
+    },
 };

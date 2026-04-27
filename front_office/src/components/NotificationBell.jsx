@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Check, CheckCheck, MessageSquare, Calendar, Trash2, X } from "lucide-react";
+import { Bell, Check, CheckCheck, MessageSquare, Calendar, Package, Trash2, X } from "lucide-react";
 import { useNotifications } from "../context/NotificationContext";
 
 const NotificationBell = () => {
@@ -38,6 +38,9 @@ const NotificationBell = () => {
     const getIcon = (source) => {
         if (source === "event") {
             return <Calendar size={18} className="text-[#FF89EB]" />;
+        }
+        if (source === "pack") {
+            return <Package size={18} className="text-[#FFB800]" />;
         }
         return <MessageSquare size={18} className="text-[#2BDFC8]" />;
     };
@@ -150,8 +153,14 @@ const NotificationBell = () => {
                                         onClick={() => {
                                             if (!n.read) markAsRead(n.id, n.source);
                                         }}
-                                        className={`group relative w-full text-left px-5 py-4 flex gap-3 border-b border-white/[0.03] hover:bg-white/[0.04] cursor-pointer ${
-                                            !n.read ? "bg-[#1CF3CA]/[0.04]" : ""
+                                        className={`group relative w-full text-left px-5 py-4 flex gap-3 border-b border-white/[0.03] hover:bg-white/[0.04] cursor-pointer transition-all duration-300 ${
+                                            !n.read 
+                                                ? n.source === "event" 
+                                                    ? "bg-[#FF89EB]/[0.05] shadow-[inset_0_0_20px_rgba(255,137,235,0.1)]" 
+                                                    : n.source === "pack"
+                                                    ? "bg-[#FFB800]/[0.05] shadow-[inset_0_0_20px_rgba(255,184,0,0.1)]"
+                                                    : "bg-[#1CF3CA]/[0.05] shadow-[inset_0_0_20px_rgba(28,243,202,0.1)]"
+                                                : ""
                                         } ${
                                             dismissingIds.has(key)
                                                 ? "notif-slide-out"
@@ -163,7 +172,7 @@ const NotificationBell = () => {
                                     >
                                         {/* Icon */}
                                         <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                                            n.source === "event" ? "bg-[#FF89EB]/10" : "bg-white/5"
+                                            n.source === "event" ? "bg-[#FF89EB]/10" : n.source === "pack" ? "bg-[#FFB800]/10" : "bg-white/5"
                                         }`}>
                                             {getIcon(n.source)}
                                         </div>
@@ -173,16 +182,11 @@ const NotificationBell = () => {
                                             <div className="flex items-start justify-between gap-2">
                                                 <p className={`text-[13px] font-semibold font-['Inter'] leading-tight ${
                                                     !n.read
-                                                        ? n.source === "event" ? "text-[#FF89EB]" : "text-[#1CF3CA]"
+                                                        ? n.source === "event" ? "text-[#FF89EB]" : n.source === "pack" ? "text-[#FFB800]" : "text-[#1CF3CA]"
                                                         : "text-white/70"
                                                 }`}>
                                                     {n.title}
                                                 </p>
-                                                {!n.read && (
-                                                    <span className={`flex-shrink-0 w-2 h-2 mt-1 rounded-full ${
-                                                        n.source === "event" ? "bg-[#FF89EB]" : "bg-[#FF89EB]"
-                                                    }`} />
-                                                )}
                                             </div>
                                             <p className="text-white/40 text-[12px] font-['Inter'] mt-1 leading-relaxed line-clamp-2">
                                                 {n.message?.includes("{{time}}") && n.scheduledAt
@@ -196,9 +200,11 @@ const NotificationBell = () => {
                                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${
                                                     n.source === "event"
                                                         ? "bg-[#FF89EB]/10 text-[#FF89EB]/60"
+                                                        : n.source === "pack"
+                                                        ? "bg-[#FFB800]/10 text-[#FFB800]/60"
                                                         : "bg-[#1CF3CA]/10 text-[#1CF3CA]/60"
                                                 }`}>
-                                                    {n.source === "event" ? "Event" : "Reservation"}
+                                                    {n.source === "event" ? "Event" : n.source === "pack" ? "Pack" : "Reservation"}
                                                 </span>
                                             </div>
                                         </div>
@@ -206,7 +212,7 @@ const NotificationBell = () => {
                                         {/* Delete button — visible on hover */}
                                         <button
                                             onClick={(e) => handleDeleteOne(e, n.id, n.source)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-red-500/0 hover:bg-red-500/20 text-white/0 group-hover:text-red-400/70 hover:!text-red-400 transition-all duration-200"
+                                            className="absolute right-2 top-2 p-1.5 rounded-lg bg-red-500/0 hover:bg-red-500/20 text-red-400/50 md:text-white/0 group-hover:text-red-400/70 hover:!text-red-400 transition-all duration-200 z-10"
                                             title="Delete notification"
                                         >
                                             <X size={14} />

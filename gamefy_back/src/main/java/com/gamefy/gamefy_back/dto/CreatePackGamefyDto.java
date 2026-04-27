@@ -24,5 +24,7 @@ public class CreatePackGamefyDto {
         private String rateRule;
         private String discountType;  // "PERCENTAGE" or "FIXED_AMOUNT", only when rateRule=DISCOUNT
         private Double discountValue; // e.g. 20 (for 20%) or 5.0 (for 5 TND)
+        private String itemName;      // e.g. "Cookie", "Soda", only when rateRule=FREE_ITEM
+        private Integer itemQuantity; // e.g. 1, 2, only when rateRule=FREE_ITEM
     }
 }

@@ -2,10 +2,11 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client/dist/sockjs";
 import toast from "react-hot-toast";
-import { MessageSquare, Calendar } from "lucide-react";
+import { MessageSquare, Calendar, Package } from "lucide-react";
 import { getUserId } from "../utils/jwt";
 import * as reservationApi from "../api/notification";
 import * as eventApi from "../api/notificationEvent";
+import * as packApi from "../api/notificationPack";
 
 const NotificationContext = createContext(null);
 
@@ -14,18 +15,45 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api
 export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [authReady, setAuthReady] = useState(!!localStorage.getItem("accessToken"));
     const stompClientRef = useRef(null);
     const reconnectTimeoutRef = useRef(null);
+
+    // ─── Detect auth changes (login / logout) ───
+
+    useEffect(() => {
+        const handleStorage = (e) => {
+            if (e.key === "accessToken") {
+                setAuthReady(!!e.newValue);
+            }
+        };
+        window.addEventListener("storage", handleStorage);
+
+        // Also poll briefly after mount to catch same-tab changes (storage event doesn't fire in the same tab)
+        const interval = setInterval(() => {
+            const hasToken = !!localStorage.getItem("accessToken");
+            setAuthReady((prev) => {
+                if (prev !== hasToken) return hasToken;
+                return prev;
+            });
+        }, 1000);
+
+        return () => {
+            window.removeEventListener("storage", handleStorage);
+            clearInterval(interval);
+        };
+    }, []);
 
     // ─── Fetch helpers ───
 
     const fetchUnreadCount = useCallback(async () => {
         try {
-            const [resData, evtData] = await Promise.all([
+            const [resData, evtData, packData] = await Promise.all([
                 reservationApi.getUnreadCount(),
                 eventApi.getUnreadCount(),
+                packApi.getUnreadCount(),
             ]);
-            setUnreadCount((resData.count || 0) + (evtData.count || 0));
+            setUnreadCount((resData.count || 0) + (evtData.count || 0) + (packData.count || 0));
         } catch (err) {
             console.error("Failed to fetch unread count", err);
         }
@@ -33,14 +61,16 @@ export const NotificationProvider = ({ children }) => {
 
     const fetchNotifications = useCallback(async () => {
         try {
-            const [resData, evtData] = await Promise.all([
+            const [resData, evtData, packData] = await Promise.all([
                 reservationApi.getNotifications(),
                 eventApi.getNotifications(),
+                packApi.getNotifications(),
             ]);
             // Tag each notification with its source for routing delete/read calls
             const tagged = [
                 ...resData.map((n) => ({ ...n, source: "reservation" })),
                 ...evtData.map((n) => ({ ...n, source: "event" })),
+                ...packData.map((n) => ({ ...n, source: "pack" })),
             ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             setNotifications(tagged);
         } catch (err) {
@@ -54,23 +84,27 @@ export const NotificationProvider = ({ children }) => {
         try {
             if (source === "event") {
                 await eventApi.markAsRead(id);
+            } else if (source === "pack") {
+                await packApi.markAsRead(id);
             } else {
                 await reservationApi.markAsRead(id);
             }
             setNotifications((prev) =>
                 prev.map((n) => (n.id === id && n.source === source ? { ...n, read: true } : n))
             );
-            setUnreadCount((prev) => Math.max(0, prev - 1));
+            // Re-fetch accurate count from server
+            fetchUnreadCount();
         } catch (err) {
             console.error("Failed to mark notification as read", err);
         }
-    }, []);
+    }, [fetchUnreadCount]);
 
     const markAllAsRead = useCallback(async () => {
         try {
             await Promise.all([
                 reservationApi.markAllAsRead(),
                 eventApi.markAllAsRead(),
+                packApi.markAllAsRead(),
             ]);
             setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
             setUnreadCount(0);
@@ -85,26 +119,27 @@ export const NotificationProvider = ({ children }) => {
         try {
             if (source === "event") {
                 await eventApi.deleteNotification(id);
+            } else if (source === "pack") {
+                await packApi.deleteNotification(id);
             } else {
                 await reservationApi.deleteNotification(id);
             }
-            setNotifications((prev) => {
-                const target = prev.find((n) => n.id === id && n.source === source);
-                if (target && !target.read) {
-                    setUnreadCount((c) => Math.max(0, c - 1));
-                }
-                return prev.filter((n) => !(n.id === id && n.source === source));
-            });
+            setNotifications((prev) =>
+                prev.filter((n) => !(n.id === id && n.source === source))
+            );
+            // Re-fetch accurate count from server instead of manual decrement
+            fetchUnreadCount();
         } catch (err) {
             console.error("Failed to delete notification", err);
         }
-    }, []);
+    }, [fetchUnreadCount]);
 
     const deleteAllNotifications = useCallback(async () => {
         try {
             await Promise.all([
                 reservationApi.deleteAllNotifications(),
                 eventApi.deleteAllNotifications(),
+                packApi.deleteAllNotifications(),
             ]);
             setNotifications([]);
             setUnreadCount(0);
@@ -113,13 +148,22 @@ export const NotificationProvider = ({ children }) => {
         }
     }, []);
 
-    // ─── WebSocket ───
+    // ─── WebSocket (depends on authReady) ───
 
     useEffect(() => {
         const userId = getUserId();
         const token = localStorage.getItem("accessToken");
 
-        if (!userId || !token) return;
+        if (!userId || !token || !authReady) {
+            // Not logged in — clean up any existing connection
+            if (stompClientRef.current) {
+                stompClientRef.current.deactivate();
+                stompClientRef.current = null;
+            }
+            setNotifications([]);
+            setUnreadCount(0);
+            return;
+        }
 
         fetchUnreadCount();
 
@@ -141,15 +185,34 @@ export const NotificationProvider = ({ children }) => {
                     console.log("📩 New notification:", notification);
 
                     // Determine source from the type field
-                    const source = notification.type?.startsWith("PARTICIPANT_") ? "event" : "reservation";
+                    let source = "reservation";
+                    if (notification.type?.startsWith("PARTICIPANT_")) {
+                        source = "event";
+                    } else if (notification.type?.startsWith("PACK_")) {
+                        source = "pack";
+                    }
 
                     setNotifications((prev) => [{ ...notification, source }, ...prev]);
                     setUnreadCount((prev) => prev + 1);
 
-                    // Determine icon based on source
-                    const toastIcon = source === "event"
-                        ? <Calendar size={20} className="text-[#FF89EB]" />
-                        : <MessageSquare size={20} className="text-[#1CF3CA]" />;
+                    // Determine icon and color based on source
+                    let toastIcon;
+                    let borderColor, textColor, shadowColor;
+
+                    if (source === "event") {
+                        toastIcon = <Calendar size={20} className="text-[#FF89EB]" />;
+                        borderColor = "#FF89EB";
+                        shadowColor = "rgba(255, 137, 235, 0.3)";
+                    } else if (source === "pack") {
+                        toastIcon = <Package size={20} className="text-[#FFB800]" />;
+                        borderColor = "#FFB800";
+                        shadowColor = "rgba(255, 184, 0, 0.3)";
+                    } else {
+                        toastIcon = <MessageSquare size={20} className="text-[#1CF3CA]" />;
+                        borderColor = "#1CF3CA";
+                        shadowColor = "rgba(28, 243, 202, 0.3)";
+                    }
+                    textColor = borderColor;
 
                     const formatTime = (dateStr) => {
                         if (!dateStr) return "";
@@ -179,13 +242,11 @@ export const NotificationProvider = ({ children }) => {
                         {
                             duration: 6000,
                             style: {
-                                border: source === "event" ? "1px solid #FF89EB" : "1px solid #1CF3CA",
+                                border: `1px solid ${borderColor}`,
                                 padding: "16px",
-                                color: source === "event" ? "#FF89EB" : "#1CF3CA",
+                                color: textColor,
                                 background: "#24003E",
-                                boxShadow: source === "event"
-                                    ? "0 0 20px rgba(255, 137, 235, 0.3)"
-                                    : "0 0 20px rgba(28, 243, 202, 0.3)",
+                                boxShadow: `0 0 20px ${shadowColor}`,
                                 maxWidth: 400,
                             },
                             icon: toastIcon,
@@ -213,7 +274,7 @@ export const NotificationProvider = ({ children }) => {
                 stompClientRef.current = null;
             }
         };
-    }, [fetchUnreadCount]);
+    }, [authReady, fetchUnreadCount]);
 
     return (
         <NotificationContext.Provider
