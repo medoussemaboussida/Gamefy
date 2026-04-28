@@ -8,6 +8,7 @@ export interface PackBenefitDto {
     discountValue?: number;
     itemName?: string;
     itemQuantity?: number;
+    hours?: number;
 }
 
 export interface PackGamefyDto {
@@ -48,6 +49,7 @@ export interface CreatePackGamefyDto {
         discountValue?: number;
         itemName?: string;
         itemQuantity?: number;
+        hours?: number;
     }[];
 }
 

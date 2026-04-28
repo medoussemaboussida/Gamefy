@@ -107,9 +107,23 @@ export default function PackManagement() {
     const getAggregatedBenefits = (benefits: any[]) => {
         const counts: { [key: string]: { count: number; label: string } } = {};
         benefits.forEach((b) => {
-            let detail = "";
+            if (b.rateRule === "HOURS") {
+                const hrs = b.hours || 1;
+                const key = `${b.benefitType}_HOURS`;
+                if (!counts[key]) {
+                    counts[key] = { count: 0, label: `${b.benefitType}_HOURS` };
+                }
+                counts[key].count += hrs;
+                return;
+            }
             if (b.rateRule === "DISCOUNT" && b.discountType && b.discountValue !== undefined) {
-                detail = b.discountType === "PERCENTAGE" ? ` (${b.discountValue}%)` : ` (${b.discountValue.toFixed(3)} TND)`;
+                const detail = b.discountType === "PERCENTAGE" ? ` (${b.discountValue}%)` : ` (${b.discountValue.toFixed(3)} TND)`;
+                const key = `${b.benefitType}_DISCOUNT${detail}`;
+                if (!counts[key]) {
+                    counts[key] = { count: 0, label: `${b.benefitType}_DISCOUNT${detail}` };
+                }
+                counts[key].count++;
+                return;
             }
             if (b.rateRule === "FREE_ITEM" && b.itemName) {
                 const qty = b.itemQuantity || 1;
@@ -120,9 +134,9 @@ export default function PackManagement() {
                 counts[key].count++;
                 return;
             }
-            const key = `${b.benefitType}_${b.rateRule}${detail}`;
+            const key = `${b.benefitType}_${b.rateRule}`;
             if (!counts[key]) {
-                counts[key] = { count: 0, label: `${b.benefitType}_${b.rateRule}${detail}` };
+                counts[key] = { count: 0, label: `${b.benefitType}_${b.rateRule}` };
             }
             counts[key].count++;
         });
@@ -255,7 +269,7 @@ export default function PackManagement() {
                                                     <div className="flex flex-wrap gap-1">
                                                         {getAggregatedBenefits(pack.benefits).map((b, i) => (
                                                             <Badge key={i} size="sm" color="info">
-                                                                {b.label} {b.count > 1 ? `x ${b.count}` : ""}
+                                                                {b.label.includes("_HOURS") ? `${b.label} ${b.count}h` : `${b.label}${b.count > 1 ? ` x ${b.count}` : ""}`}
                                                             </Badge>
                                                         ))}
                                                         {pack.benefits.length === 0 && (

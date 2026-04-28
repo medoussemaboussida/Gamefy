@@ -30,5 +30,6 @@ public class PackGamefyDto {
         private Double discountValue;
         private String itemName;
         private Integer itemQuantity;
+        private Double hours;
     }
 }

@@ -74,6 +74,7 @@ public class PackGamefyService {
                         benefit.setDiscountValue(b.getDiscountValue());
                         benefit.setItemName(b.getItemName());
                         benefit.setItemQuantity(b.getItemQuantity());
+                        benefit.setHours(b.getHours());
                         benefit.setPackGamefy(pack);
                         return benefit;
                     }).collect(Collectors.toList());
@@ -111,6 +112,7 @@ public class PackGamefyService {
                         benefit.setDiscountValue(b.getDiscountValue());
                         benefit.setItemName(b.getItemName());
                         benefit.setItemQuantity(b.getItemQuantity());
+                        benefit.setHours(b.getHours());
                         benefit.setPackGamefy(pack);
                         return benefit;
                     }).collect(Collectors.toList());
@@ -176,6 +178,7 @@ public class PackGamefyService {
                     dto.setDiscountValue(b.getDiscountValue());
                     dto.setItemName(b.getItemName());
                     dto.setItemQuantity(b.getItemQuantity());
+                    dto.setHours(b.getHours());
                     return dto;
                 }).collect(Collectors.toList());
 
@@ -341,14 +344,15 @@ public class PackGamefyService {
     }
 
     /**
-     * Count the number of benefits of a given type with rateRule=HOURS.
-     * Each such benefit = 1 hour.
+     * Sum the hours for benefits of a given type with rateRule=HOURS.
+     * Each benefit's hours field specifies the count (null defaults to 1.0 for backward compatibility).
      */
     private double calculateHours(PackGamefy pack, Benefit_type type) {
         if (pack.getBenefits() == null) return 0.0;
         return pack.getBenefits().stream()
                 .filter(b -> b.getBenefitType() == type && b.getRateRule() == Rate_Rule.HOURS)
-                .count();
+                .mapToDouble(b -> b.getHours() != null ? b.getHours() : 1.0)
+                .sum();
     }
 
     /**

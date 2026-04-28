@@ -12,7 +12,7 @@ const PackBenefitsModal = ({ isOpen, onClose, benefits, packName }) => {
     // Group Hours benefits by type (e.g., PC, VIP, COACH)
     const hoursBenefits = benefits?.filter(b => b.rateRule === "HOURS") || [];
     const groupedHours = hoursBenefits.reduce((acc, b) => {
-        acc[b.benefitType] = (acc[b.benefitType] || 0) + 1;
+        acc[b.benefitType] = (acc[b.benefitType] || 0) + (b.hours || 1);
         return acc;
     }, {});
 

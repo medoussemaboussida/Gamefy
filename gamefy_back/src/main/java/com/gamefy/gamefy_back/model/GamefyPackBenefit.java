@@ -44,6 +44,9 @@ public class GamefyPackBenefit {
     @Column(name = "item_quantity")
     private Integer itemQuantity;
 
+    @Column(name = "hours")
+    private Double hours;
+
     @Override
     public String toString() {
         return "GamefyPackBenefit{" +
@@ -54,6 +57,7 @@ public class GamefyPackBenefit {
                 ", discountValue=" + discountValue +
                 ", itemName='" + itemName + '\'' +
                 ", itemQuantity=" + itemQuantity +
+                ", hours=" + hours +
                 '}';
     }
 }

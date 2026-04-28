@@ -216,6 +216,7 @@ public class PaymentService {
         userPack.setRemainingVipHours(calculateHours(pack, Benefit_type.VIP));
         userPack.setRemainingCoachingHours(calculateHours(pack, Benefit_type.COACH));
         userPack.setAvailableDiscountIdsList(calculateAllDiscountIds(pack));
+        userPack.setConsumedItemQuantitiesMap(new java.util.LinkedHashMap<>());
         userPack.setStatus(UserPackStatus.ACTIVE);
         userPackGamefyRepository.save(userPack);
 
@@ -343,6 +344,7 @@ public class PaymentService {
         userPack.setRemainingVipHours(calculateHours(pack, Benefit_type.VIP));
         userPack.setRemainingCoachingHours(calculateHours(pack, Benefit_type.COACH));
         userPack.setAvailableDiscountIdsList(calculateAllDiscountIds(pack));
+        userPack.setConsumedItemQuantitiesMap(new java.util.LinkedHashMap<>());
         userPack.setStatus(UserPackStatus.ACTIVE);
         userPackGamefyRepository.save(userPack);
 
@@ -526,14 +528,15 @@ public class PaymentService {
     }
 
     /**
-     * Count the number of benefits of a given type with rateRule=HOURS.
-     * Each such benefit = 1 hour.
+     * Sum the hours for benefits of a given type with rateRule=HOURS.
+     * Each benefit's hours field specifies the count (null defaults to 1.0 for backward compatibility).
      */
     private double calculateHours(PackGamefy pack, Benefit_type type) {
         if (pack.getBenefits() == null) return 0.0;
         return pack.getBenefits().stream()
                 .filter(b -> b.getBenefitType() == type && b.getRateRule() == Rate_Rule.HOURS)
-                .count();
+                .mapToDouble(b -> b.getHours() != null ? b.getHours() : 1.0)
+                .sum();
     }
 
     /**

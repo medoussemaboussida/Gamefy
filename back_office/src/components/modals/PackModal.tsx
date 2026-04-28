@@ -53,6 +53,9 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                     rateRule: b.rateRule,
                     discountType: b.discountType,
                     discountValue: b.discountValue,
+                    itemName: b.itemName,
+                    itemQuantity: b.itemQuantity,
+                    hours: b.hours,
                 })),
             });
         } else {
@@ -76,7 +79,7 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
     const addBenefit = () => {
         setFormData(prev => ({
             ...prev,
-            benefits: [...prev.benefits, { benefitType: "PC", rateRule: "HOURS", discountType: undefined, discountValue: undefined, itemName: undefined, itemQuantity: undefined }]
+            benefits: [...prev.benefits, { benefitType: "PC", rateRule: "HOURS", discountType: undefined, discountValue: undefined, itemName: undefined, itemQuantity: undefined, hours: 1 }]
         }));
     };
 
@@ -88,11 +91,13 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
     };
 
     const updateBenefit = (index: number, field: string, value: any) => {
+        const numericFields = ["discountValue", "hours", "itemQuantity"];
+        const parsedValue = numericFields.includes(field) ? parseFloat(value) : value;
         setFormData(prev => ({
             ...prev,
             benefits: prev.benefits.map((b, i) => i === index ? { 
                 ...b, 
-                [field]: field === "discountValue" ? parseFloat(value) : value 
+                [field]: parsedValue
             } : b)
         }));
     };
@@ -221,7 +226,7 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                                             setFormData(prev => ({
                                                                 ...prev,
                                                                 benefits: prev.benefits.map((b, i) => i === index
-                                                                    ? { ...b, rateRule: val, discountType: undefined, discountValue: undefined, itemName: undefined, itemQuantity: undefined }
+                                                                    ? { ...b, rateRule: val, discountType: undefined, discountValue: undefined, itemName: undefined, itemQuantity: undefined, hours: b.hours || 1 }
                                                                     : b)
                                                             }));
                                                         } else if (val === "DISCOUNT") {
@@ -229,7 +234,7 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                                             setFormData(prev => ({
                                                                 ...prev,
                                                                 benefits: prev.benefits.map((b, i) => i === index
-                                                                    ? { ...b, rateRule: val, discountType: "PERCENTAGE", discountValue: 0, itemName: undefined, itemQuantity: undefined }
+                                                                    ? { ...b, rateRule: val, discountType: "PERCENTAGE", discountValue: 0, itemName: undefined, itemQuantity: undefined, hours: undefined }
                                                                     : b)
                                                             }));
                                                         } else if (val === "FREE_ITEM") {
@@ -237,7 +242,7 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                                             setFormData(prev => ({
                                                                 ...prev,
                                                                 benefits: prev.benefits.map((b, i) => i === index
-                                                                    ? { ...b, rateRule: val, benefitType: undefined, discountType: undefined, discountValue: undefined, itemName: "", itemQuantity: 1 }
+                                                                    ? { ...b, rateRule: val, benefitType: undefined, discountType: undefined, discountValue: undefined, itemName: "", itemQuantity: 1, hours: undefined }
                                                                     : b)
                                                             }));
                                                         }
@@ -272,6 +277,22 @@ const PackModal: React.FC<PackModalProps> = ({ isOpen, onClose, onSuccess, pack 
                                                             updateBenefit(index, "discountValue", e.target.value)
                                                         }
                                                         min={"0"}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                        {benefit.rateRule === "HOURS" && (
+                                            <div className="flex items-end gap-3 pt-1 pl-2 border-l-2 border-blue-300 dark:border-blue-600 ml-1">
+                                                <div className="flex-1">
+                                                    <Label className="text-[10px] mb-1">Number of Hours</Label>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g. 40"
+                                                        value={benefit.hours ?? ""}
+                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                            updateBenefit(index, "hours", e.target.value)
+                                                        }
+                                                        min={"1"}
                                                     />
                                                 </div>
                                             </div>
