@@ -114,7 +114,7 @@ const Sidebar = () => {
           alt="Logo"
           style={{
             width: !isHovered && !isMobile ? "30px" : "130px",
-            marginTop: !isHovered && !isMobile ? "10px" : "0",
+            marginTop: !isHovered && !isMobile ? "5px" : "0",
           }}
           className="transition-all duration-300 object-contain"
         />
