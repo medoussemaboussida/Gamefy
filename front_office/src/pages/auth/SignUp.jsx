@@ -230,7 +230,6 @@ const SignUp = () => {
               name="email"
               type="email"
               required
-              placeholder="Example@gmail.com"
               value={formData.email}
               onChange={handleChange}
               className={`w-full h-[47px] bg-transparent border ${fieldErrors.email ? 'border-red-500' : 'border-[#1CF3CA]'} rounded-full px-6 text-white text-[14px] font-medium font-['Inter'] focus:outline-none focus:ring-1 focus:ring-[#1CF3CA] transition-all`}

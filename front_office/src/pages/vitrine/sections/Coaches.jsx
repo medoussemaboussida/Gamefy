@@ -32,10 +32,10 @@ const itemVariants = {
 
 const Coaches = () => {
     const coachData = [
-        { name: 'Haithem "Dean" Attaia', game: "League Of Legends", tag: "TFT", img: coach1 },
-        { name: 'Foulen "Juggernaut" Foulen', game: "League Of Legends", tag: "TFT", img: coach2 },
-        { name: 'Foulen "Skream" Foulen', game: "League Of Legends", tag: "TFT", img: coach3 },
-        { name: 'Foulen "Heisen" Foulen', game: "League Of Legends", tag: "TFT", img: coach4 },
+        { name: 'Haithem "Dean" Attaia', game: "Valorant", tag: "SWIFT", img: coach1 },
+        { name: 'Sami "Juggernaut" Mokrani', game: "League Of Legends", tag: "TFT", img: coach2 },
+        { name: 'Ahmed "Skream" Dridi', game: "fortnite", tag: "BR", img: coach3 },
+        { name: 'Louay "Heisen" Ellouze', game: "FC 26", tag: "FUT", img: coach4 },
     ];
 const navigate = useNavigate();
     return (
@@ -140,7 +140,7 @@ const navigate = useNavigate();
                 <div className="glass-card rounded-[20px] border border-white/10 backdrop-blur-xl bg-white/5 p-12 flex flex-col md:flex-row items-center justify-between gap-10">
                     <div className="max-w-3xl">
                         
-                        <h2 className="text-[62px] font-bold leading-tight mb-4 uppercase">
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[62px] font-bold leading-tight mb-4 uppercase">
                             <span
                                 className="bg-clip-text text-transparent"
                                 style={{ backgroundImage: "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)" }}
@@ -148,7 +148,7 @@ const navigate = useNavigate();
                                 BECOME A COACH
                             </span>
                         </h2>
-                        <p className="text-white text-[20px] font-normal leading-relaxed">
+                        <p className="text-white text-base md:text-lg lg:text-[20px] font-normal leading-relaxed">
                             Share your experience, grow your reputation, and earn by coaching competitive players at Gamefy Academy.
                         </p>
                     </div>

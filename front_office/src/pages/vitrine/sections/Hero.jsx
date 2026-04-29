@@ -43,7 +43,7 @@ const Hero = () => {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: false, amount: 0.4 }}
-                className="max-w-7xl mx-auto px-4 text-center relative z-10 pt-32 md:pt-40 lg:pt-[250px] flex flex-col items-center"
+                className="max-w-7xl mx-auto px-4 text-center relative z-10 pt-60 md:pt-64 lg:pt-[320px] flex flex-col items-center"
             >
                 <motion.h1 variants={itemVariants} className="text-4xl sm:text-5xl md:text-6xl lg:text-[63px] leading-[1.1] mb-6 md:mb-8 tracking-tight text-white uppercase drop-shadow-2xl">
                     <span
@@ -67,16 +67,16 @@ const Hero = () => {
                 </motion.p>
 
                 <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-center items-center gap-12">
+                    <button className="w-[220px] h-[64px] flex items-center justify-center bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-full font-bold text-[16px] text-white tracking-wide shadow-[0_0_30px_rgba(221,0,184,0.3)] hover:scale-105 transition-all uppercase">
+                        Unlock Your Gift
+                    </button>
+
                     <a
                         href="#"
-                        className="text-[#06F0F6] font-medium text-[16px] tracking-wide underline underline-offset-[12px] decoration-2 hover:text-white transition-all drop-shadow-md"
+                        className="text-[#06F0F6] font-bold text-[16px] tracking-wide underline underline-offset-[12px] decoration-2 hover:text-white transition-all drop-shadow-md"
                     >
                         Book a Room!
                     </a>
-
-                    <button className="w-[196px] h-[64px] flex items-center justify-center bg-gradient-to-r from-[#DD00B8] to-[#1CF3CA] rounded-full font-medium text-[16px] text-white tracking-wide shadow-[0_0_30px_rgba(221,0,184,0.3)] hover:scale-105 transition-all uppercase">
-                        Unlock Your Gift
-                    </button>
                 </motion.div>
             </motion.div>
 

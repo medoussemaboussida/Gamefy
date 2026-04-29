@@ -284,30 +284,6 @@ const SignIn = () => {
             </div>
           </div>
 
-          {/* Remember Me */}
-          <div className="flex items-center w-full max-w-[412px] mt-[-30px]">
-            <label className="flex items-center cursor-pointer group">
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={rememberMe}
-                  onChange={() => setRememberMe(!rememberMe)}
-                />
-                <div
-                  className={`w-6 h-6 border-2 border-[#1CF3CA] rounded flex items-center justify-center transition-all ${rememberMe ? "bg-[#1CF3CA]" : "bg-transparent"}`}
-                >
-                  {rememberMe && (
-                    <Check size={16} className="text-[#470155] stroke-[4px]" />
-                  )}
-                </div>
-              </div>
-              <span className="ml-3 text-[#1CF3CA] text-sm font-medium select-none font-['Inter']">
-                Remember me
-              </span>
-            </label>
-          </div>
-
           {/* Sign In Button */}
           <button
             type="submit"

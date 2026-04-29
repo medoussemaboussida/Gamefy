@@ -1,6 +1,9 @@
 import React from "react";
 import event_img from "../../../assets/images/vitrine_page_images/event.png";
-import rooms_img from "../../../assets/images/vitrine_page_images/rooms.png";
+import room_1 from "../../../assets/images/vitrine_page_images/room_1.png";
+import room2 from "../../../assets/images/vitrine_page_images/room2.png";
+import description_card_one from "../../../assets/images/vitrine_page_images/description_card_one.png";
+import description_card_two from "../../../assets/images/vitrine_page_images/description_card_two.png";
 import { motion } from "framer-motion";
 
 const containerVariants = {
@@ -67,7 +70,7 @@ const TournamentAndRooms = () => {
                           "linear-gradient(90deg, #FFFFFF 0%, #2BDFC8 45%)",
                       }}
                     >
-                      TOURNAMENT NAME
+                      FIFA TOURNAMENT
                     </span>
                   </motion.h2>
                   <motion.p variants={itemVariants} className="text-white font-regular text-sm md:text-base lg:text-[16px] mb-3 md:mb-4 leading-relaxed drop-shadow-lg opacity-90 max-w-lg">
@@ -84,32 +87,32 @@ const TournamentAndRooms = () => {
                 </div>
 
                 {/* Countdown Card */}
-                <motion.div variants={itemVariants} className="bg-black/10 backdrop-blur-xl p-6 md:p-8 rounded-[25px] md:rounded-[35px] min-w-[280px] sm:min-w-[320px] md:min-w-[340px] text-center mb-2 md:mb-3">
-                  <p className="text-white/60 text-[11px] font-medium uppercase tracking-[0.3em] mb-6">
+                <motion.div variants={itemVariants} className="bg-black/20 backdrop-blur-xl p-6 sm:p-8 rounded-[25px] md:rounded-[35px] w-full sm:w-auto min-w-0 sm:min-w-[320px] text-center mb-2 md:mb-3 border border-white/5">
+                  <p className="text-white/60 text-[10px] md:text-[11px] font-medium uppercase tracking-[0.3em] mb-6">
                     Tournament Start in:
                   </p>
-                  <div className="flex justify-center items-center gap-6 text-white pb-2">
+                  <div className="flex justify-center items-center gap-3 sm:gap-6 text-white pb-2 font-['Inter']">
                     <div className="flex flex-col items-center">
-                      <span className="text-5xl font-black">59</span>
-                      <span className="text-[10px] uppercase tracking-widest mt-2 opacity-60">
+                      <span className="text-3xl sm:text-4xl md:text-5xl font-black">59</span>
+                      <span className="text-[9px] md:text-[10px] uppercase tracking-widest mt-2 opacity-60">
                         Hours
                       </span>
                     </div>
-                    <span className="text-4xl font-light opacity-50 mb-6">
+                    <span className="text-2xl sm:text-3xl md:text-4xl font-light opacity-50 mb-6">
                       :
                     </span>
                     <div className="flex flex-col items-center">
-                      <span className="text-5xl font-black">59</span>
-                      <span className="text-[10px] uppercase tracking-widest mt-2 opacity-60">
+                      <span className="text-3xl sm:text-4xl md:text-5xl font-black">59</span>
+                      <span className="text-[9px] md:text-[10px] uppercase tracking-widest mt-2 opacity-60">
                         Minutes
                       </span>
                     </div>
-                    <span className="text-4xl font-light opacity-50 mb-6">
+                    <span className="text-2xl sm:text-3xl md:text-4xl font-light opacity-50 mb-6">
                       :
                     </span>
                     <div className="flex flex-col items-center">
-                      <span className="text-5xl font-black">59</span>
-                      <span className="text-[10px] uppercase tracking-widest mt-2 opacity-60">
+                      <span className="text-3xl sm:text-4xl md:text-5xl font-black">59</span>
+                      <span className="text-[9px] md:text-[10px] uppercase tracking-widest mt-2 opacity-60">
                         Seconds
                       </span>
                     </div>
@@ -150,35 +153,59 @@ const TournamentAndRooms = () => {
           </div>
 
           {/* Simplified Rooms Asset */}
-          <motion.div variants={itemVariants} className="relative flex justify-center mb-16">
-            <img
-              src={rooms_img}
-              alt="Discover Our Rooms"
-              className="w-full h-auto max-w-[1239px] rounded-[0px]"
-            />
+          <motion.div variants={itemVariants} className="relative w-full max-w-[1239px] mx-auto mb-24">
+            <div className="flex flex-col md:flex-row gap-8 w-full">
+              {/* Gaming Room Column */}
+              <div className="flex flex-col gap-8 w-full md:w-1/2">
+                <img
+                  src={room_1}
+                  alt="Gaming Room"
+                  className="w-full h-auto"
+                />
+                <img
+                  src={description_card_one}
+                  alt="Gaming Room Details"
+                  className="w-full h-auto"
+                />
+              </div>
+
+              {/* VIP Room Column */}
+              <div className="flex flex-col gap-8 w-full md:w-1/2">
+                <img
+                  src={room2}
+                  alt="VIP Room"
+                  className="w-full h-auto"
+                />
+                <img
+                  src={description_card_two}
+                  alt="VIP Room Details"
+                  className="w-full h-auto"
+                />
+              </div>
+            </div>
           </motion.div>
 
           {/* Stats Row */}
-          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-[1239px] mx-auto text-white text-center mb-16 px-4">
+          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-10 max-w-[1239px] mx-auto text-white text-center mb-16 px-4">
             <div className="flex flex-col items-center">
-              <span className="text-[25px] font-black leading-tight">
+              <span className="text-[20px] md:text-[25px] font-black leading-tight">
                 240k+
               </span>
-              <span className="text-[18px] text-white mt-1">
+              <span className="text-[14px] md:text-[18px] text-white mt-1">
                 Booking
               </span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[25px] font-black leading-tight">
+              <span className="text-[20px] md:text-[25px] font-black leading-tight">
                 100k+
               </span>
-              <span className="text-[18px] text-white mt-1" >
+              <span className="text-[14px] md:text-[18px] text-white mt-1" >
                 Tournament & Workshops
               </span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[25px] font-black leading-tight">4.9</span>
-              <span className="text-[18px] text-white mt-1">
+              <span className="text-[20px] md:text-[25px] font-black leading-tight">4.9</span>
+              <span className="text-[14px] md:text-[18px] text-white mt-1">
                 Rating
               </span>
             </div>
