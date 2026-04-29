@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.CreatePackGamefyDto;
+import com.gamefy.gamefy_back.dto.PlayerPackGamefyDetailsDto;
 import com.gamefy.gamefy_back.dto.PackGamefyDto;
 import com.gamefy.gamefy_back.dto.UserPackResponseDto;
 import com.gamefy.gamefy_back.model.GamefyPackBenefit;
@@ -148,11 +149,11 @@ public class PackGamefyService {
                     java.util.Map<Integer, Integer> consumedMap = up.getConsumedItemQuantitiesMap();
                     List<UserPackResponseDto.ItemBenefitStatus> items = itemBenefits.stream()
                             .map(b -> UserPackResponseDto.ItemBenefitStatus.builder()
-                                    .benefitId(b.getId())
-                                    .itemName(b.getItemName())
-                                    .itemQuantity(b.getItemQuantity() != null ? b.getItemQuantity() : 1)
-                                    .consumedQuantity(consumedMap.getOrDefault(b.getId(), 0))
-                                    .build())
+                                     .benefitId(b.getId())
+                                     .itemName(b.getItemName())
+                                     .itemQuantity(b.getItemQuantity() != null ? b.getItemQuantity() : 1)
+                                     .consumedQuantity(consumedMap.getOrDefault(b.getId(), 0))
+                                     .build())
                             .collect(Collectors.toList());
                     return UserPackResponseDto.builder()
                             .firstName(up.getUser().getFirstName())
@@ -165,6 +166,59 @@ public class PackGamefyService {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    public PlayerPackGamefyDetailsDto getMyPackDetails(User player) {
+        UserPackGamefy up = userPackGamefyRepository.findFirstByUserOrderByActivatedAtDesc(player)
+                .orElseThrow(() -> new RuntimeException("No active Gamefy pack found for this user"));
+
+        PackGamefy pack = up.getPackGamefy();
+        List<GamefyPackBenefit> allBenefits = pack.getBenefits();
+
+        List<PlayerPackGamefyDetailsDto.DiscountBenefitDto> discounts = allBenefits.stream()
+                .filter(b -> b.getRateRule() == Rate_Rule.DISCOUNT)
+                .map(b -> PlayerPackGamefyDetailsDto.DiscountBenefitDto.builder()
+                        .benefitId(b.getId())
+                        .rateRule(b.getRateRule())
+                        .benefitType(b.getBenefitType())
+                        .discountType(b.getDiscountType())
+                        .discountValue(b.getDiscountValue())
+                        .isAvailable(up.getAvailableDiscountIdsList().contains(b.getId()))
+                        .build())
+                .collect(Collectors.toList());
+
+        java.util.Map<Integer, Integer> consumedMap = up.getConsumedItemQuantitiesMap();
+        List<PlayerPackGamefyDetailsDto.ItemBenefitDto> items = allBenefits.stream()
+                .filter(b -> b.getRateRule() == Rate_Rule.FREE_ITEM)
+                .map(b -> {
+                    int total = b.getItemQuantity() != null ? b.getItemQuantity() : 1;
+                    int consumed = consumedMap.getOrDefault(b.getId(), 0);
+                    return PlayerPackGamefyDetailsDto.ItemBenefitDto.builder()
+                            .benefitId(b.getId())
+                            .itemName(b.getItemName())
+                            .totalQuantity(total)
+                            .consumedQuantity(consumed)
+                            .remainingQuantity(Math.max(0, total - consumed))
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return PlayerPackGamefyDetailsDto.builder()
+                .packName(pack.getName())
+                .packPrice(pack.getPrice())
+                .durationMonths(pack.getDurationMonths())
+                .activatedAt(up.getActivatedAt())
+                .expiresAt(up.getExpiresAt())
+                .status(up.getStatus())
+                .remainingPcHours(up.getRemainingPcHours())
+                .totalPcHours(calculateHours(pack, Benefit_type.PC))
+                .remainingVipHours(up.getRemainingVipHours())
+                .totalVipHours(calculateHours(pack, Benefit_type.VIP))
+                .remainingCoachingHours(up.getRemainingCoachingHours())
+                .totalCoachingHours(calculateHours(pack, Benefit_type.COACH))
+                .discountBenefits(discounts)
+                .itemBenefits(items)
+                .build();
     }
 
     private PackGamefyDto mapToDto(PackGamefy pack) {

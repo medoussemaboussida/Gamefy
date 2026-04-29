@@ -124,5 +124,17 @@ export const packGamefyApi = {
         } catch (error) {
             throw error;
         }
+    },
+
+    /**
+     * Get detailed consumption data for the connected player's Gamefy pack
+     */
+    getMyPackDetails: async () => {
+        try {
+            const response = await apiClient.get("/gamefy/pack-gamefies/my-pack-details");
+            return response;
+        } catch (error) {
+            throw error;
+        }
     }
 };

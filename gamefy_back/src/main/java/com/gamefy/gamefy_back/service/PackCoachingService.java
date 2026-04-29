@@ -1,5 +1,6 @@
 package com.gamefy.gamefy_back.service;
 
+import com.gamefy.gamefy_back.dto.PlayerPackCoachingDetailsDto;
 import com.gamefy.gamefy_back.dto.PackCoachingAdminDto;
 import com.gamefy.gamefy_back.dto.PackCoachingDto;
 import com.gamefy.gamefy_back.dto.UserPackResponseDto;
@@ -254,6 +255,29 @@ public class PackCoachingService {
                         .status(up.getStatus())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    public PlayerPackCoachingDetailsDto getMyCoachingPackDetails(User player) {
+        UserPackCoaching up = userPackCoachingRepository.findFirstByUserOrderByActivatedAtDesc(player)
+                .orElseThrow(() -> new RuntimeException("No coaching pack found for this user"));
+
+        PackCoaching pack = up.getPackCoaching();
+        double totalHours = calculateHoursFromPack(pack);
+        double remainingHours = up.getRemainingHours() != null ? up.getRemainingHours() : 0.0;
+
+        return PlayerPackCoachingDetailsDto.builder()
+                .packName(pack.getName())
+                .packPrice(pack.getPrice())
+                .coachName(pack.getCoach() != null ? 
+                        pack.getCoach().getFirstName() + " " + pack.getCoach().getLastName() : "External Coach")
+                .durationMonths(pack.getDurationMonths())
+                .activatedAt(up.getActivatedAt())
+                .expiresAt(up.getExpiresAt())
+                .status(up.getStatus())
+                .totalHours(totalHours)
+                .remainingHours(remainingHours)
+                .consumedHours(Math.max(0, totalHours - remainingHours))
+                .build();
     }
 
     private PackCoachingDto mapToDto(PackCoaching pack) {

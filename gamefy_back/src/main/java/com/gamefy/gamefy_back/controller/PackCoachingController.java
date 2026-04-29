@@ -1,9 +1,6 @@
 package com.gamefy.gamefy_back.controller;
 
-import com.gamefy.gamefy_back.dto.AssignPackDto;
-import com.gamefy.gamefy_back.dto.PackCoachingAdminDto;
-import com.gamefy.gamefy_back.dto.PackCoachingDto;
-import com.gamefy.gamefy_back.dto.UserPackResponseDto;
+import com.gamefy.gamefy_back.dto.*;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.service.PackCoachingService;
 import jakarta.validation.Valid;
@@ -26,6 +23,12 @@ public class PackCoachingController {
     @PreAuthorize("hasAuthority('COACH')")
     public ResponseEntity<List<PackCoachingDto>> getMyPacks(@AuthenticationPrincipal User coach) {
         return ResponseEntity.ok(service.getPacksByCoachId(coach.getId()));
+    }
+
+    @GetMapping("/my-pack-details")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<PlayerPackCoachingDetailsDto> getMyCoachingPackDetails(@AuthenticationPrincipal User player) {
+        return ResponseEntity.ok(service.getMyCoachingPackDetails(player));
     }
 
     @GetMapping("/{id}")

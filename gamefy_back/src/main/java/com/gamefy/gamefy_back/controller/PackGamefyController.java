@@ -1,14 +1,13 @@
 package com.gamefy.gamefy_back.controller;
 
-import com.gamefy.gamefy_back.dto.AssignPackDto;
-import com.gamefy.gamefy_back.dto.CreatePackGamefyDto;
-import com.gamefy.gamefy_back.dto.PackGamefyDto;
-import com.gamefy.gamefy_back.dto.UserPackResponseDto;
+import com.gamefy.gamefy_back.dto.*;
+import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.service.PackGamefyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +23,12 @@ public class PackGamefyController {
     @GetMapping
     public ResponseEntity<List<PackGamefyDto>> getAllPacks() {
         return ResponseEntity.ok(service.getAllPacks());
+    }
+
+    @GetMapping("/my-pack-details")
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public ResponseEntity<PlayerPackGamefyDetailsDto> getMyPackDetails(@AuthenticationPrincipal User player) {
+        return ResponseEntity.ok(service.getMyPackDetails(player));
     }
 
     @GetMapping("/{id}")

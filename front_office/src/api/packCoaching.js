@@ -168,5 +168,17 @@ export const packCoachingApi = {
         } catch (error) {
             throw error;
         }
+    },
+
+    /**
+     * Get detailed consumption data for the connected player's Coaching pack
+     */
+    getMyPackDetails: async () => {
+        try {
+            const response = await apiClient.get("/gamefy/pack-coachings/my-pack-details");
+            return response;
+        } catch (error) {
+            throw error;
+        }
     }
 };

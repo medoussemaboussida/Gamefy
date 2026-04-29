@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Shield, Camera, Edit2, Loader2, ChevronRight, LogOut, Search, Bell, Calendar, MapPin, X, FileText, Receipt } from "lucide-react";
+import { User, Mail, Shield, Camera, Edit2, Loader2, ChevronRight, LogOut, Search, Bell, Calendar, MapPin, X, FileText, Receipt, Package } from "lucide-react";
 import toast from "react-hot-toast";
 import { profileApi } from "../api/profile";
 import { authApi } from "../api/auth";
@@ -9,6 +9,8 @@ import { eventApi } from "../api/event";
 import ProfileForm from "../modals/ProfileForm";
 import EventDescriptionModal from "../modals/EventDescriptionModal";
 import PaymentHistoryModal from "../modals/PaymentHistoryModal";
+import PackConsumptionModal from "../modals/PackConsumptionModal";
+import ParticipatedEventsModal from "../modals/ParticipatedEventsModal";
 import NotificationBell from "../components/NotificationBell";
 import { useUser } from "../context/UserContext";
 
@@ -18,6 +20,8 @@ const ProfilePage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+    const [isPackModalOpen, setIsPackModalOpen] = useState(false);
+    const [isEventsModalOpen, setIsEventsModalOpen] = useState(false);
     const [participatedEvents, setParticipatedEvents] = useState([]);
     const [descriptionModal, setDescriptionModal] = useState({ open: false, title: "", description: "" });
     const fileInputRef = useRef(null);
@@ -255,6 +259,24 @@ const ProfilePage = () => {
                                             Payment History
                                         </button>
                                     )}
+                                    {user.role === "PLAYER" && (
+                                        <button
+                                            onClick={() => setIsPackModalOpen(true)}
+                                            className="inline-flex items-center gap-2 px-8 py-3 bg-[#1CF3CA]/10 hover:bg-[#1CF3CA]/20 border border-[#1CF3CA]/30 text-[#1CF3CA] rounded-full font-medium transition-all"
+                                        >
+                                            <Package size={18} />
+                                            My Packs
+                                        </button>
+                                    )}
+                                    {user.role === "PLAYER" && (
+                                        <button
+                                            onClick={() => setIsEventsModalOpen(true)}
+                                            className="inline-flex items-center gap-2 px-8 py-3 bg-[#FF89EB]/10 hover:bg-[#FF89EB]/20 border border-[#FF89EB]/30 text-[#FF89EB] rounded-full font-medium transition-all"
+                                        >
+                                            <Calendar size={18} />
+                                            My Events
+                                        </button>
+                                    )}
                                     <button
                                         onClick={handleLogout}
                                         className="inline-flex items-center gap-2 px-8 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 rounded-full font-medium transition-all"
@@ -357,99 +379,6 @@ const ProfilePage = () => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Participated Events Section */}
-                    <div className="space-y-6">
-                        <h2 className="text-white text-[18px] font-bold font-['Inter']">
-                            My Participated Events
-                        </h2>
-
-                        {participatedEvents.length === 0 ? (
-                            <div className="bg-[#582167] border border-white/5 rounded-[32px] p-12 flex flex-col items-center justify-center text-center space-y-3">
-                                <Calendar size={40} className="text-white/10" />
-                                <p className="text-white/40 font-medium">You haven't joined any events yet.</p>
-                            </div>
-                        ) : (
-                            <div className="flex overflow-x-auto gap-8 py-6 px-4 pb-12 snap-x no-scrollbar -mx-4">
-                                {participatedEvents.map((event) => (
-                                    <div
-                                        key={event.id}
-                                        className="flex-shrink-0 w-full max-w-[400px] snap-center relative group bg-[#320141]/40 border border-white/5 rounded-[50px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:bg-[#320141]/60 hover:border-[#1CF3CA]/30 flex flex-col h-full shadow-2xl backdrop-blur-xl"
-                                    >
-                                        {/* Hover Light Effect */}
-                                        <div className="absolute inset-0 bg-gradient-to-br from-[#1CF3CA]/0 via-[#1CF3CA]/5 to-[#FF89EB]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-
-                                        {/* Image Section */}
-                                        <div className="relative h-[200px] overflow-hidden">
-                                            {event.photo ? (
-                                                <img
-                                                    src={`http://localhost:8080/api/uploads/event_photos/${event.photo}`}
-                                                    alt={event.title}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                                />
-                                            ) : (
-                                                <img
-                                                    src="src/assets/images/vitrine_page_images/blogs.png"
-                                                    alt={event.title}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60"
-                                                />
-                                            )}
-                                        </div>
-
-                                        {/* Content Section */}
-                                        <div className="p-8 flex flex-col flex-grow bg-gradient-to-b from-transparent to-black/30">
-                                            <div className="flex-grow space-y-4">
-                                                <h3 className="text-xl font-black font-[inter] uppercase tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8]">
-                                                    {event.title}
-                                                </h3>
-
-                                                <div className="space-y-3">
-                                                    <div className="flex items-center gap-3 text-white/70 font-medium">
-                                                        <Calendar size={18} className="text-[#1CF3CA]" />
-                                                        <span className="text-sm">{formatDate(event.startTime)}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 text-white/70 font-medium">
-                                                        <MapPin size={18} className="text-[#FF89EB]" />
-                                                        <span className="text-sm">{event.place}</span>
-                                                    </div>
-                                                </div>
-
-                                                <button
-                                                    onClick={() => setDescriptionModal({ open: true, title: event.title, description: event.description })}
-                                                    className="flex items-center gap-2 text-[#1CF3CA] hover:text-[#19d4b0] text-sm font-semibold transition-all mt-2"
-                                                >
-                                                    <FileText size={16} />
-                                                    Show Description
-                                                </button>
-                                            </div>
-
-                                            {/* Action Section */}
-                                            <div className="pt-8 w-full flex flex-col gap-4">
-                                                {event.registerLink && (
-                                                    <div className="w-full text-center">
-                                                        <a
-                                                            href={event.registerLink}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-blue-500 font-bold font-['Inter'] uppercase text-sm hover:underline"
-                                                        >
-                                                            Event Link
-                                                        </a>
-                                                    </div>
-                                                )}
-                                                <button
-                                                    onClick={() => handleCancelParticipation(event.id)}
-                                                    className="w-full px-6 py-3 bg-red-500/15 hover:bg-red-500/25 text-red-400 font-bold uppercase tracking-widest text-[10px] rounded-full transition-all active:scale-95 border border-red-500/20"
-                                                >
-                                                    Cancel Participation
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
                 </div>
             </main>
 
@@ -472,6 +401,21 @@ const ProfilePage = () => {
                     user={user}
                     onClose={() => setIsModalOpen(false)}
                     onUpdate={(updatedUser) => setUser(updatedUser)}
+                />
+            )}
+
+            {/* Pack Consumption Modal */}
+            {isPackModalOpen && (
+                <PackConsumptionModal onClose={() => setIsPackModalOpen(false)} />
+            )}
+
+            {/* Participated Events Modal */}
+            {isEventsModalOpen && (
+                <ParticipatedEventsModal 
+                    events={participatedEvents} 
+                    onClose={() => setIsEventsModalOpen(false)} 
+                    onCancel={handleCancelParticipation}
+                    onShowDescription={(event) => setDescriptionModal({ open: true, title: event.title, description: event.description })}
                 />
             )}
         </div>
