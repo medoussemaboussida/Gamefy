@@ -527,6 +527,13 @@ public class PaymentService {
                 .toList();
     }
 
+    @Transactional
+    public void deletePayment(Integer id) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        paymentRepository.delete(payment);
+    }
+
     /**
      * Sum the hours for benefits of a given type with rateRule=HOURS.
      * Each benefit's hours field specifies the count (null defaults to 1.0 for backward compatibility).

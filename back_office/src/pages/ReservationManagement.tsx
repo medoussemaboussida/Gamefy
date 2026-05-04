@@ -720,7 +720,7 @@ export default function ReservationManagement() {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleConfirmDelete}
-                userName={selectedRes?.playerName || "this reservation"}
+                userName={selectedRes ? `the reservation of ${selectedRes.playerName}` : "this reservation"}
                 loading={deleteLoading}
             />
 

@@ -18,4 +18,10 @@ export const paymentApi = {
     searchPayments: async (keyword: string): Promise<AllPaymentResponseDto[]> => {
         return apiClient.get("/gamefy/payments/search", { params: { keyword } });
     },
+    /**
+     * Delete a payment (ADMIN only)
+     */
+    deletePayment: async (id: number): Promise<void> => {
+        return apiClient.delete(`/gamefy/payments/${id}`);
+    },
 };

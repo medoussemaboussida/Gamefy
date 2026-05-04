@@ -263,4 +263,11 @@ public class PaymentController {
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(paymentService.getMyPaymentHistory(currentUser.getId()));
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> deletePayment(@PathVariable Integer id) {
+        paymentService.deletePayment(id);
+        return ResponseEntity.noContent().build();
+    }
 }

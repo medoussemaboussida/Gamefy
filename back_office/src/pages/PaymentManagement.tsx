@@ -15,7 +15,10 @@ import Pagination from "../components/ui/pagination/Pagination";
 import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
-import { ChevronDownIcon } from "../icons";
+import { ChevronDownIcon, TrashBinIcon } from "../icons";
+import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
+
+import { getUserRole } from "../utils/jwt";
 
 export default function PaymentManagement() {
     const [payments, setPayments] = useState<AllPaymentResponseDto[]>([]);
@@ -25,6 +28,10 @@ export default function PaymentManagement() {
     const [selectedPaidFor, setSelectedPaidFor] = useState<string>("ALL");
     const [isPaidForOpen, setIsPaidForOpen] = useState(false);
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [paymentToDelete, setPaymentToDelete] = useState<AllPaymentResponseDto | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const itemsPerPage = 3;
 
     const paidForOptions = [
@@ -47,6 +54,7 @@ export default function PaymentManagement() {
 
     useEffect(() => {
         fetchPayments();
+        setUserRole(getUserRole());
     }, []);
 
     // Debounced search effect
@@ -89,6 +97,28 @@ export default function PaymentManagement() {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage,
     );
+
+    const handleDeleteClick = (payment: AllPaymentResponseDto) => {
+        setPaymentToDelete(payment);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!paymentToDelete) return;
+        setDeleteLoading(true);
+        try {
+            await paymentApi.deletePayment(paymentToDelete.id);
+            toast.success("Payment deleted successfully");
+            fetchPayments();
+            setIsDeleteModalOpen(false);
+            setPaymentToDelete(null);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to delete payment");
+        } finally {
+            setDeleteLoading(true);
+            setDeleteLoading(false);
+        }
+    };
 
     return (
         <>
@@ -173,19 +203,22 @@ export default function PaymentManagement() {
                                     <TableCell className="px-5 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 text-right">
                                         Amount
                                     </TableCell>
+                                    <TableCell className="px-5 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 text-right">
+                                        Actions
+                                    </TableCell>
                                 </TableRow>
                             </TableHeader>
 
                             <TableBody>
                                 {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="px-5 py-10 text-center text-gray-500">
+                                        <TableCell colSpan={5} className="px-5 py-10 text-center text-gray-500">
                                             Loading transactions...
                                         </TableCell>
                                     </TableRow>
                                 ) : currentPayments.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="px-5 py-10 text-center text-gray-500">
+                                        <TableCell colSpan={5} className="px-5 py-10 text-center text-gray-500">
                                             No transactions found
                                         </TableCell>
                                     </TableRow>
@@ -212,6 +245,19 @@ export default function PaymentManagement() {
                                                     DT {payment.totalPrice.toFixed(3)}
                                                 </span>
                                             </TableCell>
+                                            <TableCell className="px-5 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    {userRole === "ADMIN" && (
+                                                        <button
+                                                            onClick={() => handleDeleteClick(payment)}
+                                                            className="text-gray-500 hover:text-error-500 transition-colors"
+                                                            title="Delete Payment"
+                                                        >
+                                                            <TrashBinIcon className="w-5 h-5" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 )}
@@ -226,6 +272,20 @@ export default function PaymentManagement() {
                     />
                 </ComponentCard>
             </div>
+
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setPaymentToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                userName={paymentToDelete ? `Transaction #${paymentToDelete.id} from ${paymentToDelete.userName}` : ""}
+                loading={deleteLoading}
+                title="Delete Payment"
+                description={paymentToDelete ? `Are you sure you want to delete the payment record #${paymentToDelete.id} for "${paymentToDelete.paidFor}"? This action cannot be undone.` : ""}
+                confirmLabel="Delete"
+            />
         </>
     );
 }
