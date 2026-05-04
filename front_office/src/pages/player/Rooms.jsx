@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer, Filter } from "lucide-react";
+import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer, Filter, Pencil } from "lucide-react";
 
 import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment, getWorkSchedule } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
@@ -434,12 +434,21 @@ const Rooms = () => {
                                             <div className="pt-8 w-full">
                                                 <div className="w-full space-y-3">
                                                     {needsConfirmation(res) && (
-                                                        <button
-                                                            onClick={() => handleConfirmClick(res)}
-                                                            className="w-full px-8 py-4 bg-[#1CF3CA] hover:bg-[#19d4b0] text-black font-black uppercase tracking-widest rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(28,243,202,0.2)]"
-                                                        >
-                                                            Confirm Reservation
-                                                        </button>
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleConfirmClick(res)}
+                                                                className="w-full px-8 py-4 bg-[#1CF3CA] hover:bg-[#19d4b0] text-black font-black uppercase tracking-widest rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(28,243,202,0.2)]"
+                                                            >
+                                                                Confirm Reservation
+                                                            </button>
+                                                            <button
+                                                                onClick={() => navigate("/player/reservation", { state: { editReservation: res } })}
+                                                                className="w-full px-8 py-3 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-black uppercase tracking-widest rounded-full transition-all active:scale-95 border border-white/10 hover:border-[#FF89EB]/30 flex items-center justify-center gap-2"
+                                                            >
+                                                                <Pencil size={14} />
+                                                                Edit Reservation
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>

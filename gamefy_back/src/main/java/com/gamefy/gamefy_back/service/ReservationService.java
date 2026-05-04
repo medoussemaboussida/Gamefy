@@ -264,6 +264,203 @@ public class ReservationService {
     }
 
     /**
+     * Update an existing PENDING reservation (before payment is confirmed).
+     * Restores previously consumed pack benefits, clears old PC/coaching slots,
+     * then re-applies the new reservation data.
+     */
+    @CacheEvict(value = "reservations", allEntries = true)
+    public ReservationDto updateReservation(Integer reservationId, CreateReservationDto dto, Integer userId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        // Validate ownership
+        if (!reservation.getPlayer().getId().equals(userId)) {
+            throw new RuntimeException("This reservation does not belong to you");
+        }
+
+        // Only PENDING reservations without a payment type can be edited
+        if (reservation.getStatus() != Reservation_Status.PENDING) {
+            throw new RuntimeException("Only PENDING reservations can be edited");
+        }
+        if (reservation.getPaymentType() != null) {
+            throw new RuntimeException("Cannot edit a reservation after payment method has been selected");
+        }
+
+        // ─── Step 1: Restore previously deducted pack benefits ───
+        restorePackBenefits(reservation);
+
+        // ─── Step 2: Clear old PcAvailability and CoachingSlot records ───
+        if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
+            pcAvailabilityRepository.deleteAll(reservation.getPcAvailabilities());
+            reservation.getPcAvailabilities().clear();
+        }
+        if (reservation.getCoachingSlots() != null && !reservation.getCoachingSlots().isEmpty()) {
+            coachingSlotRepository.deleteAll(reservation.getCoachingSlots());
+            reservation.getCoachingSlots().clear();
+        }
+
+        // ─── Step 3: Validate new data (same logic as createReservation) ───
+        if (dto.getPcIds() == null || dto.getPcIds().isEmpty()) {
+            throw new RuntimeException("You must select at least one PC");
+        }
+        if (dto.getStartTime() == null || dto.getEndTime() == null) {
+            throw new RuntimeException("Start time and end time are required");
+        }
+
+        LocalDateTime normalizedEndTime = normalizeEndTime(dto.getStartTime(), dto.getEndTime());
+        if (!normalizedEndTime.isAfter(dto.getStartTime())) {
+            throw new RuntimeException("End time must be after start time");
+        }
+
+        PC_Type requiredPcType = mapReservationTypeToPcType(dto.getReservationType());
+
+        // Validate all selected PCs (exclude current reservation from booking check)
+        List<PC> selectedPCs = new ArrayList<>();
+        Set<Integer> bookedPcIds = getBookedPcIds(dto.getStartTime(), normalizedEndTime);
+        // Remove PCs that were booked by THIS reservation (they were just freed)
+        // They're already deleted above, but in case of flush timing, exclude them
+
+        for (Integer pcId : dto.getPcIds()) {
+            PC pc = pcRepository.findById(pcId)
+                    .orElseThrow(() -> new RuntimeException("PC not found with id: " + pcId));
+
+            if (pc.getStatus() != PC_Status.AVAILABLE) {
+                throw new RuntimeException("PC #" + pc.getPcNumber() + " is not available (status: " + pc.getStatus() + ")");
+            }
+            if (pc.getPcType() != requiredPcType) {
+                throw new RuntimeException("PC #" + pc.getPcNumber() + " is not of type " + requiredPcType);
+            }
+            if (bookedPcIds.contains(pcId)) {
+                throw new RuntimeException("PC #" + pc.getPcNumber() + " is already reserved for this time slot");
+            }
+            if (dto.getReservationType() == Reservation_Type.COACHING_ROOM && dto.getGame() != null) {
+                boolean hasGame = pc.getGames().stream()
+                        .anyMatch(g -> g.getGameName().equalsIgnoreCase(dto.getGame()));
+                if (!hasGame) {
+                    throw new RuntimeException("PC #" + pc.getPcNumber() + " does not have the game: " + dto.getGame());
+                }
+            }
+            selectedPCs.add(pc);
+        }
+
+        // Validate coach if coaching
+        final User coach;
+        if (dto.getReservationType() == Reservation_Type.COACHING_ROOM) {
+            if (dto.getCoachId() == null) {
+                throw new RuntimeException("Coach ID is required for coaching reservation");
+            }
+            coach = userRepository.findById(dto.getCoachId())
+                    .orElseThrow(() -> new RuntimeException("Coach not found"));
+        } else {
+            coach = null;
+        }
+
+        // ─── Step 4: Update the reservation fields ───
+        reservation.setStartTime(dto.getStartTime());
+        reservation.setEndTime(normalizedEndTime);
+        reservation.setReservationType(dto.getReservationType());
+        reservation.setPriceTime(dto.getPriceTime());
+        reservation.setCoach(coach);
+        reservation.setPackHoursUsed(null);
+        reservation.setPackDiscountIdsUsed(null);
+        reservation.setCoachingPackHoursUsed(null);
+
+        // If reservation is fully covered by pack (0 DT), auto-confirm
+        if (dto.getPriceTime() != null && dto.getPriceTime() <= 0) {
+            reservation.setStatus(Reservation_Status.CONFIRMED);
+            reservation.setPaymentType(Payment_Type.PACK_COVERED);
+        } else {
+            reservation.setStatus(Reservation_Status.PENDING);
+        }
+
+        Reservation saved = reservationRepository.save(reservation);
+
+        // Transition: Confirmed (Auto-confirmation for free reservations)
+        if (saved.getStatus() == Reservation_Status.CONFIRMED) {
+            subscriptionService.addHoursForConfirmedReservation(saved);
+        }
+
+        // ─── Step 5: Create new PcAvailability records ───
+        for (PC pc : selectedPCs) {
+            PcAvailability availability = new PcAvailability();
+            availability.setPc(pc);
+            availability.setReservation(saved);
+            availability.setStartTime(dto.getStartTime());
+            availability.setEndTime(normalizedEndTime);
+            pcAvailabilityRepository.save(availability);
+        }
+
+        // ─── Step 6: Create new CoachingSlot if coaching ───
+        if (dto.getReservationType() == Reservation_Type.COACHING_ROOM && coach != null) {
+            DayOfWeek dayOfWeek = DayOfWeek.valueOf(saved.getStartTime().getDayOfWeek().name());
+            String month = saved.getStartTime().getMonth().name();
+            String year = String.valueOf(saved.getStartTime().getYear());
+
+            List<CoachingSession> coachSessions = coachingSessionRepository.findByCoachId(coach.getId());
+            CoachingSession session = coachSessions.stream()
+                .filter(s -> s.getStatus() == CoachingSessionStatus.AVAILABLE)
+                .filter(s -> s.getDay() == dayOfWeek && s.getMonth().trim().equalsIgnoreCase(month.trim()) && s.getYear().equals(year))
+                .filter(s -> {
+                    LocalTime reqStart = saved.getStartTime().toLocalTime();
+                    LocalTime reqEnd = saved.getEndTime().toLocalTime();
+                    LocalTime sStart = s.getStartTime();
+                    LocalTime sEnd = s.getEndTime();
+                    boolean isWrapAround = sStart.isAfter(sEnd);
+                    boolean startOk = isWrapAround
+                        ? (!reqStart.isBefore(sStart) || !reqStart.isAfter(sEnd))
+                        : (!reqStart.isBefore(sStart) && !reqStart.isAfter(sEnd));
+                    boolean endOk = isWrapAround
+                        ? (!reqEnd.isBefore(sStart) || !reqEnd.isAfter(sEnd))
+                        : (!reqEnd.isBefore(sStart) && !reqEnd.isAfter(sEnd));
+                    return startOk && endOk;
+                })
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Coach is not available for this session time range"));
+
+            CoachingSlot slot = new CoachingSlot();
+            slot.setCoachingSession(session);
+            slot.setReservation(saved);
+            slot.setStartTime(saved.getStartTime());
+            slot.setEndTime(saved.getEndTime());
+            coachingSlotRepository.save(slot);
+        }
+
+        // ─── Step 7: Deduct new pack benefits ───
+        boolean usesGamefyPack = (dto.getPackHoursUsed() != null && dto.getPackHoursUsed() > 0)
+                || (dto.getPackDiscountIdsUsed() != null && !dto.getPackDiscountIdsUsed().isEmpty());
+        boolean usesCoachingPack = dto.getCoachingPackHoursUsed() != null && dto.getCoachingPackHoursUsed() > 0;
+        if (usesGamefyPack && usesCoachingPack) {
+            throw new RuntimeException("You cannot activate both Gamefy Pack and Coaching Pack on the same reservation");
+        }
+
+        if (dto.getPackHoursUsed() != null && dto.getPackHoursUsed() > 0) {
+            deductPackHours(userId, dto.getReservationType(), dto.getPackHoursUsed());
+            saved.setPackHoursUsed(dto.getPackHoursUsed());
+        }
+        if (dto.getPackDiscountIdsUsed() != null && !dto.getPackDiscountIdsUsed().isEmpty()) {
+            deductPackDiscounts(userId, dto.getPackDiscountIdsUsed());
+            saved.setPackDiscountIdsUsed(dto.getPackDiscountIdsUsed().toString());
+        }
+        if (usesCoachingPack) {
+            if (dto.getCoachId() == null) {
+                throw new RuntimeException("Coach ID is required when using a coaching pack");
+            }
+            deductCoachingPackHours(userId, dto.getCoachId(), dto.getCoachingPackHoursUsed());
+            saved.setCoachingPackHoursUsed(dto.getCoachingPackHoursUsed());
+        }
+
+        boolean hasPackUsage = saved.getPackHoursUsed() != null
+                || (saved.getPackDiscountIdsUsed() != null && !saved.getPackDiscountIdsUsed().equals("[]"))
+                || saved.getCoachingPackHoursUsed() != null;
+        if (hasPackUsage) {
+            reservationRepository.save(saved);
+        }
+
+        log.info("Player ID={} updated reservation ID={}", userId, reservationId);
+        return mapToDto(saved);
+    }
+
+    /**
      * Set payment type to CASH_PAYMENT but keep status as PENDING.
      * The player will pay at the location; admin confirms later.
      */
@@ -291,7 +488,8 @@ public class ReservationService {
             java.time.LocalDateTime startTime,
             java.time.LocalDateTime endTime,
             Reservation_Type reservationType,
-            String game) {
+            String game,
+            Integer excludeReservationId) {
 
         PC_Type requiredPcType = mapReservationTypeToPcType(reservationType);
 
@@ -307,8 +505,8 @@ public class ReservationService {
                     .collect(Collectors.toList());
         }
 
-        // Get booked PC IDs for the time range
-        Set<Integer> bookedPcIds = getBookedPcIds(startTime, endTime);
+        // Get booked PC IDs for the time range, excluding the reservation being edited
+        Set<Integer> bookedPcIds = getBookedPcIds(startTime, endTime, excludeReservationId);
 
         // Build response
         List<Map<String, Object>> result = new ArrayList<>();
@@ -327,9 +525,14 @@ public class ReservationService {
     }
 
     private Set<Integer> getBookedPcIds(java.time.LocalDateTime startTime, java.time.LocalDateTime endTime) {
+        return getBookedPcIds(startTime, endTime, null);
+    }
+
+    private Set<Integer> getBookedPcIds(java.time.LocalDateTime startTime, java.time.LocalDateTime endTime, Integer excludeReservationId) {
         return pcAvailabilityRepository
                 .findByStartTimeLessThanAndEndTimeGreaterThan(endTime, startTime)
                 .stream()
+                .filter(pa -> excludeReservationId == null || !pa.getReservation().getId().equals(excludeReservationId))
                 .map(pa -> pa.getPc().getId())
                 .collect(Collectors.toSet());
     }
@@ -472,6 +675,9 @@ public class ReservationService {
                 .playerName(reservation.getPlayer().getFirstName() + " " + reservation.getPlayer().getLastName())
                 .pcNumbers(reservation.getPcAvailabilities().stream()
                         .map(pa -> pa.getPc().getPcNumber())
+                        .collect(Collectors.toList()))
+                .pcIds(reservation.getPcAvailabilities().stream()
+                        .map(pa -> pa.getPc().getId())
                         .collect(Collectors.toList()))
                 .coachId(reservation.getCoach() != null ? reservation.getCoach().getId() : null)
                 .coachName(reservation.getCoach() != null ? 

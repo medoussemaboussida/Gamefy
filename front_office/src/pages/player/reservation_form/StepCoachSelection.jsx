@@ -1,4 +1,4 @@
-export default function StepCoachSelection({ coaches, coachLoading, selectedCoachId, setSelectedCoachId, selectedGame, setStep }) {
+export default function StepCoachSelection({ coaches, coachLoading, selectedCoachId, setSelectedCoachId, selectedGame, setStep, setSelectedDate, setStartTime, setEndTime, setSelectedPcIds, setPcs }) {
     return (
         <div className="space-y-6">
             <button onClick={() => setStep(2)} className="text-[#1CF3CA] hover:text-[#1CF3CA]/80 text-sm font-bold font-['Inter'] uppercase tracking-wider flex items-center gap-1 group">
@@ -15,6 +15,14 @@ export default function StepCoachSelection({ coaches, coachLoading, selectedCoac
                         <button
                             key={coach.id}
                             onClick={() => {
+                                // If selecting a different coach, reset calendar/time/PCs
+                                if (coach.id !== selectedCoachId) {
+                                    setSelectedDate(null);
+                                    setStartTime("");
+                                    setEndTime("");
+                                    setSelectedPcIds([]);
+                                    setPcs([]);
+                                }
                                 setSelectedCoachId(coach.id);
                                 setStep(4);
                             }}

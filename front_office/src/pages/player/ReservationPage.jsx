@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { getWorkSchedule, getAvailablePCs, createReservation, getCoachSessions, getAllFixedPrices, getActiveOffer } from "../../api/reservation";
+import { useNavigate, useLocation } from "react-router-dom";
+import { getWorkSchedule, getAvailablePCs, createReservation, updateReservation, getCoachSessions, getAllFixedPrices, getActiveOffer } from "../../api/reservation";
 import TimeSelectionModal from "../../modals/TimeSelectionModal";
 import toast from "react-hot-toast";
 import { ArrowLeft } from "lucide-react";
@@ -35,8 +35,10 @@ const scrollbarStyle = `
 
 export default function ReservationPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [step, setStep] = useState(1);
     const [reservationType, setReservationType] = useState(null);
+    const [editingReservationId, setEditingReservationId] = useState(null);
 
     // Step 2
     const [selectedDate, setSelectedDate] = useState(null);
@@ -99,6 +101,49 @@ export default function ReservationPage() {
         fetchPrices();
         fetchOffer();
     }, []);
+
+    // ─── Pre-fill form when editing an existing reservation ───
+    useEffect(() => {
+        const editData = location.state?.editReservation;
+        if (!editData) return;
+
+        setEditingReservationId(editData.id);
+        setReservationType(editData.reservationType);
+
+        // Parse the UTC start/end times to extract date and local minute values
+        const parseUtcToLocal = (isoString) => {
+            const d = new Date(isoString.includes('Z') ? isoString : isoString + 'Z');
+            return d;
+        };
+
+        const startDate = parseUtcToLocal(editData.startTime);
+        const endDate = parseUtcToLocal(editData.endTime);
+
+        // Set calendar month/year/date
+        setCurrentMonth(startDate.getMonth());
+        setCurrentYear(startDate.getFullYear());
+        setSelectedDate(startDate.getDate());
+
+        // Convert local time to minutes-since-midnight for the time slot system
+        const startMins = startDate.getHours() * 60 + startDate.getMinutes();
+        const endMins = endDate.getHours() * 60 + endDate.getMinutes();
+        setStartTime(String(startMins));
+        setEndTime(String(endMins));
+
+        // Pre-fill PC selection (use pcIds from dto)
+        if (editData.pcIds && editData.pcIds.length > 0) {
+            setSelectedPcIds(editData.pcIds);
+        }
+
+        // Pre-fill coaching fields
+        if (editData.reservationType === 'COACHING_ROOM') {
+            if (editData.game) setSelectedGame(editData.game);
+            if (editData.coachId) setSelectedCoachId(editData.coachId);
+        }
+
+        // Clear the location state so refresh doesn't re-trigger
+        window.history.replaceState({}, document.title);
+    }, [location.state]);
 
     // ─── Fetch work schedule when month changes ───
     useEffect(() => {
@@ -257,9 +302,12 @@ export default function ReservationPage() {
         const utcEnd = formatLocalToUTCISO(Number(endTime));
 
         try {
-            const data = await getAvailablePCs(utcStart, utcEnd, reservationType, selectedGame);
+            const data = await getAvailablePCs(utcStart, utcEnd, reservationType, selectedGame, editingReservationId);
             setPcs(data);
-            setSelectedPcIds([]);
+            // In edit mode, keep the previously selected PCs; in create mode, start fresh
+            if (!editingReservationId) {
+                setSelectedPcIds([]);
+            }
             setIsTimeModalOpen(false);
             setStep(5);
         } catch (e) {
@@ -294,7 +342,7 @@ export default function ReservationPage() {
         };
 
         try {
-            await createReservation({
+            const reservationDto = {
                 reservationType,
                 startTime: formatLocalToUTCISO(Number(startTime)),
                 endTime: formatLocalToUTCISO(Number(endTime)),
@@ -305,9 +353,15 @@ export default function ReservationPage() {
                 packHoursUsed: packHoursUsed > 0 ? packHoursUsed : null,
                 packDiscountIdsUsed: selectedDiscounts.length > 0 ? selectedDiscounts.map(d => d.id) : null,
                 coachingPackHoursUsed: coachingPackHoursUsed > 0 ? coachingPackHoursUsed : null,
-            });
+            };
+
+            if (editingReservationId) {
+                await updateReservation(editingReservationId, reservationDto);
+            } else {
+                await createReservation(reservationDto);
+            }
             
-            toast.success("Reservation created successfully!", {
+            toast.success(editingReservationId ? "Reservation updated successfully!" : "Reservation created successfully!", {
                 style: {
                     border: '1px solid #1CF3CA',
                     padding: '16px',
@@ -321,9 +375,9 @@ export default function ReservationPage() {
                 },
             });
 
-            setTimeout(() => navigate("/player/dashboard"), 2000);
+            setTimeout(() => navigate("/player/rooms"), 2000);
         } catch (e) {
-            setError(e.message || "Failed to create reservation");
+            setError(e.message || (editingReservationId ? "Failed to update reservation" : "Failed to create reservation"));
         } finally {
             setSubmitting(false);
         }
@@ -451,9 +505,11 @@ export default function ReservationPage() {
                     {/* Header */}
                     <div className="text-center mb-10">
                         <h1 className="text-[32px] md:text-[51px] font-black font-['Inter'] tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-[#2BDFC8] uppercase">
-                            Book Your Session
+                            {editingReservationId ? 'Edit Your Reservation' : 'Book Your Session'}
                         </h1>
-                        <p className="text-white/60 mt-2 font-normal font-['Inter']">Reserve your gaming setup in just a few steps</p>
+                        <p className="text-white/60 mt-2 font-normal font-['Inter']">
+                            {editingReservationId ? 'Modify your reservation details below' : 'Reserve your gaming setup in just a few steps'}
+                        </p>
                     </div>
 
                     {/* Step Indicator */}
@@ -530,6 +586,11 @@ export default function ReservationPage() {
                             setSelectedCoachId={setSelectedCoachId}
                             selectedGame={selectedGame}
                             setStep={setStep}
+                            setSelectedDate={setSelectedDate}
+                            setStartTime={setStartTime}
+                            setEndTime={setEndTime}
+                            setSelectedPcIds={setSelectedPcIds}
+                            setPcs={setPcs}
                         />
                     )}
 
@@ -613,6 +674,7 @@ export default function ReservationPage() {
                             calculateSubtotal={calculateSubtotal}
                             handleSubmit={handleSubmit}
                             submitting={submitting}
+                            isEditMode={!!editingReservationId}
                         />
                     )}
                 </div>

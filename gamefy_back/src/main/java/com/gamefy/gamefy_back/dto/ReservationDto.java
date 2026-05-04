@@ -23,6 +23,7 @@ public class ReservationDto implements Serializable {
     private LocalDateTime endTime;
     private Reservation_Status status;
     private List<Integer> pcNumbers;
+    private List<Integer> pcIds;
     private String playerName;
     private Double priceTime;
     private Payment_Type paymentType;

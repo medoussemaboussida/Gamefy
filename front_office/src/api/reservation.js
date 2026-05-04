@@ -48,9 +48,10 @@ export const getWorkSchedule = (month, year) => {
  * @param {string} [game] - Optional game for filtering PCs in coaching flow
  * @returns {Promise<AvailablePcDto[]>}
  */
-export const getAvailablePCs = (startTime, endTime, type, game) => {
+export const getAvailablePCs = (startTime, endTime, type, game, excludeReservationId) => {
     let url = `/gamefy/reservations/available-pcs?start=${startTime}&end=${endTime}&type=${type}`;
     if (game) url += `&game=${game}`;
+    if (excludeReservationId) url += `&excludeReservationId=${excludeReservationId}`;
     return apiClient.get(url);
 };
 
@@ -87,6 +88,16 @@ export const getCoachSessions = (coachId) => {
  */
 export const createReservation = (dto) => {
     return apiClient.post("/gamefy/reservations", dto);
+};
+
+/**
+ * Update an existing reservation (only PENDING with no payment type).
+ * @param {number} id - Reservation ID
+ * @param {ReservationDto} dto
+ * @returns {Promise<ReservationDto>}
+ */
+export const updateReservation = (id, dto) => {
+    return apiClient.put(`/gamefy/reservations/${id}`, dto);
 };
 
 /**

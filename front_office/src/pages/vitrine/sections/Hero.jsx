@@ -43,7 +43,7 @@ const Hero = () => {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: false, amount: 0.4 }}
-                className="max-w-7xl mx-auto px-4 text-center relative z-10 pt-60 md:pt-64 lg:pt-[320px] flex flex-col items-center"
+                className="max-w-7xl mx-auto px-4 text-center relative z-10 pt-60 md:pt-64 lg:pt-[280px] flex flex-col items-center"
             >
                 <motion.h1 variants={itemVariants} className="text-4xl sm:text-5xl md:text-6xl lg:text-[63px] leading-[1.1] mb-6 md:mb-8 tracking-tight text-white uppercase drop-shadow-2xl">
                     <span

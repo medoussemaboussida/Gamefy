@@ -32,16 +32,27 @@ public class ReservationController {
         return ResponseEntity.ok(service.createReservation(dto, user.getId()));
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<ReservationDto> updateReservation(
+            @PathVariable Integer id,
+            @RequestBody CreateReservationDto dto,
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(service.updateReservation(id, dto, user.getId()));
+    }
+
     @GetMapping("/available-pcs")
     public ResponseEntity<List<Map<String, Object>>> getAvailablePCs(
             @RequestParam String start,
             @RequestParam String end,
             @RequestParam String type,
-            @RequestParam(required = false) String game) {
+            @RequestParam(required = false) String game,
+            @RequestParam(required = false) Integer excludeReservationId) {
         LocalDateTime startTime = LocalDateTime.parse(start);
         LocalDateTime endTime = LocalDateTime.parse(end);
         Reservation_Type reservationType = Reservation_Type.valueOf(type);
-        return ResponseEntity.ok(service.getAvailablePCs(startTime, endTime, reservationType, game));
+        return ResponseEntity.ok(service.getAvailablePCs(startTime, endTime, reservationType, game, excludeReservationId));
     }
 
     @GetMapping("/games")

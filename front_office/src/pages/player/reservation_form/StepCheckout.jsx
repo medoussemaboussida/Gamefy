@@ -32,6 +32,7 @@ export default function StepCheckout({
     calculateSubtotal,
     handleSubmit,
     submitting,
+    isEditMode,
 }) {
     const startLabel = timeSlots.find(s => String(s.value) === String(startTime))?.label;
     const originalEndLabel = timeSlots.find(s => String(s.value) === String(endTime))?.label;
@@ -183,7 +184,7 @@ export default function StepCheckout({
                                     </>
                                 ) : (
                                     <>
-                                        <span>Confirm</span>
+                                        <span>{isEditMode ? 'Update Reservation' : 'Confirm'}</span>
                                     </>
                                 )}
                             </div>
