@@ -613,6 +613,42 @@ public class ReservationService {
     }
 
     /**
+     * Player: delete their own PENDING reservation (before payment method is confirmed).
+     * Restores any consumed pack benefits and cleans up PC/coaching slot records.
+     */
+    @CacheEvict(value = "reservations", allEntries = true)
+    public void deletePlayerReservation(Integer reservationId, Integer userId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        if (!reservation.getPlayer().getId().equals(userId)) {
+            throw new RuntimeException("This reservation does not belong to you");
+        }
+
+        if (reservation.getStatus() != Reservation_Status.PENDING) {
+            throw new RuntimeException("Only PENDING reservations can be cancelled");
+        }
+        if (reservation.getPaymentType() != null) {
+            throw new RuntimeException("Cannot cancel a reservation after payment method has been selected");
+        }
+
+        log.info("Player ID={} deleting reservation ID={}", userId, reservationId);
+
+        // Restore pack benefits
+        restorePackBenefits(reservation);
+
+        // Cleanup associated data
+        if (reservation.getPcAvailabilities() != null && !reservation.getPcAvailabilities().isEmpty()) {
+            pcAvailabilityRepository.deleteAll(reservation.getPcAvailabilities());
+        }
+        if (reservation.getCoachingSlots() != null && !reservation.getCoachingSlots().isEmpty()) {
+            coachingSlotRepository.deleteAll(reservation.getCoachingSlots());
+        }
+
+        reservationRepository.delete(reservation);
+    }
+
+    /**
      * Admin/Webmaster: update reservation status.
      * - CONFIRMED  → creates a Payment record immediately.
      * - PENDING / CANCELLED → just updates the status; scheduler auto-deletes

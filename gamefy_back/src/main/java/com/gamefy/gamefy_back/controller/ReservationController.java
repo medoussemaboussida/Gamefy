@@ -129,6 +129,16 @@ public class ReservationController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/{id}/my")
+    @PreAuthorize("hasAnyAuthority('PLAYER', 'COACH', 'ADMIN', 'WEB_MASTER')")
+    public ResponseEntity<Void> deletePlayerReservation(
+            @PathVariable Integer id,
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        service.deletePlayerReservation(id, user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
     /**
      * Admin/Webmaster: change a reservation's status.
      * CONFIRMED → payment record created immediately.

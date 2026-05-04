@@ -101,6 +101,15 @@ export const updateReservation = (id, dto) => {
 };
 
 /**
+ * Delete a player's own reservation (only PENDING with no payment type).
+ * @param {number} id - Reservation ID
+ * @returns {Promise<void>}
+ */
+export const deleteMyReservation = (id) => {
+    return apiClient.delete(`/gamefy/reservations/${id}/my`);
+};
+
+/**
  * Get all fixed prices.
  * @returns {Promise<Object[]>}
  */

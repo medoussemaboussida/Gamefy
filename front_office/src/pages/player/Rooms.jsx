@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer, Filter, Pencil } from "lucide-react";
+import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer, Filter, Pencil, Trash2 } from "lucide-react";
 
-import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment, getWorkSchedule } from "../../api/reservation";
+import { getMyReservations, createReservationPaymentIntent, confirmReservationCashPayment, getWorkSchedule, deleteMyReservation } from "../../api/reservation";
 import Sidebar from "../../components/Sidebar";
 import ReservationPaymentModal from "../../components/payment/ReservationPaymentModal";
 import CashPaymentModal from "../../modals/CashPaymentModal";
@@ -441,13 +441,61 @@ const Rooms = () => {
                                                             >
                                                                 Confirm Reservation
                                                             </button>
-                                                            <button
-                                                                onClick={() => navigate("/player/reservation", { state: { editReservation: res } })}
-                                                                className="w-full px-8 py-3 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-black uppercase tracking-widest rounded-full transition-all active:scale-95 border border-white/10 hover:border-[#FF89EB]/30 flex items-center justify-center gap-2"
-                                                            >
-                                                                <Pencil size={14} />
-                                                                Edit Reservation
-                                                            </button>
+                                                            
+                                                            <div className="flex gap-3">
+                                                                <button
+                                                                    onClick={() => navigate("/player/reservation", { state: { editReservation: res } })}
+                                                                    className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-black uppercase tracking-widest rounded-full transition-all active:scale-95 border border-white/10 hover:border-[#FF89EB]/30 flex items-center justify-center gap-2 text-xs"
+                                                                >
+                                                                    <Pencil size={14} />
+                                                                    Edit
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        toast((t) => (
+                                                                            <div className="flex flex-col gap-3">
+                                                                                <p className="font-bold text-sm">Cancel this reservation?</p>
+                                                                                <p className="text-xs text-white/60">This will permanently delete the reservation and restore any used pack benefits.</p>
+                                                                                <div className="flex gap-2">
+                                                                                    <button
+                                                                                        onClick={async () => {
+                                                                                            toast.dismiss(t.id);
+                                                                                            try {
+                                                                                                await deleteMyReservation(res.id);
+                                                                                                toast.success("Reservation cancelled successfully");
+                                                                                                fetchReservations();
+                                                                                            } catch (err) {
+                                                                                                toast.error(err?.message || "Failed to cancel reservation");
+                                                                                            }
+                                                                                        }}
+                                                                                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-colors"
+                                                                                    >
+                                                                                        Yes
+                                                                                    </button>
+                                                                                    <button
+                                                                                        onClick={() => toast.dismiss(t.id)}
+                                                                                        className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg transition-colors"
+                                                                                    >
+                                                                                        No
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ), {
+                                                                            duration: 10000,
+                                                                            style: {
+                                                                                background: '#320141',
+                                                                                color: '#fff',
+                                                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                                                padding: '16px',
+                                                                            },
+                                                                        });
+                                                                    }}
+                                                                    className="flex-1 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 font-black uppercase tracking-widest rounded-full transition-all active:scale-95 border border-red-500/20 hover:border-red-500/40 flex items-center justify-center gap-2 text-xs"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
                                                         </>
                                                     )}
                                                 </div>
