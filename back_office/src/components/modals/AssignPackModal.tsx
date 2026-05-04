@@ -83,7 +83,7 @@ const AssignPackModal: React.FC<AssignPackModalProps> = ({ isOpen, onClose, user
                                                 <BoxIcon width="20" height="20" />
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-lg font-bold text-gray-800 dark:text-white">{pack.price.toFixed(3)} TND</p>
+                                                <p className="text-lg font-bold text-gray-800 dark:text-white">{pack.price.toFixed(3)} DT</p>
                                             </div>
                                         </div>
 

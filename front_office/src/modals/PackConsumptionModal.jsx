@@ -423,7 +423,7 @@ const PackConsumptionModal = ({ onClose }) => {
                 <div className="p-8 border-t border-white/5 bg-black/20">
                     <button 
                         onClick={onClose}
-                        className="w-full py-5 bg-[#1CF3CA] hover:bg-[#19d4b0] text-black rounded-[24px] font-black uppercase tracking-[0.2em] text-[12px] transition-all active:scale-95 shadow-[0_10px_20px_rgba(28,243,202,0.2)]"
+                        className="w-full py-5 bg-[#1CF3CA] hover:bg-[#19d4b0] text-black rounded-[24px] font-black uppercase tracking-[0.5em] text-[14px] transition-all active:scale-95 shadow-[0_10px_20px_rgba(28,243,202,0.2)]"
                     >
                         Close Tracker
                     </button>

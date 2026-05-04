@@ -153,9 +153,9 @@ const AddEditPackCoachingModal = ({ isOpen, onClose, onRefresh, pack = null }) =
 
                         {/* Price */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-400 ml-1">Price (DT)</label>
+                            <label className="text-sm font-medium text-gray-400 ml-1">Price</label>
                             <div className="relative">
-                                <DollarSign size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-[#1CF3CA]" />
+                           <label size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-[#1CF3CA]">DT</label>
                                 <input
                                     type="number"
                                     step="0.001"
