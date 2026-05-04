@@ -33,6 +33,7 @@ export default function OfferManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchKeyword, setSearchKeyword] = useState("");
   const itemsPerPage = 3;
 
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
@@ -70,10 +71,11 @@ export default function OfferManagement() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedStatus]);
+  }, [selectedStatus, searchKeyword]);
 
   const filteredOffers = offers.filter((offer) => {
-    return selectedStatus === "ALL" || offer.status === selectedStatus;
+    const nameMatch = offer.offerName.toLowerCase().includes(searchKeyword.toLowerCase());
+    return nameMatch && (selectedStatus === "ALL" || offer.status === selectedStatus);
   });
 
   const totalItems = filteredOffers.length;
@@ -154,6 +156,24 @@ export default function OfferManagement() {
       <div className="space-y-6">
         <ComponentCard title="Platform Offers">
           <div className="flex flex-wrap items-center justify-start gap-3 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by name..."
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                className="h-[38px] w-64 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-800 placeholder-gray-400 shadow-sm outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-brand-500"
+              />
+              {searchKeyword && (
+                <button
+                  onClick={() => setSearchKeyword("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             {/* Status Filter */}
             <div className="relative">
               <Button

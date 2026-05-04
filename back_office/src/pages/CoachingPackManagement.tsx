@@ -29,6 +29,7 @@ export default function CoachingPackManagement() {
     const [selectedCoachId, setSelectedCoachId] = useState<string>("ALL");
     const [coaches, setCoaches] = useState<UserResponseDto[]>([]);
     const [isCoachOpen, setIsCoachOpen] = useState(false);
+    const [searchKeyword, setSearchKeyword] = useState("");
 
     const currentUserRole = getUserRole();
     const isAdmin = currentUserRole === "ADMIN";
@@ -71,12 +72,13 @@ export default function CoachingPackManagement() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [selectedCoachId]);
+    }, [selectedCoachId, searchKeyword]);
 
     const filteredPacks = (packs || [])
         .filter((p) => {
+            const nameMatch = p.name.toLowerCase().includes(searchKeyword.toLowerCase());
             const coachMatch = selectedCoachId === "ALL" || p.coachId === Number(selectedCoachId);
-            return coachMatch;
+            return nameMatch && coachMatch;
         });
 
     const totalItems = filteredPacks.length;
@@ -122,6 +124,24 @@ export default function CoachingPackManagement() {
                 <ComponentCard title="Platform Offers">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                         <div className="flex flex-wrap items-center gap-3">
+                            {/* Search Input */}
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search by name..."
+                                    value={searchKeyword}
+                                    onChange={(e) => setSearchKeyword(e.target.value)}
+                                    className="h-[38px] w-64 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-800 placeholder-gray-400 shadow-sm outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-brand-500"
+                                />
+                                {searchKeyword && (
+                                    <button
+                                        onClick={() => setSearchKeyword("")}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
                             {/* Coach Filter */}
                             <div className="relative">
                                 <Button

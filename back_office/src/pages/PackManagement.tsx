@@ -35,6 +35,7 @@ export default function PackManagement() {
     const [selectedPack, setSelectedPack] = useState<PackGamefyDto | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchKeyword, setSearchKeyword] = useState("");
     const itemsPerPage = 3;
 
     const [isSortFieldOpen, setIsSortFieldOpen] = useState(false);
@@ -60,17 +61,19 @@ export default function PackManagement() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [sortField, sortOrder]);
+    }, [sortField, sortOrder, searchKeyword]);
 
-    const sortedPacks = [...packs].sort((a, b) => {
-        let comparison = 0;
-        if (sortField === "name") {
-            comparison = a.name.localeCompare(b.name);
-        } else if (sortField === "price") {
-            comparison = a.price - b.price;
-        }
-        return sortOrder === "asc" ? comparison : -comparison;
-    });
+    const sortedPacks = [...packs]
+        .filter(p => p.name.toLowerCase().includes(searchKeyword.toLowerCase()))
+        .sort((a, b) => {
+            let comparison = 0;
+            if (sortField === "name") {
+                comparison = a.name.localeCompare(b.name);
+            } else if (sortField === "price") {
+                comparison = a.price - b.price;
+            }
+            return sortOrder === "asc" ? comparison : -comparison;
+        });
 
     const totalItems = sortedPacks.length;
     const currentPacks = sortedPacks.slice(
@@ -154,6 +157,24 @@ export default function PackManagement() {
                 <ComponentCard title="Gaming Packs">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                         <div className="flex flex-wrap items-center gap-3">
+                            {/* Search Input */}
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search by name..."
+                                    value={searchKeyword}
+                                    onChange={(e) => setSearchKeyword(e.target.value)}
+                                    className="h-[38px] w-64 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-800 placeholder-gray-400 shadow-sm outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-brand-500"
+                                />
+                                {searchKeyword && (
+                                    <button
+                                        onClick={() => setSearchKeyword("")}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
                             {/* Sort Field Dropdown */}
                             <div className="relative">
                                 <Button

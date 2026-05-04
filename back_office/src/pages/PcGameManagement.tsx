@@ -30,6 +30,7 @@ export default function PcGameManagement() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchKeyword, setSearchKeyword] = useState("");
   const itemsPerPage = 3;
 
   const currentUserRole = getUserRole();
@@ -113,7 +114,25 @@ export default function PcGameManagement() {
       <PageBreadcrumb pageTitle="PC Games Management" />
       <div className="space-y-6">
         <ComponentCard title="PC Games List">
-          <div className="flex justify-start mb-4">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by name..."
+                value={searchKeyword}
+                onChange={(e) => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+                className="h-[38px] w-64 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-800 placeholder-gray-400 shadow-sm outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-brand-500"
+              />
+              {searchKeyword && (
+                <button
+                  onClick={() => { setSearchKeyword(""); setCurrentPage(1); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             {isAdmin && (
               <Button variant="primary" size="sm" onClick={openAddModal}>
                 Add PC Game
@@ -145,7 +164,7 @@ export default function PcGameManagement() {
                       Loading games...
                     </TableCell>
                   </TableRow>
-                ) : games.length === 0 ? (
+                ) : games.filter(g => g.gameName.toLowerCase().includes(searchKeyword.toLowerCase())).length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={isAdmin ? 2 : 1}
@@ -155,7 +174,7 @@ export default function PcGameManagement() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  games.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((game) => (
+                  games.filter(g => g.gameName.toLowerCase().includes(searchKeyword.toLowerCase())).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((game) => (
                     <TableRow key={game.id}>
                       <TableCell className="px-5 py-4 text-start text-gray-600 dark:text-gray-400">
                         {game.gameName}
@@ -191,7 +210,7 @@ export default function PcGameManagement() {
           </div>
           <Pagination
             currentPage={currentPage}
-            totalItems={games.length}
+            totalItems={games.filter(g => g.gameName.toLowerCase().includes(searchKeyword.toLowerCase())).length}
             itemsPerPage={itemsPerPage}
             onPageChange={(page) => setCurrentPage(page)}
           />
