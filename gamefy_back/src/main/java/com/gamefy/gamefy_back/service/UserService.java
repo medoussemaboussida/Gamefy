@@ -4,6 +4,7 @@ import com.gamefy.gamefy_back.dto.CreateUserDto;
 import com.gamefy.gamefy_back.dto.UserResponseDto;
 import com.gamefy.gamefy_back.dto.UpdateProfileDto;
 import com.gamefy.gamefy_back.emailManager.EmailService;
+import com.gamefy.gamefy_back.exception.UserExceptions.*;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.UserPackCoaching;
 import com.gamefy.gamefy_back.model.UserPackGamefy;
@@ -65,11 +66,11 @@ public class UserService {
         // ... (body same as before but return mapToResponseDto)
         // Only ADMIN or WEB_MASTER can be created via this method
         if (request.getRole() != Roles.ADMIN && request.getRole() != Roles.WEB_MASTER) {
-            throw new RuntimeException("Only ADMIN or WEB_MASTER roles can be assigned");
+            throw new InvalidRoleException(request.getRole());
         }
 
         if (repository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
 
         // Generate a random 10-character password
@@ -94,7 +95,7 @@ public class UserService {
     @CacheEvict(value = "users", allEntries = true)
     public void deleteUser(Integer id) {
         User user = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
         
         // Notify user before deletion
         emailService.sendAccountDeletedEmail(user.getEmail());
@@ -106,7 +107,7 @@ public class UserService {
     @CacheEvict(value = "users", allEntries = true)
     public UserResponseDto updateUserStatus(Long userId, Boolean enabled) {
         User user = repository.findById(userId.intValue())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId.intValue()));
         
         // Update status based on enabled parameter
         user.setStatus(enabled ? UserStatus.ACTIVE : UserStatus.INACTIVE);
@@ -124,14 +125,14 @@ public class UserService {
 
     public UserResponseDto getUserById(Integer id) {
         User user = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
         return mapToResponseDto(user);
     }
 
     @CacheEvict(value = "users", allEntries = true)
     public UserResponseDto updateProfile(Integer userId, UpdateProfileDto request) {
         User user = repository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         if (request.getFirstName() != null) {
             user.setFirstName(request.getFirstName());

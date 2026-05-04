@@ -2,6 +2,8 @@ package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.CreateReservationDto;
 import com.gamefy.gamefy_back.dto.ReservationDto;
+import com.gamefy.gamefy_back.exception.ReservationExceptions.*;
+import com.gamefy.gamefy_back.exception.UserExceptions.UserNotFoundException;
 import com.gamefy.gamefy_back.model.*;
 import com.gamefy.gamefy_back.model.enums.*;
 import com.gamefy.gamefy_back.repository.*;
@@ -47,19 +49,19 @@ public class ReservationService {
     @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto createReservation(CreateReservationDto dto, Integer userId) {
         User player = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         if (dto.getPcIds() == null || dto.getPcIds().isEmpty()) {
-            throw new RuntimeException("You must select at least one PC");
+            throw new InvalidReservationDataException("You must select at least one PC");
         }
 
         if (dto.getStartTime() == null || dto.getEndTime() == null) {
-            throw new RuntimeException("Start time and end time are required");
+            throw new InvalidReservationDataException("Start time and end time are required");
         }
 
         LocalDateTime normalizedEndTime = normalizeEndTime(dto.getStartTime(), dto.getEndTime());
         if (!normalizedEndTime.isAfter(dto.getStartTime())) {
-            throw new RuntimeException("End time must be after start time");
+            throw new InvalidReservationDataException("End time must be after start time");
         }
 
         // Map reservation type to PC type
@@ -71,18 +73,18 @@ public class ReservationService {
 
         for (Integer pcId : dto.getPcIds()) {
             PC pc = pcRepository.findById(pcId)
-                    .orElseThrow(() -> new RuntimeException("PC not found with id: " + pcId));
+                    .orElseThrow(() -> new PcNotAvailableException("PC not found with id: " + pcId));
 
             if (pc.getStatus() != PC_Status.AVAILABLE) {
-                throw new RuntimeException("PC #" + pc.getPcNumber() + " is not available (status: " + pc.getStatus() + ")");
+                throw new PcNotAvailableException("PC #" + pc.getPcNumber() + " is not available (status: " + pc.getStatus() + ")");
             }
 
             if (pc.getPcType() != requiredPcType) {
-                throw new RuntimeException("PC #" + pc.getPcNumber() + " is not of type " + requiredPcType);
+                throw new PcNotAvailableException("PC #" + pc.getPcNumber() + " is not of type " + requiredPcType);
             }
 
             if (bookedPcIds.contains(pcId)) {
-                throw new RuntimeException("PC #" + pc.getPcNumber() + " is already reserved for this time slot");
+                throw new PcNotAvailableException("PC #" + pc.getPcNumber() + " is already reserved for this time slot");
             }
 
             // If coaching, ensure PC has the requested game
@@ -90,7 +92,7 @@ public class ReservationService {
                 boolean hasGame = pc.getGames().stream()
                         .anyMatch(g -> g.getGameName().equalsIgnoreCase(dto.getGame()));
                 if (!hasGame) {
-                    throw new RuntimeException("PC #" + pc.getPcNumber() + " does not have the game: " + dto.getGame());
+                    throw new PcNotAvailableException("PC #" + pc.getPcNumber() + " does not have the game: " + dto.getGame());
                 }
             }
 
@@ -101,10 +103,10 @@ public class ReservationService {
         final User coach;
         if (dto.getReservationType() == Reservation_Type.COACHING_ROOM) {
             if (dto.getCoachId() == null) {
-                throw new RuntimeException("Coach ID is required for coaching reservation");
+                throw new InvalidReservationDataException("Coach ID is required for coaching reservation");
             }
             coach = userRepository.findById(dto.getCoachId())
-                    .orElseThrow(() -> new RuntimeException("Coach not found"));
+                    .orElseThrow(() -> new CoachNotAvailableException("Coach not found with id: " + dto.getCoachId()));
         } else {
             coach = null;
         }
@@ -184,7 +186,7 @@ public class ReservationService {
                     System.out.println("Coach: " + coach.getFirstName() + " (ID: " + coach.getId() + ")");
                     System.out.println("Requested: Day=" + dayOfWeek + ", Month=" + month + ", Year=" + year);
                     System.out.println("Requested Range: " + reservation.getStartTime().toLocalTime() + " - " + reservation.getEndTime().toLocalTime());
-                    return new RuntimeException("Coach is not available for this session time range");
+                    return new CoachNotAvailableException("Coach is not available for this session time range");
                 });
 
             CoachingSlot slot = new CoachingSlot();
@@ -200,7 +202,7 @@ public class ReservationService {
                 || (dto.getPackDiscountIdsUsed() != null && !dto.getPackDiscountIdsUsed().isEmpty());
         boolean usesCoachingPack = dto.getCoachingPackHoursUsed() != null && dto.getCoachingPackHoursUsed() > 0;
         if (usesGamefyPack && usesCoachingPack) {
-            throw new RuntimeException("You cannot activate both Gamefy Pack and Coaching Pack on the same reservation");
+            throw new InvalidReservationDataException("You cannot activate both Gamefy Pack and Coaching Pack on the same reservation");
         }
 
         // Deduct gamefy pack benefits if the player activated them
@@ -216,7 +218,7 @@ public class ReservationService {
         // Deduct coaching pack hours if the player activated them
         if (usesCoachingPack) {
             if (dto.getCoachId() == null) {
-                throw new RuntimeException("Coach ID is required when using a coaching pack");
+                throw new InvalidReservationDataException("Coach ID is required when using a coaching pack");
             }
             deductCoachingPackHours(userId, dto.getCoachId(), dto.getCoachingPackHoursUsed());
             saved.setCoachingPackHoursUsed(dto.getCoachingPackHoursUsed());
@@ -240,14 +242,14 @@ public class ReservationService {
     @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto confirmCardPayment(Integer reservationId, Payment_Type paymentType, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(ReservationNotFoundException::new);
 
         if (!reservation.getPlayer().getId().equals(userId)) {
-            throw new RuntimeException("This reservation does not belong to you");
+            throw new ReservationAccessDeniedException();
         }
 
         if (reservation.getStatus() != Reservation_Status.PENDING) {
-            throw new RuntimeException("Only PENDING reservations can be confirmed");
+            throw new InvalidReservationStateException("Only PENDING reservations can be confirmed");
         }
 
         Reservation_Status oldStatus = reservation.getStatus();
@@ -271,19 +273,19 @@ public class ReservationService {
     @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto updateReservation(Integer reservationId, CreateReservationDto dto, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(ReservationNotFoundException::new);
 
         // Validate ownership
         if (!reservation.getPlayer().getId().equals(userId)) {
-            throw new RuntimeException("This reservation does not belong to you");
+            throw new ReservationAccessDeniedException();
         }
 
         // Only PENDING reservations without a payment type can be edited
         if (reservation.getStatus() != Reservation_Status.PENDING) {
-            throw new RuntimeException("Only PENDING reservations can be edited");
+            throw new InvalidReservationStateException("Only PENDING reservations can be edited");
         }
         if (reservation.getPaymentType() != null) {
-            throw new RuntimeException("Cannot edit a reservation after payment method has been selected");
+            throw new InvalidReservationStateException("Cannot edit a reservation after payment method has been selected");
         }
 
         // ─── Step 1: Restore previously deducted pack benefits ───
@@ -301,15 +303,15 @@ public class ReservationService {
 
         // ─── Step 3: Validate new data (same logic as createReservation) ───
         if (dto.getPcIds() == null || dto.getPcIds().isEmpty()) {
-            throw new RuntimeException("You must select at least one PC");
+            throw new InvalidReservationDataException("You must select at least one PC");
         }
         if (dto.getStartTime() == null || dto.getEndTime() == null) {
-            throw new RuntimeException("Start time and end time are required");
+            throw new InvalidReservationDataException("Start time and end time are required");
         }
 
         LocalDateTime normalizedEndTime = normalizeEndTime(dto.getStartTime(), dto.getEndTime());
         if (!normalizedEndTime.isAfter(dto.getStartTime())) {
-            throw new RuntimeException("End time must be after start time");
+            throw new InvalidReservationDataException("End time must be after start time");
         }
 
         PC_Type requiredPcType = mapReservationTypeToPcType(dto.getReservationType());
@@ -322,22 +324,22 @@ public class ReservationService {
 
         for (Integer pcId : dto.getPcIds()) {
             PC pc = pcRepository.findById(pcId)
-                    .orElseThrow(() -> new RuntimeException("PC not found with id: " + pcId));
+                    .orElseThrow(() -> new PcNotAvailableException("PC not found with id: " + pcId));
 
             if (pc.getStatus() != PC_Status.AVAILABLE) {
-                throw new RuntimeException("PC #" + pc.getPcNumber() + " is not available (status: " + pc.getStatus() + ")");
+                throw new PcNotAvailableException("PC #" + pc.getPcNumber() + " is not available (status: " + pc.getStatus() + ")");
             }
             if (pc.getPcType() != requiredPcType) {
-                throw new RuntimeException("PC #" + pc.getPcNumber() + " is not of type " + requiredPcType);
+                throw new PcNotAvailableException("PC #" + pc.getPcNumber() + " is not of type " + requiredPcType);
             }
             if (bookedPcIds.contains(pcId)) {
-                throw new RuntimeException("PC #" + pc.getPcNumber() + " is already reserved for this time slot");
+                throw new PcNotAvailableException("PC #" + pc.getPcNumber() + " is already reserved for this time slot");
             }
             if (dto.getReservationType() == Reservation_Type.COACHING_ROOM && dto.getGame() != null) {
                 boolean hasGame = pc.getGames().stream()
                         .anyMatch(g -> g.getGameName().equalsIgnoreCase(dto.getGame()));
                 if (!hasGame) {
-                    throw new RuntimeException("PC #" + pc.getPcNumber() + " does not have the game: " + dto.getGame());
+                    throw new PcNotAvailableException("PC #" + pc.getPcNumber() + " does not have the game: " + dto.getGame());
                 }
             }
             selectedPCs.add(pc);
@@ -347,10 +349,10 @@ public class ReservationService {
         final User coach;
         if (dto.getReservationType() == Reservation_Type.COACHING_ROOM) {
             if (dto.getCoachId() == null) {
-                throw new RuntimeException("Coach ID is required for coaching reservation");
+                throw new InvalidReservationDataException("Coach ID is required for coaching reservation");
             }
             coach = userRepository.findById(dto.getCoachId())
-                    .orElseThrow(() -> new RuntimeException("Coach not found"));
+                    .orElseThrow(() -> new CoachNotAvailableException("Coach not found with id: " + dto.getCoachId()));
         } else {
             coach = null;
         }
@@ -415,7 +417,7 @@ public class ReservationService {
                     return startOk && endOk;
                 })
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Coach is not available for this session time range"));
+                .orElseThrow(() -> new CoachNotAvailableException("Coach is not available for this session time range"));
 
             CoachingSlot slot = new CoachingSlot();
             slot.setCoachingSession(session);
@@ -430,7 +432,7 @@ public class ReservationService {
                 || (dto.getPackDiscountIdsUsed() != null && !dto.getPackDiscountIdsUsed().isEmpty());
         boolean usesCoachingPack = dto.getCoachingPackHoursUsed() != null && dto.getCoachingPackHoursUsed() > 0;
         if (usesGamefyPack && usesCoachingPack) {
-            throw new RuntimeException("You cannot activate both Gamefy Pack and Coaching Pack on the same reservation");
+            throw new InvalidReservationDataException("You cannot activate both Gamefy Pack and Coaching Pack on the same reservation");
         }
 
         if (dto.getPackHoursUsed() != null && dto.getPackHoursUsed() > 0) {
@@ -443,7 +445,7 @@ public class ReservationService {
         }
         if (usesCoachingPack) {
             if (dto.getCoachId() == null) {
-                throw new RuntimeException("Coach ID is required when using a coaching pack");
+                throw new InvalidReservationDataException("Coach ID is required when using a coaching pack");
             }
             deductCoachingPackHours(userId, dto.getCoachId(), dto.getCoachingPackHoursUsed());
             saved.setCoachingPackHoursUsed(dto.getCoachingPackHoursUsed());
@@ -467,10 +469,10 @@ public class ReservationService {
     @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto setCashPaymentType(Integer reservationId, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(ReservationNotFoundException::new);
 
         if (!reservation.getPlayer().getId().equals(userId)) {
-            throw new RuntimeException("This reservation does not belong to you");
+            throw new ReservationAccessDeniedException();
         }
 
         reservation.setPaymentType(Payment_Type.CASH_PAYMENT);
@@ -586,7 +588,7 @@ public class ReservationService {
     @CacheEvict(value = "reservations", allEntries = true)
     public void deleteReservation(Integer id) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
+                .orElseThrow(() -> new ReservationNotFoundException(id));
 
         log.info("Admin deleting reservation ID={}", id);
         
@@ -619,17 +621,17 @@ public class ReservationService {
     @CacheEvict(value = "reservations", allEntries = true)
     public void deletePlayerReservation(Integer reservationId, Integer userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(ReservationNotFoundException::new);
 
         if (!reservation.getPlayer().getId().equals(userId)) {
-            throw new RuntimeException("This reservation does not belong to you");
+            throw new ReservationAccessDeniedException();
         }
 
         if (reservation.getStatus() != Reservation_Status.PENDING) {
-            throw new RuntimeException("Only PENDING reservations can be cancelled");
+            throw new InvalidReservationStateException("Only PENDING reservations can be cancelled");
         }
         if (reservation.getPaymentType() != null) {
-            throw new RuntimeException("Cannot cancel a reservation after payment method has been selected");
+            throw new InvalidReservationStateException("Cannot cancel a reservation after payment method has been selected");
         }
 
         log.info("Player ID={} deleting reservation ID={}", userId, reservationId);
@@ -657,14 +659,14 @@ public class ReservationService {
     @CacheEvict(value = "reservations", allEntries = true)
     public ReservationDto updateStatus(Integer reservationId, String newStatus) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + reservationId));
+                .orElseThrow(() -> new ReservationNotFoundException(reservationId));
 
         Reservation_Status oldStatus = reservation.getStatus();
         Reservation_Status status;
         try {
             status = Reservation_Status.valueOf(newStatus.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid status: " + newStatus);
+            throw new InvalidReservationDataException("Invalid status: " + newStatus);
         }
 
         reservation.setStatus(status);
@@ -728,7 +730,7 @@ public class ReservationService {
             case PC_ROOM -> PC_Type.GAMING;
             case VIP_ROOM -> PC_Type.VIP;
             case COACHING_ROOM -> PC_Type.GAMING; // Assuming coaching happens on gaming PCs, adjust if needed
-            default -> throw new RuntimeException("Unsupported reservation type: " + reservationType);
+            default -> throw new InvalidReservationDataException("Unsupported reservation type: " + reservationType);
         };
     }
 
@@ -743,7 +745,7 @@ public class ReservationService {
      */
     public Map<String, Object> getPackBenefitsForReservation(Integer userId, String roomType) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         List<UserPackGamefy> activePacks = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
         UserPackGamefy activePack = activePacks.isEmpty() ? null : activePacks.get(0);
@@ -802,13 +804,13 @@ public class ReservationService {
             case "PC_ROOM" -> Benefit_type.PC;
             case "VIP_ROOM" -> Benefit_type.VIP;
             case "COACHING_ROOM" -> Benefit_type.COACH;
-            default -> throw new RuntimeException("Unsupported room type: " + roomType);
+            default -> throw new InvalidReservationDataException("Unsupported room type: " + roomType);
         };
     }
 
     private void deductPackHours(Integer userId, Reservation_Type reservationType, Double hoursUsed) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         List<UserPackGamefy> activePacks = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
         if (activePacks.isEmpty()) return;
         UserPackGamefy pack = activePacks.get(0);
@@ -823,7 +825,7 @@ public class ReservationService {
 
     private void deductPackDiscounts(Integer userId, List<Integer> idsToDeduct) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         List<UserPackGamefy> activePacks = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
         if (activePacks.isEmpty()) return;
         UserPackGamefy pack = activePacks.get(0);
@@ -842,7 +844,7 @@ public class ReservationService {
      */
     public Map<String, Object> getCoachingPackBenefits(Integer userId, Integer coachId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         Map<String, Object> result = new LinkedHashMap<>();
 
@@ -867,14 +869,14 @@ public class ReservationService {
 
     private void deductCoachingPackHours(Integer userId, Integer coachId, Double hoursUsed) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         List<UserPackCoaching> activePacks = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
         UserPackCoaching pack = activePacks.stream()
                 .filter(p -> p.getPackCoaching().getCoach() != null
                         && p.getPackCoaching().getCoach().getId().equals(coachId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No active coaching pack found for this coach"));
+                .orElseThrow(() -> new CoachNotAvailableException("No active coaching pack found for this coach"));
 
         double remaining = pack.getRemainingHours() != null ? pack.getRemainingHours() : 0;
         pack.setRemainingHours(Math.max(0, remaining - hoursUsed));
