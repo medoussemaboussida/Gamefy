@@ -1,12 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { X, CreditCard, Calendar, ShoppingBag, Receipt, Loader2, Search } from 'lucide-react';
+import { X, CreditCard, Calendar, ShoppingBag, Receipt, Loader2, Filter, ChevronDown } from 'lucide-react';
 import { paymentApi } from '../api/payment';
 import toast from 'react-hot-toast';
 
 const PaymentHistoryModal = ({ onClose }) => {
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [filterType, setFilterType] = useState("ALL");
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+    const filterOptions = [
+        { value: "ALL", label: "All Transactions" },
+        { value: "Reservation", label: "Reservations" },
+        { value: "Pack Gamefy", label: "Gamefy Packs" },
+        { value: "Pack Coaching", label: "Coaching Packs" },
+    ];
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -28,9 +36,10 @@ const PaymentHistoryModal = ({ onClose }) => {
         return new Date(dateString + "Z").toLocaleDateString(undefined, options);
     };
 
-    const filteredPayments = payments.filter(p => 
-        p.paidFor.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredPayments = payments.filter(p => {
+        if (filterType === "ALL") return true;
+        return p.paidFor.startsWith(filterType);
+    });
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all duration-300">
@@ -58,16 +67,39 @@ const PaymentHistoryModal = ({ onClose }) => {
                         </button>
                     </div>
 
-                    {/* Search Bar */}
-                    <div className="mt-8 relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#1CF3CA] transition-colors" size={20} />
-                        <input 
-                            type="text"
-                            placeholder="Search transactions..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 bg-black/20 border border-white/5 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:border-[#1CF3CA]/50 transition-all font-['Inter']"
-                        />
+                    {/* Filter Dropdown (Styled like Rooms.jsx) */}
+                    <div className="mt-8 relative">
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className="bg-gradient-to-r from-[#DD00B8] to-[#2BDFC8] px-6 h-[46px] rounded-[18px] text-white font-bold flex items-center gap-2 hover:opacity-90 transition-all text-[15px] whitespace-nowrap shadow-lg shadow-black/20"
+                        >
+                            <Filter size={18} />
+                            <span>{filterOptions.find(opt => opt.value === filterType)?.label}</span>
+                            <ChevronDown size={18} className={`transition-transform duration-300 ${isFilterOpen ? "rotate-180" : ""}`} />
+                        </button>
+
+                        {isFilterOpen && (
+                            <>
+                                <div className="fixed inset-0 z-10" onClick={() => setIsFilterOpen(false)}></div>
+                                <div className="absolute left-0 mt-3 w-64 bg-[#320141]/95 backdrop-blur-xl border border-white/10 rounded-[24px] shadow-2xl p-2 z-20 animate-in fade-in zoom-in duration-200">
+                                    {filterOptions.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            onClick={() => {
+                                                setFilterType(option.value);
+                                                setIsFilterOpen(false);
+                                            }}
+                                            className={`w-full flex items-center px-5 py-3 rounded-xl text-[14px] font-bold transition-all ${filterType === option.value
+                                                ? "bg-[#1CF3CA] text-black"
+                                                : "text-white/70 hover:bg-white/5 hover:text-white"
+                                                }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -83,7 +115,11 @@ const PaymentHistoryModal = ({ onClose }) => {
                             <ShoppingBag size={48} className="text-white/5" />
                             <div>
                                 <p className="text-white/60 font-bold">No transactions found</p>
-                                <p className="text-white/20 text-sm mt-1">When you make a purchase, it will appear here.</p>
+                                <p className="text-white/20 text-sm mt-1">
+                                    {filterType === "ALL" 
+                                        ? "When you make a purchase, it will appear here." 
+                                        : `No transactions found for ${filterOptions.find(o => o.value === filterType)?.label}.`}
+                                </p>
                             </div>
                         </div>
                     ) : (
@@ -110,7 +146,7 @@ const PaymentHistoryModal = ({ onClose }) => {
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[#1CF3CA] font-black font-['Inter'] text-lg">
-                                                {payment.totalPrice.toFixed(2)} DT
+                                                {payment.totalPrice.toFixed(3)} DT
                                             </p>
                                             <span className="text-[10px] uppercase tracking-widest font-black text-white/20">Success</span>
                                         </div>
@@ -122,10 +158,10 @@ const PaymentHistoryModal = ({ onClose }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 border-t border-white/5 bg-black/10">
+                <div className="p-8 border-t border-white/5 bg-black/20">
                     <button 
                         onClick={onClose}
-                        className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-bold uppercase tracking-widest text-[12px] transition-all active:scale-95"
+                        className="w-full py-5 bg-[#1CF3CA] hover:bg-[#19d4b0] text-black rounded-[24px] font-black uppercase tracking-[0.5em] text-[13px] transition-all active:scale-95 shadow-[0_10px_20px_rgba(28,243,202,0.2)]"
                     >
                         Close History
                     </button>

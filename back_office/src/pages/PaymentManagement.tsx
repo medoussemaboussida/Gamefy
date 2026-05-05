@@ -136,7 +136,7 @@ export default function PaymentManagement() {
                             <input
                                 id="payment-search-input"
                                 type="text"
-                                placeholder="Search by user name..."
+                                placeholder="Search by player name"
                                 value={searchKeyword}
                                 onChange={(e) => setSearchKeyword(e.target.value)}
                                 className="h-[38px] w-72 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-800 placeholder-gray-400 shadow-sm outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/10 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-brand-500"
