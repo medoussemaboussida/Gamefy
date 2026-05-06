@@ -20,11 +20,15 @@ import PlayerPacks from "./pages/player/Packs";
 import ReservationPage from "./pages/player/ReservationPage";
 import CoachPacks from "./pages/coach/CoachPacks";
 import NotificationBell from "./components/NotificationBell";
+import ChatBot from "./components/ChatBot";
 
 // Pages where the floating bell should NOT appear
 const PUBLIC_ROUTES = ["/", "/signin", "/signup", "/become-coach", "/forgot-password", "/reset-password", "/verify-2fa"];
 
 function App() {
+  const location = useLocation();
+  const showChatBot = !PUBLIC_ROUTES.includes(location.pathname);
+
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
       <ScrollToHash />
@@ -61,9 +65,13 @@ function App() {
 
         {/* Add more routes as needed */}
       </Routes>
+
+      {/* Floating AI Chatbot — visible on authenticated pages only */}
+      {showChatBot && <ChatBot />}
     </div>
   )
 }
 
 export default App
+
 
