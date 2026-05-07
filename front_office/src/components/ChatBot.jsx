@@ -135,7 +135,7 @@ const ChatBot = () => {
                             <Bot size={20} />
                         </div>
                         <div className="chatbot-header-info">
-                            <h3>Gamefy AI</h3>
+                            <h3>Gamefy Assistant</h3>
                             <span>● Online</span>
                         </div>
                     </div>

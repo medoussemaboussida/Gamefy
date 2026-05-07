@@ -70,10 +70,22 @@ const buildSystemPrompt = (context) => {
             grouped[key].push(s);
         });
 
+        // Convert UTC time string to local time string (same logic as ReservationPage.jsx)
+        const offset = new Date().getTimezoneOffset(); // e.g. -60 for UTC+1
+        const utcToLocal = (timeStr) => {
+            if (!timeStr) return timeStr;
+            const [h, m] = timeStr.split(":").map(Number);
+            const utcMins = h * 60 + m;
+            const localMins = utcMins - offset;
+            const localH = Math.floor(((localMins % 1440) + 1440) % 1440 / 60);
+            const localM = ((localMins % 1440) + 1440) % 1440 % 60;
+            return `${String(localH).padStart(2, "0")}:${String(localM).padStart(2, "0")}`;
+        };
+
         const scheduleLines = Object.entries(grouped).map(([day, slots]) => {
             const slot = slots[0];
             if (slot.status === "CLOSED") return `${day}: CLOSED`;
-            return `${day}: ${slot.startTime} - ${slot.endTime} (${slot.status})`;
+            return `${day}: ${utcToLocal(slot.startTime)} - ${utcToLocal(slot.endTime)} (${slot.status})`;
         });
         scheduleInfo = scheduleLines.join("\n");
 
@@ -81,9 +93,9 @@ const buildSystemPrompt = (context) => {
         const todaySchedule = context.workSchedule.find(s => s.day === todayDayName);
         if (todaySchedule) {
             if (todaySchedule.status === "CLOSED") {
-                scheduleInfo += `\n\n⚠️ TODAY (${todayDayName}): CLOSED`;
+                scheduleInfo += `\n\nTODAY (${todayDayName}): CLOSED`;
             } else {
-                scheduleInfo += `\n\nTODAY (${todayDayName}): Open from ${todaySchedule.startTime} to ${todaySchedule.endTime}`;
+                scheduleInfo += `\n\nTODAY (${todayDayName}): Open from ${utcToLocal(todaySchedule.startTime)} to ${utcToLocal(todaySchedule.endTime)}`;
             }
         }
     }
@@ -92,9 +104,9 @@ const buildSystemPrompt = (context) => {
     let eventsInfo = "No upcoming events at the moment.";
     if (context.events && context.events.length > 0) {
         eventsInfo = context.events.map(e => {
-            const start = new Date(e.startTime.includes("Z") ? e.startTime : e.startTime + "Z");
+            const start = new Date(e.startTime);
             const dateStr = start.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-            const timeStr = start.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+            const timeStr = start.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
             return `- "${e.title}" | ${dateStr} at ${timeStr} | Location: ${e.place} | Status: ${e.eventStatus}${e.description ? ` | ${e.description}` : ""}`;
         }).join("\n");
     }
@@ -125,7 +137,7 @@ IMPORTANT RULES:
 - Use the REAL DATA provided below to answer questions. Never make up prices, schedules, or other facts.
 - If you don't have data for something, say so honestly.
 - Format prices in DT (Tunisian Dinar) with 3 decimal places.
-- When mentioning times, the schedule times are in UTC. Convert them contextually if the player mentions local time.
+- All times (schedule, events) are in LOCAL time (Tunisia). Display them exactly as provided — NEVER mention UTC or any timezone. Just say the time naturally like "11:00 AM" or "from 11:00 to 01:00".
 - Be helpful about how things work at Gamefy: reservations, packs, events, coaching, payments (Stripe card or cash at the center).
 
 === CURRENT DATE ===
