@@ -25,4 +25,16 @@ public class UserExceptions {
             super("Invalid role assignment: " + role + ". Only ADMIN or WEB_MASTER roles can be assigned.");
         }
     }
+
+    public static class InvalidTokenException extends RuntimeException {
+        public InvalidTokenException(String message) {
+            super(message);
+        }
+    }
+
+    public static class RecaptchaException extends RuntimeException {
+        public RecaptchaException(String message) {
+            super(message);
+        }
+    }
 }

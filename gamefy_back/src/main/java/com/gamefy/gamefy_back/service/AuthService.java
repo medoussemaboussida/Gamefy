@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.emailManager.EmailService;
+import com.gamefy.gamefy_back.exception.UserExceptions.*;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.enums.Roles;
 import com.gamefy.gamefy_back.model.enums.UserStatus;
@@ -39,10 +40,10 @@ public class AuthService {
 
     public User signup(String firstName, String lastName, String email, String password, String recaptchaToken) {
         if (!recaptchaService.verifyToken(recaptchaToken)) {
-            throw new RuntimeException("Invalid reCAPTCHA token");
+            throw new RecaptchaException("Invalid reCAPTCHA token");
         }
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException(email);
         }
         User user = new User();
         user.setFirstName(firstName);
@@ -58,10 +59,10 @@ public class AuthService {
 
     public User signupCoach(String firstName, String lastName, String email, String password, String recaptchaToken) {
         if (!recaptchaService.verifyToken(recaptchaToken)) {
-            throw new RuntimeException("Invalid reCAPTCHA token");
+            throw new RecaptchaException("Invalid reCAPTCHA token");
         }
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException(email);
         }
         User user = new User();
         user.setFirstName(firstName);
@@ -174,7 +175,7 @@ public class AuthService {
     //generate a token and send it to email
     public void forgotPassword(String email, String clientUrl) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
         String token = UUID.randomUUID().toString();
         user.setResetPwdToken(token);
@@ -189,7 +190,7 @@ public class AuthService {
     //change new password
     public void resetPassword(String token, String newPassword) {
         User user = userRepository.findByResetPwdToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid or expired reset token"));
+                .orElseThrow(() -> new InvalidTokenException("Invalid or expired reset token"));
 
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setResetPwdToken(null);
@@ -200,7 +201,7 @@ public class AuthService {
         if (jwtService.validateToken(refreshToken) && jwtService.isRefreshToken(refreshToken)) {
             String email = jwtService.extractEmail(refreshToken);
             User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new UserNotFoundException(email));
             
             String newAccessToken = jwtService.generateAccessToken(user);
             
@@ -209,7 +210,7 @@ public class AuthService {
             tokens.put("userId", user.getId().toString());
             return tokens;
         }
-        throw new RuntimeException("Invalid or expired refresh token");
+        throw new InvalidTokenException("Invalid or expired refresh token");
     }
 
     /**
@@ -217,7 +218,7 @@ public class AuthService {
      */
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
     }
 
     /**
@@ -225,7 +226,7 @@ public class AuthService {
      */
     public User getUserById(Integer id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(id));
     }
 
     /**
@@ -233,7 +234,7 @@ public class AuthService {
      */
     public Map<String, String> verifyTwoFa(Integer userId, String code) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         if (user.getTwoFaToken() == null || !user.getTwoFaToken().equals(code)) {
             throw new BadCredentialsException("Invalid 2FA code");
@@ -251,7 +252,7 @@ public class AuthService {
      */
     public void toggleTwoFa(Integer userId, boolean enabled) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         user.setTwoFaActivated(enabled);
         if (!enabled) {
