@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.OfferDto;
+import com.gamefy.gamefy_back.exception.OfferExceptions.OfferNotFoundException;
 import com.gamefy.gamefy_back.model.Offer;
 import com.gamefy.gamefy_back.model.enums.Offer_Status;
 import com.gamefy.gamefy_back.repository.OfferRepository;
@@ -32,7 +33,7 @@ public class OfferService {
 
     public OfferDto getOfferById(Integer id) {
         Offer offer = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Offer not found with id: " + id));
+                .orElseThrow(() -> new OfferNotFoundException(id));
         return mapToDto(offer);
     }
 
@@ -44,7 +45,7 @@ public class OfferService {
 
     public OfferDto updateOffer(Integer id, OfferDto dto) {
         Offer existing = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Offer not found with id: " + id));
+                .orElseThrow(() -> new OfferNotFoundException(id));
 
         existing.setOfferName(dto.getOfferName());
         existing.setReduction(dto.getReduction());
@@ -56,7 +57,7 @@ public class OfferService {
 
     public void deleteOffer(Integer id) {
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Offer not found with id: " + id);
+            throw new OfferNotFoundException(id);
         }
         repository.deleteById(id);
     }

@@ -2,6 +2,9 @@ package com.gamefy.gamefy_back.exception;
 
 import com.gamefy.gamefy_back.exception.UserExceptions.*;
 import com.gamefy.gamefy_back.exception.ReservationExceptions.*;
+import com.gamefy.gamefy_back.exception.PcExceptions.*;
+import com.gamefy.gamefy_back.exception.GameExceptions.*;
+import com.gamefy.gamefy_back.exception.OfferExceptions.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -150,6 +153,52 @@ public class GlobalExceptionHandler {
                 .message(ex.getMessage())
                 .build();
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    // ─── PC & Game Exceptions ───
+
+    @ExceptionHandler(PcNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePcNotFound(PcNotFoundException ex) {
+        log.warn("PC not found: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Not Found")
+                .message(ex.getMessage())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(GameNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleGameNotFound(GameNotFoundException ex) {
+        log.warn("Game not found: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Not Found")
+                .message(ex.getMessage())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(GameAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleGameAlreadyExists(GameAlreadyExistsException ex) {
+        log.warn("Game conflict: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .error("Conflict")
+                .message(ex.getMessage())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(OfferNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOfferNotFound(OfferNotFoundException ex) {
+        log.warn("Offer not found: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Not Found")
+                .message(ex.getMessage())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
     // ─── Validation & Generic ───

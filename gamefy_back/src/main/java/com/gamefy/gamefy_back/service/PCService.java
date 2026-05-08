@@ -1,6 +1,8 @@
 package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.PcDto;
+import com.gamefy.gamefy_back.exception.GameExceptions.GameNotFoundException;
+import com.gamefy.gamefy_back.exception.PcExceptions.PcNotFoundException;
 import com.gamefy.gamefy_back.model.PC;
 import com.gamefy.gamefy_back.model.PcGame;
 import com.gamefy.gamefy_back.repository.PCRepository;
@@ -32,7 +34,7 @@ public class PCService {
 
     public PcDto getPCById(Integer id) {
         PC pc = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("PC not found with id: " + id));
+                .orElseThrow(() -> new PcNotFoundException(id));
         return mapToDto(pc);
     }
 
@@ -44,14 +46,14 @@ public class PCService {
 
     public PcDto updatePC(Integer id, PcDto dto) {
         PC existing = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("PC not found with id: " + id));
+                .orElseThrow(() -> new PcNotFoundException(id));
 
         existing.setPcNumber(dto.getPcNumber());
         existing.setStatus(dto.getStatus());
         
         List<PcGame> gameEntities = dto.getGames().stream()
                 .map(name -> pcGameRepository.findByGameName(name)
-                        .orElseThrow(() -> new RuntimeException("Game not found: " + name)))
+                        .orElseThrow(() -> new GameNotFoundException(name)))
                 .collect(Collectors.toList());
         existing.setGames(gameEntities);
         
@@ -64,7 +66,7 @@ public class PCService {
 
     public void deletePC(Integer id) {
         if (!repository.existsById(id)) {
-            throw new RuntimeException("PC not found with id: " + id);
+            throw new PcNotFoundException(id);
         }
         repository.deleteById(id);
     }
@@ -89,7 +91,7 @@ public class PCService {
         if (dto.getGames() != null) {
             List<PcGame> gameEntities = dto.getGames().stream()
                     .map(name -> pcGameRepository.findByGameName(name)
-                            .orElseThrow(() -> new RuntimeException("Game not found: " + name)))
+                            .orElseThrow(() -> new GameNotFoundException(name)))
                     .collect(Collectors.toList());
             pc.setGames(gameEntities);
         }

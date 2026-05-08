@@ -27,6 +27,7 @@ export default function PcGameManagement() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<PcGame | null>(null);
   const [gameName, setGameName] = useState("");
+  const [nameError, setNameError] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,19 +57,21 @@ export default function PcGameManagement() {
   const openAddModal = () => {
     setSelectedGame(null);
     setGameName("");
+    setNameError("");
     setIsModalOpen(true);
   };
 
   const openEditModal = (game: PcGame) => {
     setSelectedGame(game);
     setGameName(game.gameName);
+    setNameError("");
     setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!gameName.trim()) {
-      toast.error("Game name is required");
+      setNameError("Game name is required");
       return;
     }
 
@@ -232,7 +235,12 @@ export default function PcGameManagement() {
                 type="text"
                 placeholder="e.g. League of Legends"
                 value={gameName}
-                onChange={(e) => setGameName(e.target.value)}
+                onChange={(e) => {
+                  setGameName(e.target.value);
+                  if (nameError) setNameError("");
+                }}
+                error={!!nameError}
+                hint={nameError}
               />
             </div>
 

@@ -1,5 +1,7 @@
 package com.gamefy.gamefy_back.service;
 
+import com.gamefy.gamefy_back.exception.GameExceptions.GameAlreadyExistsException;
+import com.gamefy.gamefy_back.exception.GameExceptions.GameNotFoundException;
 import com.gamefy.gamefy_back.model.PcGame;
 import com.gamefy.gamefy_back.repository.PcGameRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +30,12 @@ public class PcGameService {
 
     public PcGame getGameById(Integer id) {
         return pcGameRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("PcGame not found with id: " + id));
+                .orElseThrow(() -> new GameNotFoundException(id.toString()));
     }
 
     public PcGame createGame(PcGame pcGame) {
         if (pcGameRepository.findByGameName(pcGame.getGameName()).isPresent()) {
-            throw new RuntimeException("Game with name " + pcGame.getGameName() + " already exists");
+            throw new GameAlreadyExistsException(pcGame.getGameName());
         }
         return pcGameRepository.save(pcGame);
     }
@@ -44,7 +46,7 @@ public class PcGameService {
         pcGameRepository.findByGameName(pcGame.getGameName())
                 .ifPresent(g -> {
                     if (!g.getId().equals(id)) {
-                        throw new RuntimeException("Game with name " + pcGame.getGameName() + " already exists");
+                        throw new GameAlreadyExistsException(pcGame.getGameName());
                     }
                 });
 
@@ -54,7 +56,7 @@ public class PcGameService {
 
     public void deleteGame(Integer id) {
         if (!pcGameRepository.existsById(id)) {
-            throw new RuntimeException("PcGame not found with id: " + id);
+            throw new GameNotFoundException(id.toString());
         }
         pcGameRepository.deleteById(id);
     }
