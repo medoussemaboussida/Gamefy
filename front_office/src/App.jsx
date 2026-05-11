@@ -21,9 +21,10 @@ import ReservationPage from "./pages/player/ReservationPage";
 import CoachPacks from "./pages/coach/CoachPacks";
 import NotificationBell from "./components/NotificationBell";
 import ChatBot from "./components/ChatBot";
+import VirtualTourPage from "./pages/VirtualTourPage";
 
 // Pages where the floating bell should NOT appear
-const PUBLIC_ROUTES = ["/", "/signin", "/signup", "/become-coach", "/forgot-password", "/reset-password", "/verify-2fa"];
+const PUBLIC_ROUTES = ["/", "/signin", "/signup", "/become-coach", "/forgot-password", "/reset-password", "/verify-2fa", "/virtual-tour"];
 
 function App() {
   const location = useLocation();
@@ -46,6 +47,7 @@ function App() {
 
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/events" element={<EventsPage />} />
+        <Route path="/virtual-tour" element={<VirtualTourPage />} />
 
         {/* Auth pages usually don't have global Header/Footer */}
         <Route path="/signin" element={<SignIn />} />
