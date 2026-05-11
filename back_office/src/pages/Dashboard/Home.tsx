@@ -6,6 +6,8 @@ import {
   reservationApi,
   ReservationDto,
 } from "../../api/reservation";
+import { useDashboard } from "../../context/DashboardContext";
+import { CalendarCheck, Package, Monitor, Ticket, Activity } from "lucide-react";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ export default function Home() {
   const [reservations, setReservations] = useState<ReservationDto[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [isLoadingReservations, setIsLoadingReservations] = useState(true);
+  const { stats, isLoading: isLoadingStats } = useDashboard();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -171,6 +174,114 @@ export default function Home() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* New Statistics Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 md:gap-6">
+          {/* Total Reservations Card */}
+          <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/20 to-blue-600/5 p-5 dark:bg-gray-900 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-blue-400">
+                <CalendarCheck size={22} />
+              </div>
+            </div>
+            <div className="mt-5">
+              <h4 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+                {isLoadingStats ? (
+                  <div className="h-8 w-12 animate-pulse rounded bg-white/10" />
+                ) : (
+                  stats?.totalReservations || 0
+                )}
+              </h4>
+              <span className="mt-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                Total Reservations
+              </span>
+            </div>
+          </div>
+
+          {/* Active Packs Card */}
+          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 p-5 dark:bg-gray-900 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-emerald-400">
+                <Package size={22} />
+              </div>
+              <span className="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full">
+                <Activity size={10} />
+                Active
+              </span>
+            </div>
+            <div className="mt-5">
+              <h4 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+                {isLoadingStats ? (
+                  <div className="h-8 w-12 animate-pulse rounded bg-white/10" />
+                ) : (
+                  stats?.activePacksCount || 0
+                )}
+              </h4>
+              <span className="mt-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                Active Gamefy Packs
+              </span>
+            </div>
+          </div>
+
+          {/* PC Inventory Card */}
+          <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/20 to-purple-600/5 p-5 dark:bg-gray-900 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-purple-400">
+                <Monitor size={22} />
+              </div>
+            </div>
+            <div className="mt-5">
+              <h4 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+                {isLoadingStats ? (
+                  <div className="h-8 w-12 animate-pulse rounded bg-white/10" />
+                ) : (
+                  Object.values(stats?.pcCountByType || {}).reduce((a, b) => a + b, 0)
+                )}
+              </h4>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {!isLoadingStats && stats?.pcCountByType && Object.entries(stats.pcCountByType).map(([type, count]) => (
+                  <div key={type} className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10">
+                    <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">{type.replace("_", " ")}</span>
+                    <span className="text-xs font-black text-white">{count}</span>
+                  </div>
+                ))}
+              </div>
+              <span className="mt-2 block text-sm font-medium text-gray-500 dark:text-gray-400">
+                PC Inventory
+              </span>
+            </div>
+          </div>
+
+          {/* Active Offer Card */}
+          <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/20 to-amber-600/5 p-5 dark:bg-gray-900 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-amber-400">
+                <Ticket size={22} />
+              </div>
+            </div>
+            <div className="mt-5">
+              {isLoadingStats ? (
+                <div className="h-8 w-32 animate-pulse rounded bg-white/10" />
+              ) : stats?.activeOffer ? (
+                <>
+                  <h4 className="text-xl font-bold text-gray-800 dark:text-white/90 truncate">
+                    {stats.activeOffer.offerName}
+                  </h4>
+                  <p className="text-lg font-black text-amber-400 mt-1">
+                    -{stats.activeOffer.reduction}% OFF
+                  </p>
+                </>
+              ) : (
+                <h4 className="text-lg font-medium text-gray-400 dark:text-gray-500">
+                  No Active Offer
+                </h4>
+              )}
+              <span className="mt-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                Current Active Offer
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Latest Reservations Table */}

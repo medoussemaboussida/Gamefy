@@ -22,4 +22,6 @@ public interface UserPackGamefyRepository extends JpaRepository<UserPackGamefy, 
     List<UserPackGamefy> findByPackGamefy(PackGamefy packGamefy);
 
     Optional<UserPackGamefy> findFirstByUserOrderByActivatedAtDesc(User user);
+
+    long countByStatus(UserPackStatus status);
 }

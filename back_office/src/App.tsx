@@ -31,81 +31,84 @@ import PaymentManagement from "./pages/PaymentManagement";
 import ReservationManagement from "./pages/ReservationManagement";
 import CoachingPackManagement from "./pages/CoachingPackManagement";
 import PcGameManagement from "./pages/PcGameManagement";
+import { DashboardProvider } from "./context/DashboardContext";
 
 export default function App() {
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <Router>
-        <ScrollToTop />
-        <Routes>
-          {/* Dashboard Layout */}
-          <Route element={<AppLayout />}>
-            <Route index path="/home" element={<Home />} />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/pcs" element={<PCManagement />} />
-            <Route path="/offers" element={<OfferManagement />} />
-            <Route path="/events" element={<EventManagement />} />
-            <Route path="/packs" element={<PackManagement />} />
-            <Route path="/payments" element={<PaymentManagement />} />
-            <Route path="/reservations" element={<ReservationManagement />} />
-            <Route path="/coaching-packs" element={<CoachingPackManagement />} />
-            <Route path="/pc-games" element={<PcGameManagement />} />
+      <DashboardProvider>
+        <Router>
+          <ScrollToTop />
+          <Routes>
+            {/* Dashboard Layout */}
+            <Route element={<AppLayout />}>
+              <Route index path="/home" element={<Home />} />
+              <Route path="/users" element={<UserManagement />} />
+              <Route path="/pcs" element={<PCManagement />} />
+              <Route path="/offers" element={<OfferManagement />} />
+              <Route path="/events" element={<EventManagement />} />
+              <Route path="/packs" element={<PackManagement />} />
+              <Route path="/payments" element={<PaymentManagement />} />
+              <Route path="/reservations" element={<ReservationManagement />} />
+              <Route path="/coaching-packs" element={<CoachingPackManagement />} />
+              <Route path="/pc-games" element={<PcGameManagement />} />
 
-            {/* Others Page */}
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/blank" element={<Blank />} />
+              {/* Others Page */}
+              <Route path="/profile" element={<UserProfiles />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/blank" element={<Blank />} />
 
-            {/* Forms */}
-            <Route path="/form-elements" element={<FormElements />} />
+              {/* Forms */}
+              <Route path="/form-elements" element={<FormElements />} />
 
-            {/* Tables */}
-            <Route path="/basic-tables" element={<BasicTables />} />
+              {/* Tables */}
+              <Route path="/basic-tables" element={<BasicTables />} />
 
-            {/* Ui Elements */}
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/avatars" element={<Avatars />} />
-            <Route path="/badge" element={<Badges />} />
-            <Route path="/buttons" element={<Buttons />} />
-            <Route path="/images" element={<Images />} />
-            <Route path="/videos" element={<Videos />} />
+              {/* Ui Elements */}
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/avatars" element={<Avatars />} />
+              <Route path="/badge" element={<Badges />} />
+              <Route path="/buttons" element={<Buttons />} />
+              <Route path="/images" element={<Images />} />
+              <Route path="/videos" element={<Videos />} />
 
-            {/* Charts */}
-            <Route path="/line-chart" element={<LineChart />} />
-            <Route path="/bar-chart" element={<BarChart />} />
-          </Route>
+              {/* Charts */}
+              <Route path="/line-chart" element={<LineChart />} />
+              <Route path="/bar-chart" element={<BarChart />} />
+            </Route>
 
-          {/* Auth Layout */}
-          <Route path="/" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Auth Layout */}
+            <Route path="/" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Fallback Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster
-          position="top-center"
-          containerStyle={{
-            zIndex: 999999, // Very high to ensure it appears above your header (z-99999) and any modals/overlays
-          }}
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: "#333",
-              color: "#fff",
-              borderRadius: "8px",
-              padding: "12px 16px",
-            },
-            success: {
-              icon: "✅",
-            },
-            error: {
-              icon: "❌",
-            },
-          }}
-        />
-      </Router>
+            {/* Fallback Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster
+            position="top-center"
+            containerStyle={{
+              zIndex: 999999, // Very high to ensure it appears above your header (z-99999) and any modals/overlays
+            }}
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: "#333",
+                color: "#fff",
+                borderRadius: "8px",
+                padding: "12px 16px",
+              },
+              success: {
+                icon: "✅",
+              },
+              error: {
+                icon: "❌",
+              },
+            }}
+          />
+        </Router>
+      </DashboardProvider>
     </GoogleOAuthProvider>
   );
 }
