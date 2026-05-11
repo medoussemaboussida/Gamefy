@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import { Search, Bell, Calendar, MapPin, ExternalLink, Loader2, ChevronDown, Filter, FileText } from "lucide-react";
 import { eventApi } from "../api/event";
@@ -14,6 +14,42 @@ const EventsPage = () => {
     const [isStatusOpen, setIsStatusOpen] = useState(false);
     const [userParticipations, setUserParticipations] = useState([]);
     const [descriptionModal, setDescriptionModal] = useState({ open: false, title: "", description: "" });
+
+    const filteredEvents = events.filter(event => {
+        const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            event.place.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = selectedStatus === "ALL" || event.eventStatus === selectedStatus;
+        return matchesSearch && matchesStatus;
+    });
+    
+    // Shadows logic
+    const scrollRef = useRef(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+
+    const checkScroll = useCallback(() => {
+        if (scrollRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+            setCanScrollLeft(scrollLeft > 5);
+            setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
+        }
+    }, []);
+
+    useEffect(() => {
+        const container = scrollRef.current;
+        if (container) {
+            container.addEventListener("scroll", checkScroll);
+            window.addEventListener("resize", checkScroll);
+            // Initial check
+            setTimeout(checkScroll, 100);
+        }
+        return () => {
+            if (container) {
+                container.removeEventListener("scroll", checkScroll);
+                window.removeEventListener("resize", checkScroll);
+            }
+        };
+    }, [checkScroll, filteredEvents]);
 
     const statusOptions = [
         { value: "ALL", label: "All Statuses" },
@@ -50,12 +86,6 @@ const EventsPage = () => {
         fetchEvents();
     }, []);
 
-    const filteredEvents = events.filter(event => {
-        const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            event.place.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = selectedStatus === "ALL" || event.eventStatus === selectedStatus;
-        return matchesSearch && matchesStatus;
-    });
 
     const formatDate = (dateString) => {
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -249,7 +279,15 @@ const EventsPage = () => {
                                 <p className="text-white/40">Try searching for something else or check back later!</p>
                             </div>
                         ) : (
-                        <div className="flex overflow-x-auto gap-8 py-6 px-4 pb-16 snap-x no-scrollbar custom-scrollbar-h -mx-4">
+                        <div className="relative -mx-4">
+                            {/* Shadows */}
+                            <div className={`absolute left-0 top-0 bottom-16 w-16 z-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-[#24003E] to-transparent ${canScrollLeft ? "opacity-100" : "opacity-0"}`} />
+                            <div className={`absolute right-0 top-0 bottom-16 w-16 z-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-l from-[#24003E] to-transparent ${canScrollRight ? "opacity-100" : "opacity-0"}`} />
+
+                            <div 
+                                ref={scrollRef}
+                                className="flex overflow-x-auto gap-8 py-6 px-4 pb-16 snap-x no-scrollbar custom-scrollbar-h"
+                            >
 
                                 {filteredEvents.map((event) => (
                                     <div
@@ -346,6 +384,7 @@ const EventsPage = () => {
 
                                 ))}
                             </div>
+                        </div>
                         )}
                     </div>
                 </div>

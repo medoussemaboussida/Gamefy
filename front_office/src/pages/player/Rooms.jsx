@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Plus, Monitor, Clock, Tag, CreditCard, Banknote, X, AlertTriangle, Timer, Filter, Pencil, Trash2 } from "lucide-react";
 
@@ -47,15 +47,20 @@ const CountdownTimer = ({ createdAt, onExpired }) => {
 
     if (isExpired) {
         return (
-            <span className="inline-flex items-center gap-1 text-red-400 text-[10px] font-black uppercase">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border backdrop-blur-md text-[10px] font-black uppercase tracking-wider bg-red-900/20 text-red-500 border-red-900/30">
                 <AlertTriangle size={11} /> Expired
             </span>
         );
     }
 
     return (
-        <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase ${isUrgent ? "text-red-400" : "text-yellow-400"}`}>
-            <Timer size={11} /> {timeLeft} left
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border backdrop-blur-md text-[10px] font-black uppercase tracking-wider ${
+            isUrgent 
+                ? "bg-red-500/10 text-red-400 border-red-500/20" 
+                : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+        }`}>
+            <Timer size={11} className="animate-pulse" />
+            <span>{timeLeft} left</span>
         </span>
     );
 };
@@ -66,10 +71,38 @@ const Rooms = () => {
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState("newest");
     const [isSortOpen, setIsSortOpen] = useState(false);
+    
+    // Scroll shadows state
+    const scrollContainerRef = useRef(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
 
+    const checkScroll = useCallback(() => {
+        if (scrollContainerRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+            // Use a small buffer (5px) to avoid flicker on sub-pixel offsets
+            setCanScrollLeft(scrollLeft > 5);
+            setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
+        }
+    }, []);
 
-
-    // Payment confirmation state
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+            checkScroll();
+            container.addEventListener("scroll", checkScroll);
+            window.addEventListener("resize", checkScroll);
+            
+            // Check again after a short delay to ensure content is rendered
+            const timer = setTimeout(checkScroll, 100);
+            
+            return () => {
+                container.removeEventListener("scroll", checkScroll);
+                window.removeEventListener("resize", checkScroll);
+                clearTimeout(timer);
+            };
+        }
+    }, [checkScroll, reservations]); // Re-check when reservations change
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [cashConfirming, setCashConfirming] = useState(false);
@@ -356,7 +389,21 @@ const Rooms = () => {
                         ) : filteredReservations.length > 0 ? (<>
 
                             {/* ── Reservation cards (scrollable) ── */}
-                            <div className="flex overflow-x-auto gap-8 py-6 px-4 pb-16 snap-x no-scrollbar custom-scrollbar-h -mx-4">
+                            <div className="relative -mx-4">
+                                {/* Left Shadow */}
+                                <div 
+                                    className={`absolute left-0 top-6 bottom-16 w-20 z-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-[#24003E] to-transparent ${canScrollLeft ? "opacity-100" : "opacity-0"}`}
+                                />
+                                
+                                {/* Right Shadow */}
+                                <div 
+                                    className={`absolute right-0 top-6 bottom-16 w-20 z-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-l from-[#24003E] to-transparent ${canScrollRight ? "opacity-100" : "opacity-0"}`}
+                                />
+
+                                <div 
+                                    ref={scrollContainerRef}
+                                    className="flex overflow-x-auto gap-8 py-6 px-4 pb-16 snap-x no-scrollbar custom-scrollbar-h"
+                                >
                                 {filteredReservations.map((res) => (
                                     <div
                                         key={res.id}
@@ -503,6 +550,7 @@ const Rooms = () => {
                                         </div>
                                     </div>
                                 ))}
+                                </div>
                             </div>
 
                         </>) : (

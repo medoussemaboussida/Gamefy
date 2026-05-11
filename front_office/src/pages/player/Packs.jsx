@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Sidebar from "../../components/Sidebar";
 import { packGamefyApi } from "../../api/packGamefy";
 import { packCoachingApi } from "../../api/packCoaching";
@@ -36,6 +36,59 @@ const Packs = () => {
     const [myPackStatus, setMyPackStatus] = useState(null); // { packId, packName, status }
     const [myCoachingPackStatus, setMyCoachingPackStatus] = useState(null); // { packId, packName, status }
     const [isRenewalMode, setIsRenewalMode] = useState(false);
+    
+    // Scroll shadows state for Gamefy packs
+    const gamefyScrollRef = useRef(null);
+    const [canScrollLeftG, setCanScrollLeftG] = useState(false);
+    const [canScrollRightG, setCanScrollRightG] = useState(false);
+
+    // Scroll shadows state for Coaching packs
+    const coachingScrollRef = useRef(null);
+    const [canScrollLeftC, setCanScrollLeftC] = useState(false);
+    const [canScrollRightC, setCanScrollRightC] = useState(false);
+
+    const checkGamefyScroll = useCallback(() => {
+        if (gamefyScrollRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = gamefyScrollRef.current;
+            setCanScrollLeftG(scrollLeft > 5);
+            setCanScrollRightG(scrollLeft + clientWidth < scrollWidth - 5);
+        }
+    }, []);
+
+    const checkCoachingScroll = useCallback(() => {
+        if (coachingScrollRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = coachingScrollRef.current;
+            setCanScrollLeftC(scrollLeft > 5);
+            setCanScrollRightC(scrollLeft + clientWidth < scrollWidth - 5);
+        }
+    }, []);
+
+    useEffect(() => {
+        const gContainer = gamefyScrollRef.current;
+        const cContainer = coachingScrollRef.current;
+
+        if (gContainer) {
+            gContainer.addEventListener("scroll", checkGamefyScroll);
+            window.addEventListener("resize", checkGamefyScroll);
+            setTimeout(checkGamefyScroll, 100);
+        }
+        if (cContainer) {
+            cContainer.addEventListener("scroll", checkCoachingScroll);
+            window.addEventListener("resize", checkCoachingScroll);
+            setTimeout(checkCoachingScroll, 100);
+        }
+
+        return () => {
+            if (gContainer) {
+                gContainer.removeEventListener("scroll", checkGamefyScroll);
+                window.removeEventListener("resize", checkGamefyScroll);
+            }
+            if (cContainer) {
+                cContainer.removeEventListener("scroll", checkCoachingScroll);
+                window.removeEventListener("resize", checkCoachingScroll);
+            }
+        };
+    }, [checkGamefyScroll, checkCoachingScroll, packs, coachingPacks]);
 
 
     useEffect(() => {
@@ -219,90 +272,99 @@ const Packs = () => {
                         <p className="text-xl">No packs available at the moment.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto pr-2 custom-scrollbar pb-20">
-                        {packs.map((pack) => (
-                            <div
-                                key={pack.id}
-                                className="group bg-[#24003E]/40 border border-white/5 rounded-3xl p-6 flex flex-col transition-all duration-300 hover:border-[#1CF3CA]/30 hover:bg-[#24003E]/60 hover:shadow-[0_0_30px_rgba(28,243,202,0.1)] h-full"
-                            >
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="p-3 rounded-2xl bg-[#1CF3CA]/10 text-[#1CF3CA]">
-                                        <Gift size={24} />
-                                    </div>
-                                    <div className="text-right">
-                                         <span className="block text-2xl font-bold text-[#1CF3CA]">{Number(pack.price).toFixed(3)} DT</span>
+                    <div className="relative -mx-4 md:mx-0">
+                        {/* Left Shadow */}
+                        <div className={`absolute left-0 top-0 bottom-20 w-16 z-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-[#24003E] to-transparent md:hidden ${canScrollLeftG ? "opacity-100" : "opacity-0"}`} />
+                        {/* Right Shadow */}
+                        <div className={`absolute right-0 top-0 bottom-20 w-16 z-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-l from-[#24003E] to-transparent md:hidden ${canScrollRightG ? "opacity-100" : "opacity-0"}`} />
 
-                                        <span className="text-xs text-gray-500 uppercase tracking-wider">Per Pack</span>
-                                    </div>
-                                </div>
-
-                                <h3 className="text-xl font-bold mb-4 group-hover:text-[#FF89EB] transition-colors">{pack.name}</h3>
-
-                                <div className="flex-grow flex flex-col justify-center py-6">
-                                    <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/[0.03] border border-white/5 group-hover:border-[#1CF3CA]/20 transition-all">
-                                        <Zap size={32} className="text-[#1CF3CA]/30 mb-2 group-hover:text-[#1CF3CA]/70 transition-colors" />
-                                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest text-center">
-                                            {pack.benefits?.length || 0} Exclusive Benefits
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-3">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            onClick={() => openDescription(pack)}
-                                            className="py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white font-semibold transition-all hover:bg-white/10 flex items-center justify-center gap-2 text-sm"
-                                        >
-                                            <Info size={16} />
-                                            Details
-                                        </button>
-                                        <button
-                                            onClick={() => openBenefits(pack)}
-                                            className="py-3 px-4 rounded-xl bg-[#1CF3CA]/5 border border-[#1CF3CA]/10 text-[#1CF3CA] font-semibold transition-all hover:bg-[#1CF3CA]/10 hover:border-[#1CF3CA]/30 flex items-center justify-center gap-2 text-sm"
-                                        >
-                                            <Zap size={16} />
-                                            Benefits
-                                        </button>
-                                    </div>
-                                    {purchasedPackIds.includes(pack.id) ? (
-                                        <div className="w-full py-3 px-4 rounded-xl bg-white/5 border border-[#1CF3CA]/30 text-[#1CF3CA] font-semibold flex items-center justify-center gap-2 cursor-default">
-                                            <Check size={18} />
-                                            You already bought this pack
+                        <div 
+                            ref={gamefyScrollRef}
+                            className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-x-auto md:overflow-visible px-4 md:px-0 no-scrollbar pb-20 scroll-smooth"
+                        >
+                            {packs.map((pack) => (
+                                <div
+                                    key={pack.id}
+                                    className="flex-shrink-0 w-72 md:w-auto group bg-[#24003E]/40 border border-white/5 rounded-3xl p-6 flex flex-col transition-all duration-300 hover:border-[#1CF3CA]/30 hover:bg-[#24003E]/60 hover:shadow-[0_0_30px_rgba(28,243,202,0.1)] h-full"
+                                >
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="p-3 rounded-2xl bg-[#1CF3CA]/10 text-[#1CF3CA]">
+                                            <Gift size={24} />
                                         </div>
-                                    ) : myPackStatus && myPackStatus.packId === pack.id && (myPackStatus.status === "EXPIRED" || myPackStatus.status === "CONSUMED") ? (
-                                        <button
-                                            onClick={() => handleRenewPack(pack)}
-                                            disabled={isProcessingPayment && selectedPack?.id === pack.id}
-                                            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold transition-all hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                                        >
-                                            {isProcessingPayment && selectedPack?.id === pack.id ? (
-                                                <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                                            ) : (
-                                                <>
-                                                    <RefreshCw size={18} />
-                                                    Renew Pack
-                                                </>
-                                            )}
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => handleBuyNow(pack)}
-                                            disabled={isProcessingPayment && selectedPack?.id === pack.id}
-                                            className="w-full py-3 px-4 rounded-xl bg-[#1CF3CA] text-black font-bold transition-all hover:bg-[#1CF3CA]/90 disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(28,243,202,0.2)]"
-                                        >
-                                            {isProcessingPayment && selectedPack?.id === pack.id ? (
-                                                <div className="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full"></div>
-                                            ) : (
-                                                <>
-                                                    <CreditCard size={18} />
-                                                    Buy Now
-                                                </>
-                                            )}
-                                        </button>
-                                    )}
+                                        <div className="text-right">
+                                            <span className="block text-2xl font-bold text-[#1CF3CA]">{Number(pack.price).toFixed(3)} DT</span>
+                                            <span className="text-xs text-gray-500 uppercase tracking-wider">Per Pack</span>
+                                        </div>
+                                    </div>
+
+                                    <h3 className="text-xl font-bold mb-4 group-hover:text-[#FF89EB] transition-colors">{pack.name}</h3>
+
+                                    <div className="flex-grow flex flex-col justify-center py-6">
+                                        <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/[0.03] border border-white/5 group-hover:border-[#1CF3CA]/20 transition-all">
+                                            <Zap size={32} className="text-[#1CF3CA]/30 mb-2 group-hover:text-[#1CF3CA]/70 transition-colors" />
+                                            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest text-center">
+                                                {pack.benefits?.length || 0} Exclusive Benefits
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                onClick={() => openDescription(pack)}
+                                                className="py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white font-semibold transition-all hover:bg-white/10 flex items-center justify-center gap-2 text-sm"
+                                            >
+                                                <Info size={16} />
+                                                Details
+                                            </button>
+                                            <button
+                                                onClick={() => openBenefits(pack)}
+                                                className="py-3 px-4 rounded-xl bg-[#1CF3CA]/5 border border-[#1CF3CA]/10 text-[#1CF3CA] font-semibold transition-all hover:bg-[#1CF3CA]/10 hover:border-[#1CF3CA]/30 flex items-center justify-center gap-2 text-sm"
+                                            >
+                                                <Zap size={16} />
+                                                Benefits
+                                            </button>
+                                        </div>
+                                        {purchasedPackIds.includes(pack.id) ? (
+                                            <div className="w-full py-3 px-4 rounded-xl bg-white/5 border border-[#1CF3CA]/30 text-[#1CF3CA] font-semibold flex items-center justify-center gap-2 cursor-default">
+                                                <Check size={18} />
+                                                You already bought this pack
+                                            </div>
+                                        ) : myPackStatus && myPackStatus.packId === pack.id && (myPackStatus.status === "EXPIRED" || myPackStatus.status === "CONSUMED") ? (
+                                            <button
+                                                onClick={() => handleRenewPack(pack)}
+                                                disabled={isProcessingPayment && selectedPack?.id === pack.id}
+                                                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold transition-all hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                                            >
+                                                {isProcessingPayment && selectedPack?.id === pack.id ? (
+                                                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCw size={18} />
+                                                        Renew Pack
+                                                    </>
+                                                )}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleBuyNow(pack)}
+                                                disabled={isProcessingPayment && selectedPack?.id === pack.id}
+                                                className="w-full py-3 px-4 rounded-xl bg-[#1CF3CA] text-black font-bold transition-all hover:bg-[#1CF3CA]/90 disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(28,243,202,0.2)]"
+                                            >
+                                                {isProcessingPayment && selectedPack?.id === pack.id ? (
+                                                    <div className="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full"></div>
+                                                ) : (
+                                                    <>
+                                                        <CreditCard size={18} />
+                                                        Buy Now
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 )}
 
@@ -337,7 +399,15 @@ const Packs = () => {
                             <p className="text-xl">No coaching packs available at the moment.</p>
                         </div>
                     ) : (
-                        <div className="flex gap-5 overflow-x-auto pb-4 coaching-scrollbar snap-x snap-mandatory px-1">
+                        <div className="relative -mx-4 md:mx-0">
+                            {/* Shadows for coaching packs */}
+                            <div className={`absolute left-0 top-0 bottom-4 w-16 z-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-[#24003E] to-transparent ${canScrollLeftC ? "opacity-100" : "opacity-0"}`} />
+                            <div className={`absolute right-0 top-0 bottom-4 w-16 z-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-l from-[#24003E] to-transparent ${canScrollRightC ? "opacity-100" : "opacity-0"}`} />
+
+                            <div 
+                                ref={coachingScrollRef}
+                                className="flex gap-5 overflow-x-auto pb-4 px-4 md:px-0 no-scrollbar scroll-smooth"
+                            >
                             {coachingPacks.map((pack) => (
                                 <div
                                     key={pack.id}
@@ -427,6 +497,7 @@ const Packs = () => {
                                     </div>
                                 </div>
                             ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -501,6 +572,13 @@ const Packs = () => {
         }
         .coaching-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(255, 137, 235, 0.5);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
         </div>

@@ -64,28 +64,28 @@ export default function StepCheckout({
                         <div>
                             <div className="flex items-center gap-2 mb-6">
                                 <div className="w-8 h-1 bg-[#1CF3CA] rounded-full" />
-                                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[#1CF3CA]">Checkout</h3>
+                                <h3 className="text-sm font-black uppercase tracking-[0.3em] text-[#1CF3CA]">Checkout</h3>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-3">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-[10px] font-black uppercase text-white/30">Entry</span>
-                                        <span className="text-[11px] font-black text-white italic">{reservationType?.replace("_", " ")}</span>
+                                        <span className="text-[11px] font-black uppercase text-white/30">Entry</span>
+                                        <span className="text-xs font-black text-white italic">{reservationType?.replace("_", " ")}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-[10px] font-black uppercase text-white/30">Date</span>
-                                        <span className="text-[11px] font-black text-white italic">{MONTHS[currentMonth]} {selectedDate}, {currentYear}</span>
+                                        <span className="text-[11px] font-black uppercase text-white/30">Date</span>
+                                        <span className="text-xs font-black text-white italic">{MONTHS[currentMonth]} {selectedDate}, {currentYear}</span>
                                     </div>
                                     {selectedGame && (
                                         <div className="flex justify-between items-center">
-                                            <span className="text-[10px] font-black uppercase text-white/30">Session</span>
-                                            <span className="text-[11px] font-black text-[#1CF3CA] italic">{selectedGame}</span>
+                                            <span className="text-[11px] font-black uppercase text-white/30">Session</span>
+                                            <span className="text-xs font-black text-[#1CF3CA] italic">{selectedGame}</span>
                                         </div>
                                     )}
                                     <div className="pt-2 border-t border-white/5 flex justify-between items-center">
-                                        <span className="text-[10px] font-black uppercase text-white/30">Duration</span>
-                                        <span className="text-[11px] font-black text-white italic">
+                                        <span className="text-[11px] font-black uppercase text-white/30">Duration</span>
+                                        <span className="text-xs font-black text-white italic">
                                             {startLabel} — {originalEndLabel}
                                         </span>
                                     </div>
@@ -158,7 +158,7 @@ export default function StepCheckout({
                                 </div>
 
                                 <div className="flex flex-col items-center py-6">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-2">Units Reserved</span>
+                                    <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/30 mb-2">Units Reserved</span>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-6xl font-black italic tracking-tighter text-white">{selectedPcIds.length}</span>
                                         <span className="text-lg font-black italic text-[#1CF3CA] uppercase">PC{selectedPcIds.length !== 1 && 's'}</span>
