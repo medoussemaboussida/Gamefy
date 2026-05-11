@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.service;
 
 import com.gamefy.gamefy_back.dto.EventDto;
+import com.gamefy.gamefy_back.exception.EventExceptions.*;
 import com.gamefy.gamefy_back.model.Event;
 import com.gamefy.gamefy_back.model.enums.Event_Status;
 import com.gamefy.gamefy_back.repository.EventRepository;
@@ -37,7 +38,7 @@ public class EventService {
 
     public EventDto getEventById(Integer id) {
         Event event = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
+                .orElseThrow(() -> new EventNotFoundException(id));
         return mapToDto(event);
     }
 
@@ -49,7 +50,7 @@ public class EventService {
 
     public EventDto updateEvent(Integer id, EventDto dto) {
         Event existing = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
+                .orElseThrow(() -> new EventNotFoundException(id));
 
         // Use current values if not provided in dto
         java.time.LocalDateTime start = dto.getStartTime() != null ? dto.getStartTime() : existing.getStartTime();
@@ -74,14 +75,14 @@ public class EventService {
 
     public void deleteEvent(Integer id) {
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Event not found with id: " + id);
+            throw new EventNotFoundException(id);
         }
         repository.deleteById(id);
     }
 
     public EventDto uploadPhoto(Integer id, MultipartFile file) throws IOException {
         Event event = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
+                .orElseThrow(() -> new EventNotFoundException(id));
 
         String photoPath = fileService.saveEventPhoto(file);
         event.setPhoto(photoPath);
@@ -121,10 +122,10 @@ public class EventService {
         if (startTime == null || endTime == null) return;
 
         if (startTime.isBefore(now.minusMinutes(1))) { // 1 min buffer for network
-            throw new RuntimeException("Event start time cannot be in the past");
+            throw new EventTimeException("Event start time cannot be in the past");
         }
         if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
-            throw new RuntimeException("Event end time must be after the start time");
+            throw new EventTimeException("Event end time must be after the start time");
         }
     }
 }

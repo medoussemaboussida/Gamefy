@@ -5,6 +5,7 @@ import com.gamefy.gamefy_back.exception.ReservationExceptions.*;
 import com.gamefy.gamefy_back.exception.PcExceptions.*;
 import com.gamefy.gamefy_back.exception.GameExceptions.*;
 import com.gamefy.gamefy_back.exception.OfferExceptions.*;
+import com.gamefy.gamefy_back.exception.EventExceptions.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -193,6 +194,61 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OfferNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleOfferNotFound(OfferNotFoundException ex) {
         log.warn("Offer not found: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Not Found")
+                .message(ex.getMessage())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(EventNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEventNotFound(EventNotFoundException ex) {
+        log.warn("Event not found: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Not Found")
+                .message(ex.getMessage())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(EventTimeException.class)
+    public ResponseEntity<ErrorResponse> handleEventTimeError(EventTimeException ex) {
+        log.warn("Event time error: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(ex.getMessage())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UserAlreadyParticipantException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyParticipant(UserAlreadyParticipantException ex) {
+        log.warn("Participation conflict: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .error("Conflict")
+                .message(ex.getMessage())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(ParticipationNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleParticipationNotFound(ParticipationNotFoundException ex) {
+        log.warn("Participation not found: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Not Found")
+                .message(ex.getMessage())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ParticipantNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleParticipantNotFound(ParticipantNotFoundException ex) {
+        log.warn("Participant not found: {}", ex.getMessage());
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.NOT_FOUND.value())
                 .error("Not Found")

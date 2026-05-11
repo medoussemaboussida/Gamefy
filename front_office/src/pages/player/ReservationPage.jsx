@@ -269,8 +269,21 @@ export default function ReservationPage() {
         if (end <= start) end += 1440;
 
         let current = start;
+        
+        // Identify current time in minutes if today is selected
+        const today = new Date();
+        const isToday = 
+            selectedDate === today.getDate() && 
+            currentMonth === today.getMonth() && 
+            currentYear === today.getFullYear();
+        
+        const nowMins = today.getHours() * 60 + today.getMinutes();
+
         while (current <= end) {
-            slots.push({ label: toAMPM(current), value: current });
+            // Only add slot if it's not in the past for today's date
+            if (!isToday || current >= nowMins) {
+                slots.push({ label: toAMPM(current), value: current });
+            }
             current += 30;
         }
         return slots;

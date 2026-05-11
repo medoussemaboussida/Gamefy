@@ -1,4 +1,5 @@
 import { apiClient } from "./apiClient";
+import { getUserId } from "../utils/jwt";
 
 export interface LoginRequestDto {
     email: string;
@@ -23,6 +24,19 @@ export interface AuthResponseDto {
     accessToken: string;
     role: string;
     userId: number;
+    requires2FA?: boolean;
+    twoFaActivated?: boolean;
+}
+
+export namespace TwoFaDto {
+    export interface VerifyTwoFaRequest {
+        userId: number;
+        code: string;
+    }
+
+    export interface ToggleTwoFaRequest {
+        enabled: boolean;
+    }
 }
 
 export interface MessageResponseDto {
@@ -52,5 +66,16 @@ export const authApi = {
 
     logout: async (): Promise<MessageResponseDto> => {
         return apiClient.post("/gamefy/auth/logout");
+    },
+
+    verify2FA: async (dto: TwoFaDto.VerifyTwoFaRequest): Promise<AuthResponseDto> => {
+        return apiClient.post("/gamefy/auth/verify-2fa", dto);
+    },
+
+    toggle2FA: async (dto: TwoFaDto.ToggleTwoFaRequest): Promise<MessageResponseDto> => {
+        const userId = getUserId();
+        return apiClient.post("/gamefy/auth/toggle-2fa", dto, {
+            headers: { userId: userId?.toString() }
+        });
     },
 };

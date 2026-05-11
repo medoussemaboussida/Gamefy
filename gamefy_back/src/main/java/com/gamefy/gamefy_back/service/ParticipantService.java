@@ -4,6 +4,7 @@ import com.gamefy.gamefy_back.dto.ParticipantDto;
 import com.gamefy.gamefy_back.emailManager.EmailService;
 import com.gamefy.gamefy_back.model.Event;
 import com.gamefy.gamefy_back.model.Participant;
+import com.gamefy.gamefy_back.exception.EventExceptions.*;
 import com.gamefy.gamefy_back.model.User;
 import com.gamefy.gamefy_back.model.enums.Participant_Status;
 import com.gamefy.gamefy_back.repository.EventRepository;
@@ -44,7 +45,7 @@ public class ParticipantService {
     public byte[] exportParticipantsToExcel(Integer eventId) throws IOException {
         List<Participant> participants = participantRepository.findByEventId(eventId);
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
+                .orElseThrow(() -> new EventNotFoundException(eventId));
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Participants - " + event.getTitle());
@@ -87,11 +88,11 @@ public class ParticipantService {
 
     public ParticipantDto participate(Integer eventId, User user) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
+                .orElseThrow(() -> new EventNotFoundException(eventId));
 
         Optional<Participant> existing = participantRepository.findByEventIdAndUserId(eventId, user.getId());
         if (existing.isPresent()) {
-            throw new RuntimeException("User is already a participant of this event");
+            throw new UserAlreadyParticipantException();
         }
 
         Participant participant = new Participant();
@@ -114,7 +115,7 @@ public class ParticipantService {
 
     public ParticipantDto cancelParticipation(Integer eventId, User user) {
         Participant participant = participantRepository.findByEventIdAndUserId(eventId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Participation not found for this event"));
+                .orElseThrow(() -> new ParticipationNotFoundException());
 
         ParticipantDto dto = mapToDto(participant);
         String eventTitle = participant.getEvent().getTitle();
@@ -133,7 +134,7 @@ public class ParticipantService {
 
     public ParticipantDto updateParticipantStatus(Integer participantId, Participant_Status status) {
         Participant participant = participantRepository.findById(participantId)
-                .orElseThrow(() -> new RuntimeException("Participant not found with id: " + participantId));
+                .orElseThrow(() -> new ParticipantNotFoundException(participantId));
 
         Participant_Status oldStatus = participant.getParticipantStatus();
         participant.setParticipantStatus(status);

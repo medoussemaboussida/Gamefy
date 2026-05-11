@@ -5,6 +5,8 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { UserResponseDto, userApi } from "../../api/user";
+import { authApi } from "../../api/auth";
+import Switch from "../ui/Switch";
 import toast from "react-hot-toast";
 
 interface UserInfoCardProps {
@@ -100,6 +102,32 @@ export default function UserInfoCard({ user, onUserUpdate }: UserInfoCardProps) 
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 ********
               </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                Two-Factor Authentication
+              </p>
+              <div className="flex items-center gap-3">
+                <Switch 
+                  enabled={user.twoFaActivated} 
+                  onChange={async (enabled) => {
+                    const toggleToast = toast.loading(enabled ? "Enabling 2FA..." : "Disabling 2FA...");
+                    try {
+                      await authApi.toggle2FA({ enabled });
+                      toast.success(enabled ? "2FA enabled!" : "2FA disabled!", { id: toggleToast });
+                      if (onUserUpdate) {
+                        onUserUpdate({ ...user, twoFaActivated: enabled });
+                      }
+                    } catch (error: any) {
+                      toast.error(error.message || "Failed to update 2FA", { id: toggleToast });
+                    }
+                  }} 
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {user.twoFaActivated ? "Enabled" : "Disabled"}
+                </span>
+              </div>
             </div>
           </div>
         </div>

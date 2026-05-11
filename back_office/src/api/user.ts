@@ -15,6 +15,7 @@ export interface UserResponseDto {
     role: string;
     status: string;
     profilePhoto: string | null;
+    twoFaActivated: boolean;
     packGamefyId?: number;
     packGamefyName?: string | null;
     packCoachingId?: number;

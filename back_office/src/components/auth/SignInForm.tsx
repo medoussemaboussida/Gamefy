@@ -7,15 +7,17 @@ import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import { authApi } from "../../api/auth";
+import TwoFaVerifyForm from "./TwoFaVerifyForm";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const [showTwoFa, setShowTwoFa] = useState(false);
+  const [tempUserId, setTempUserId] = useState<number | null>(null);
 
   const navigate = useNavigate();
 
@@ -32,6 +34,11 @@ export default function SignInForm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoginSuccess = (token: string) => {
+    localStorage.setItem("accessToken", token);
+    navigate("/home");
   };
 
   const validateField = (name: string, value: string) => {
@@ -80,6 +87,13 @@ export default function SignInForm() {
 
     try {
       const response = await authApi.login({ email, password });
+      
+      if (response.requires2FA) {
+        setTempUserId(response.userId);
+        setShowTwoFa(true);
+        return;
+      }
+
       // Store the token in localStorage or a more secure way
       localStorage.setItem("accessToken", response.accessToken);
       // Redirect to dashboard on success
@@ -98,6 +112,16 @@ export default function SignInForm() {
       setLoading(false);
     }
   };
+
+  if (showTwoFa && tempUserId) {
+    return (
+      <TwoFaVerifyForm
+        userId={tempUserId}
+        onSuccess={handleLoginSuccess}
+        onCancel={() => setShowTwoFa(false)}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1">
