@@ -41,7 +41,7 @@ const VirtualTourPage = () => {
             <Header />
             <main className="flex-grow min-h-screen bg-[#12082a]">
                 {/* ── Page hero strip ──────────────────────────── */}
-                <section className="relative bg-[#12082a] pt-10 pb-6 overflow-hidden">
+                <section className="relative bg-[#12082a] pt-40 pb-6 overflow-hidden">
                     {/* Background blobs */}
                     <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#7700ff] rounded-full blur-[180px] opacity-10 pointer-events-none" />
                     <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#00d4ff] rounded-full blur-[160px] opacity-8 pointer-events-none" />
