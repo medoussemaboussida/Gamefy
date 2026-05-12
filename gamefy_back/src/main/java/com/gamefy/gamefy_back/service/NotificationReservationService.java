@@ -75,6 +75,59 @@ public class NotificationReservationService {
         log.info("Notification sent to user ID={}: {}", player.getId(), title);
     }
 
+    /**
+     * Send a notification to the coach when a coaching reservation is created, confirmed, or cancelled.
+     * @param reservation the coaching reservation
+     * @param eventType one of "NEW", "CONFIRMED", "CANCELLED", "PENDING"
+     */
+    @Transactional
+    public void sendCoachReservationNotification(Reservation reservation, String eventType) {
+        User coach = reservation.getCoach();
+        if (coach == null) return; // Not a coaching reservation
+
+        String playerName = reservation.getPlayer().getFirstName() + " " + reservation.getPlayer().getLastName();
+
+        String title = switch (eventType) {
+            case "NEW"       -> "New Coaching Session 🎮";
+            case "CONFIRMED" -> "Coaching Session Confirmed ✅";
+            case "CANCELLED" -> "Coaching Session Cancelled ❌";
+            case "PENDING"   -> "Coaching Session Set to Pending ⏳";
+            default          -> "Coaching Session Update";
+        };
+
+        String message = switch (eventType) {
+            case "NEW"       -> playerName + " booked a coaching session with you on {{time}}";
+            case "CONFIRMED" -> "Your coaching session with " + playerName + " on {{time}} has been confirmed";
+            case "CANCELLED" -> "The coaching session with " + playerName + " on {{time}} has been cancelled";
+            case "PENDING"   -> "Your coaching session with " + playerName + " on {{time}} has been set back to pending";
+            default          -> "Your coaching session with " + playerName + " on {{time}} has been updated";
+        };
+
+        String type = "COACHING_RESERVATION_" + eventType;
+
+        NotificationReservation notification = NotificationReservation.builder()
+                .user(coach)
+                .title(title)
+                .message(message)
+                .type(type)
+                .referenceId(reservation.getId())
+                .scheduledAt(reservation.getStartTime())
+                .isRead(false)
+                .build();
+
+        NotificationReservation saved = notificationReservationRepository.save(notification);
+        NotificationReservationDto dto = mapToDto(saved);
+
+        // Push via WebSocket to the coach
+        messagingTemplate.convertAndSendToUser(
+                String.valueOf(coach.getId()),
+                "/queue/notifications",
+                dto
+        );
+
+        log.info("Coach notification sent to coach ID={}: {}", coach.getId(), title);
+    }
+
     @Transactional(readOnly = true)
     public List<NotificationReservationDto> getNotifications(Integer userId) {
         return notificationReservationRepository.findByUserIdOrderByCreatedAtDesc(userId)

@@ -136,6 +136,11 @@ public class ReservationService {
             subscriptionService.addHoursForConfirmedReservation(saved);
         }
 
+        // Notify coach if this is a coaching reservation
+        if (saved.getReservationType() == Reservation_Type.COACHING_ROOM && saved.getCoach() != null) {
+            notificationReservationService.sendCoachReservationNotification(saved, "NEW");
+        }
+
         // Create PcAvailability records for each selected PC
         for (PC pc : selectedPCs) {
             PcAvailability availability = new PcAvailability();
@@ -636,6 +641,11 @@ public class ReservationService {
 
         log.info("Player ID={} deleting reservation ID={}", userId, reservationId);
 
+        // Notify coach before deleting (if coaching reservation)
+        if (reservation.getCoach() != null) {
+            notificationReservationService.sendCoachReservationNotification(reservation, "CANCELLED");
+        }
+
         // Restore pack benefits
         restorePackBenefits(reservation);
 
@@ -696,6 +706,11 @@ public class ReservationService {
 
         // Send real-time notification to the player
         notificationReservationService.sendReservationStatusNotification(saved, oldStatus, status);
+
+        // Send real-time notification to the coach (if coaching reservation)
+        if (saved.getCoach() != null) {
+            notificationReservationService.sendCoachReservationNotification(saved, status.name());
+        }
 
         return mapToDto(saved);
     }

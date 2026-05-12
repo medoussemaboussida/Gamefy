@@ -53,6 +53,13 @@ export const coachProfileApi = {
         return apiClient.delete("/gamefy/coaches/profile/me");
     },
     /**
+     * Get dashboard stats for the logged-in coach (totalSessions, activeBookedPacks)
+     * @returns {Promise<{totalSessions: number, activeBookedPacks: number}>}
+     */
+    getMyStats: async () => {
+        return apiClient.get("/gamefy/coaches/profile/me/stats");
+    },
+    /**
      * Get all PC games (from enum)
      * @returns {Promise<string[]>}
      */

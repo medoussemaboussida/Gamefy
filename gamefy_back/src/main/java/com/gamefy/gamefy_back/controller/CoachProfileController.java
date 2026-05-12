@@ -52,6 +52,13 @@ public class CoachProfileController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/me/stats")
+    @PreAuthorize("hasAuthority('COACH')")
+    public ResponseEntity<java.util.Map<String, Object>> getMyStats(@AuthenticationPrincipal User currentUser) {
+        java.util.Map<String, Object> stats = coachProfileService.getCoachStats(currentUser.getId());
+        return ResponseEntity.ok(stats);
+    }
+
     // Admin overrides
     @PutMapping("/{userId}")
     @PreAuthorize("hasAuthority('ADMIN')")

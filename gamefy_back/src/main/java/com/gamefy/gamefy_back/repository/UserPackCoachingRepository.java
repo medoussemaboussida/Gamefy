@@ -17,4 +17,6 @@ public interface UserPackCoachingRepository extends JpaRepository<UserPackCoachi
     List<UserPackCoaching> findByPackCoaching(PackCoaching packCoaching);
 
     java.util.Optional<UserPackCoaching> findFirstByUserOrderByActivatedAtDesc(User user);
+
+    long countByPackCoachingCoachIdAndStatus(Integer coachId, UserPackStatus status);
 }

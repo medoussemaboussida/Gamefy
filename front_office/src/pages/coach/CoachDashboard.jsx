@@ -16,6 +16,7 @@ const CoachDashboard = () => {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [reservations, setReservations] = useState([]);
   const [reservationsLoading, setReservationsLoading] = useState(true);
+  const [stats, setStats] = useState({ totalSessions: 0, activeBookedPacks: 0 });
 
   const fetchProfile = async () => {
     try {
@@ -41,9 +42,19 @@ const CoachDashboard = () => {
     }
   }, []);
 
+  const fetchStats = async () => {
+    try {
+      const data = await coachProfileApi.getMyStats();
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to fetch coach stats", error);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
     fetchReservations();
+    fetchStats();
   }, [fetchReservations]);
 
   const statusColors = {
@@ -107,7 +118,7 @@ const CoachDashboard = () => {
                 <MoreHorizontal className="text-white/40 cursor-pointer" />
               </div>
               <div className="text-white text-[32px] font-bold font-['Inter']">
-                14
+                {stats.totalSessions}
               </div>
             </div>
 
@@ -120,7 +131,7 @@ const CoachDashboard = () => {
                 <MoreHorizontal className="text-white/40 cursor-pointer" />
               </div>
               <div className="text-white text-[32px] font-bold font-['Inter']">
-                10
+                {stats.activeBookedPacks}
               </div>
             </div>
 
