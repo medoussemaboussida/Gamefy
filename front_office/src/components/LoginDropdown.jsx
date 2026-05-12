@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogIn, UserPlus, ChevronDown } from "lucide-react";
+import { LogIn, UserPlus, ChevronDown, Box } from "lucide-react";
 
 const LoginDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -98,6 +98,22 @@ const LoginDropdown = () => {
                                 <div className="flex flex-col">
                                     <span className="font-medium text-[15px]">Create Player Account</span>
                                     <span className="text-white/40 text-[11px]">Join Gamefy Academy</span>
+                                </div>
+                            </Link>
+
+                            <div className="h-px bg-white/5 mx-2 my-1" />
+
+                            <Link 
+                                to="/virtual-tour"
+                                className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-white/90 hover:bg-white/10 hover:text-[#06F0F6] transition-all group"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                <div className="p-2 rounded-lg bg-[#06F0F6]/10 text-[#06F0F6] group-hover:bg-[#06F0F6] group-hover:text-black transition-all">
+                                    <Box size={20} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="font-medium text-[15px]">3D Virtual Tour</span>
+                                    <span className="text-white/40 text-[11px]">Explore our gaming center</span>
                                 </div>
                             </Link>
                         </div>
