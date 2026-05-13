@@ -10,11 +10,15 @@ import com.gamefy.gamefy_back.repository.*;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -532,6 +536,48 @@ public class PaymentService {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
         paymentRepository.delete(payment);
+    }
+
+    public byte[] exportPaymentsToExcel() throws IOException {
+        List<PaymentDtos.AllPaymentResponse> payments = getAllPayments();
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Platform Payments");
+
+            // Create Header Row
+            Row headerRow = sheet.createRow(0);
+            String[] columns = {"ID", "User", "Paid For", "Amount (DT)", "Date"};
+
+            CellStyle headerCellStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerCellStyle.setFont(headerFont);
+
+            for (int i = 0; i < columns.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(columns[i]);
+                cell.setCellStyle(headerCellStyle);
+            }
+
+            // Fill Data Rows
+            int rowIdx = 1;
+            for (PaymentDtos.AllPaymentResponse p : payments) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(p.getId());
+                row.createCell(1).setCellValue(p.getUserName());
+                row.createCell(2).setCellValue(p.getPaidFor());
+                row.createCell(3).setCellValue(p.getTotalPrice());
+                row.createCell(4).setCellValue(p.getCreatedAt().toString());
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < columns.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        }
     }
 
     /**

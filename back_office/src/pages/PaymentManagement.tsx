@@ -16,6 +16,7 @@ import Button from "../components/ui/button/Button";
 import { Dropdown } from "../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
 import { ChevronDownIcon, TrashBinIcon } from "../icons";
+import { FileText } from "lucide-react";
 import DeleteConfirmationModal from "../components/modals/deleteConfirmation";
 
 import { getUserRole } from "../utils/jwt";
@@ -120,6 +121,16 @@ export default function PaymentManagement() {
         }
     };
 
+    const handleExportExcel = async () => {
+        try {
+            await paymentApi.exportPaymentsToExcel();
+            toast.success("Payments exported to Excel!");
+        } catch (error) {
+            console.error("Export failed:", error);
+            toast.error("Failed to export payments");
+        }
+    };
+
     return (
         <>
             <PageMeta
@@ -185,6 +196,17 @@ export default function PaymentManagement() {
                                 ))}
                             </Dropdown>
                         </div>
+
+                        {/* Export Excel Button */}
+                        <Button
+                            onClick={handleExportExcel}
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 border-green-200 hover:bg-green-50 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-500/10"
+                            startIcon={<FileText className="w-4 h-4" />}
+                        >
+                            Export Excel
+                        </Button>
                     </div>
 
                     <div className="overflow-auto rounded-lg border border-gray-200 dark:border-white/10">
