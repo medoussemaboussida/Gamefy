@@ -63,12 +63,6 @@ public class UserService {
 
     @CacheEvict(value = "users", allEntries = true)
     public UserResponseDto createUser(CreateUserDto request) {
-        // ... (body same as before but return mapToResponseDto)
-        // Only ADMIN or WEB_MASTER can be created via this method
-        if (request.getRole() != Roles.ADMIN && request.getRole() != Roles.WEB_MASTER) {
-            throw new InvalidRoleException(request.getRole());
-        }
-
         if (repository.findByEmail(request.getEmail()).isPresent()) {
             throw new EmailAlreadyExistsException(request.getEmail());
         }

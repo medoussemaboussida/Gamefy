@@ -24,8 +24,10 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess 
     const [fieldErrors, setFieldErrors] = useState<{ firstName?: string; lastName?: string; email?: string }>({});
 
     const roleOptions = [
-        { value: "ADMIN", label: "Admin" },
+        { value: "PLAYER", label: "Player" },
+        { value: "COACH", label: "Coach" },
         { value: "WEB_MASTER", label: "Web Master" },
+        { value: "ADMIN", label: "Admin" },
     ];
 
     const validateField = (name: string, value: string) => {
@@ -110,7 +112,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSuccess 
             <div className="flex flex-col gap-6">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                        Add New Administrative User
+                        Add New User
                     </h3>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         Enter the details below. A random password will be generated and emailed to the user.

@@ -25,7 +25,7 @@ public class EmailService {
         message.setTo(to);
         message.setSubject("Your Account has been Created");
         message.setText("Welcome to Gamefy Academy team!\n\n" +
-                "An administrative account has been created for you.\n" +
+                "An account has been created for you.\n" +
                 "Email: " + to + "\n" +
                 "Password: " + password + "\n" +
                 "Your Role will be : " + role + "\n\n" +
