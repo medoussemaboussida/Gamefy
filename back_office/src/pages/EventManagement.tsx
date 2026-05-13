@@ -122,6 +122,7 @@ export default function EventManagement() {
 
     const handleViewParticipants = async (event: EventDto) => {
         if (!event.id) return;
+        setSelectedEvent(event);
         setParticipantsEventTitle(event.title);
         setIsParticipantsModalOpen(true);
         setParticipantsLoading(true);

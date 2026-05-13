@@ -123,7 +123,7 @@ public class ReservationController {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteReservation(@PathVariable Integer id) {
         service.deleteReservation(id);
         return ResponseEntity.noContent().build();

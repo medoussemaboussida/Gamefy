@@ -182,6 +182,10 @@ export default function ReservationManagement() {
     const [isSortOpen, setIsSortOpen] = useState(false);
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Role check — only ADMIN can delete reservations
+    const userRole = localStorage.getItem("userRole");
+    const isAdmin = userRole === "ADMIN";
+
     // Delete modal
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedRes, setSelectedRes] = useState<{ id: number, playerName: string } | null>(null);
@@ -571,9 +575,11 @@ export default function ReservationManagement() {
                                         <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                                             Status
                                         </TableCell>
+                                        {isAdmin && (
                                         <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                                             Actions
                                         </TableCell>
+                                        )}
                                     </TableRow>
                                 </TableHeader>
 
@@ -629,6 +635,7 @@ export default function ReservationManagement() {
                                                 <TableCell className="px-5 py-4 text-start">
                                                     <StatusCell res={res} onStatusChange={handleStatusChange} />
                                                 </TableCell>
+                                                {isAdmin && (
                                                 <TableCell className="px-5 py-4 text-start">
                                                     <div className="flex items-center gap-2">
                                                         <button
@@ -640,6 +647,7 @@ export default function ReservationManagement() {
                                                         </button>
                                                     </div>
                                                 </TableCell>
+                                                )}
                                             </TableRow>
                                         ))
                                     )}
@@ -667,12 +675,14 @@ export default function ReservationManagement() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <StatusCell res={res} onStatusChange={handleStatusChange} />
+                                                {isAdmin && (
                                                 <button
                                                     onClick={() => handleDeleteClick(res.id, res.playerName)}
                                                     className="p-1 px-2 transition-colors duration-200 rounded-lg text-gray-500 hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-500/10"
                                                 >
                                                     <TrashBinIcon className="w-5 h-5" />
                                                 </button>
+                                                )}
                                             </div>
                                         </div>
 
