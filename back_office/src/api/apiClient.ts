@@ -54,7 +54,9 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // If error is 401 or 403 (Unauthorized/Forbidden) and it's not a retry
-    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+    // Also skip if the failing request IS the refresh endpoint itself
+    const isRefreshRequest = originalRequest.url?.includes("/gamefy/auth/refresh");
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry && !isRefreshRequest) {
 
       if (isRefreshing) {
         // If a refresh is already in progress, queue this request

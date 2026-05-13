@@ -24,6 +24,14 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const fetchStats = async () => {
     // Only fetch if stats is null to comply with "called just once" request
     if (stats !== null) return;
+
+    // Don't fetch if the user isn't authenticated — avoids triggering
+    // a 401 → refresh → redirect loop on the login page
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
     
     try {
       setIsLoading(true);
