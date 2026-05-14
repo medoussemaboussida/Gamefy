@@ -1,0 +1,108 @@
+name: Gamefy Backend CI
+
+on:
+  push:
+    branches: [ oussema ]
+  pull_request:
+    branches: [ oussema ]
+
+jobs:
+
+  # ──────────────────────────────────────────────
+  # Stage 1 — Clean
+  # ──────────────────────────────────────────────
+  clean:
+    name: 🧹 Maven Clean
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+
+      - name: mvn clean
+        run: mvn clean --batch-mode
+
+  # ──────────────────────────────────────────────
+  # Stage 2 — Compile
+  # ──────────────────────────────────────────────
+  compile:
+    name: 🔨 Maven Compile
+    needs: clean
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+
+      - name: mvn compile
+        run: mvn compile --batch-mode
+
+  # ──────────────────────────────────────────────
+  # Stage 3 — Package
+  # ──────────────────────────────────────────────
+  package:
+    name: 📦 Maven Package
+    needs: compile
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+
+      - name: mvn package
+        run: mvn package -DskipTests --batch-mode
+
+  # ──────────────────────────────────────────────
+  # Stage 4 — Install
+  # ──────────────────────────────────────────────
+  install:
+    name: 🚀 Maven Install
+    needs: package
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+
+      - name: mvn install
+        run: mvn install -DskipTests --batch-mode
