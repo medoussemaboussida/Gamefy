@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.UUID;
 
 @Service
@@ -90,7 +90,7 @@ public class AuthService {
         // Check if 2FA is activated
         if (user.isTwoFaActivated()) {
             // Generate a 6-digit code
-            String code = String.format("%06d", new Random().nextInt(999999));
+            String code = String.format("%06d", new SecureRandom().nextInt(999999));
             user.setTwoFaToken(code);
             userRepository.save(user);
 
