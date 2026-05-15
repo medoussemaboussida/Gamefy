@@ -130,6 +130,9 @@ jobs:
           cache: maven
           cache-dependency-path: gamefy_back/pom.xml
 
+      - name: Compile sources
+        run: mvn compile -DskipTests --batch-mode
+
       - name: SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
