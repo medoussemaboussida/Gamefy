@@ -162,7 +162,7 @@ public class PackCoachingService {
     /** Silent removal — used internally during reassignment to avoid double notifications */
     @Transactional
     @CacheEvict(value = {"users"}, allEntries = true)
-    private void removePackFromPlayerSilent(Integer userId) {
+    void removePackFromPlayerSilent(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         List<UserPackCoaching> activeRecords = userPackCoachingRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);

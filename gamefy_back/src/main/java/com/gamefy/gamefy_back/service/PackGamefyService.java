@@ -305,7 +305,7 @@ public class PackGamefyService {
     /** Silent removal — used internally during reassignment to avoid double notifications */
     @Transactional
     @CacheEvict(value = {"users", "payments"}, allEntries = true)
-    private void removePackFromUserSilent(Integer userId) {
+    void removePackFromUserSilent(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         List<UserPackGamefy> activeRecords = userPackGamefyRepository.findByUserAndStatus(user, UserPackStatus.ACTIVE);
