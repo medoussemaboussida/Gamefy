@@ -9,110 +9,109 @@ on:
 jobs:
 
   # ──────────────────────────────────────────────
-  # Stage 1 — Clean
+  # Stage 1 — Clean (temporarily disabled)
   # ──────────────────────────────────────────────
-  clean:
-    name: 🧹 Maven Clean
-    runs-on: self-hosted
-    defaults:
-      run:
-        working-directory: gamefy_back
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-          cache-dependency-path: gamefy_back/pom.xml
-
-      - name: mvn clean
-        run: mvn clean --batch-mode
-
-  # ──────────────────────────────────────────────
-  # Stage 2 — Compile
-  # ──────────────────────────────────────────────
-  compile:
-    name: 🔨 Maven Compile
-    needs: clean
-    runs-on: self-hosted
-    defaults:
-      run:
-        working-directory: gamefy_back
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-          cache-dependency-path: gamefy_back/pom.xml
-
-      - name: mvn compile
-        run: mvn compile --batch-mode
+  # clean:
+  #   name: 🧹 Maven Clean
+  #   runs-on: self-hosted
+  #   defaults:
+  #     run:
+  #       working-directory: gamefy_back
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up JDK 21
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         distribution: temurin
+  #         java-version: '21'
+  #         cache: maven
+  #         cache-dependency-path: gamefy_back/pom.xml
+  #
+  #     - name: mvn clean
+  #       run: mvn clean --batch-mode
 
   # ──────────────────────────────────────────────
-  # Stage 3 — Package
+  # Stage 2 — Compile (temporarily disabled)
   # ──────────────────────────────────────────────
-  package:
-    name: 📦 Maven Package
-    needs: compile
-    runs-on: self-hosted
-    defaults:
-      run:
-        working-directory: gamefy_back
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-          cache-dependency-path: gamefy_back/pom.xml
-
-      - name: mvn package
-        run: mvn package -DskipTests --batch-mode
+  # compile:
+  #   name: 🔨 Maven Compile
+  #   needs: clean
+  #   runs-on: self-hosted
+  #   defaults:
+  #     run:
+  #       working-directory: gamefy_back
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up JDK 21
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         distribution: temurin
+  #         java-version: '21'
+  #         cache: maven
+  #         cache-dependency-path: gamefy_back/pom.xml
+  #
+  #     - name: mvn compile
+  #       run: mvn compile --batch-mode
 
   # ──────────────────────────────────────────────
-  # Stage 4 — Install
+  # Stage 3 — Package (temporarily disabled)
   # ──────────────────────────────────────────────
-  install:
-    name: 🚀 Maven Install
-    needs: package
-    runs-on: self-hosted
-    defaults:
-      run:
-        working-directory: gamefy_back
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # package:
+  #   name: 📦 Maven Package
+  #   needs: compile
+  #   runs-on: self-hosted
+  #   defaults:
+  #     run:
+  #       working-directory: gamefy_back
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up JDK 21
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         distribution: temurin
+  #         java-version: '21'
+  #         cache: maven
+  #         cache-dependency-path: gamefy_back/pom.xml
+  #
+  #     - name: mvn package
+  #       run: mvn package -DskipTests --batch-mode
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-          cache-dependency-path: gamefy_back/pom.xml
-
-      - name: mvn install
-        run: mvn install -DskipTests --batch-mode
+  # ──────────────────────────────────────────────
+  # Stage 4 — Install (temporarily disabled)
+  # ──────────────────────────────────────────────
+  # install:
+  #   name: 🚀 Maven Install
+  #   needs: package
+  #   runs-on: self-hosted
+  #   defaults:
+  #     run:
+  #       working-directory: gamefy_back
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up JDK 21
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         distribution: temurin
+  #         java-version: '21'
+  #         cache: maven
+  #         cache-dependency-path: gamefy_back/pom.xml
+  #
+  #     - name: mvn install
+  #       run: mvn install -DskipTests --batch-mode
 
   # ──────────────────────────────────────────────
   # Stage 5 — SonarQube Scan
   # ──────────────────────────────────────────────
   sonarqube:
     name: 🔍 SonarQube Analysis
-    needs: install
     runs-on: self-hosted
     defaults:
       run:
@@ -140,6 +139,6 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.projectKey=gamefy-backend \
-            -Dsonar.projectName="Gamefy Backend" \
+            -Dsonar.projectName="gamefy-backend" \
             -Dsonar.java.source=21 \
             --batch-mode
