@@ -133,7 +133,10 @@ public class AuthService {
                 HttpRequest request = new NetHttpTransport().createRequestFactory()
                         .buildGetRequest(new GenericUrl("https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + token));
                 HttpResponse response = request.execute();
-                Map<String, Object> payload = new GsonFactory().createJsonParser(response.getContent()).parseAndClose(Map.class);
+                Map<String, Object> payload;
+                try (com.google.api.client.json.JsonParser parser = new GsonFactory().createJsonParser(response.getContent())) {
+                    payload = parser.parseAndClose(Map.class);
+                }
                 
                 email = (String) payload.get("email");
                 firstName = (String) payload.get("given_name");
