@@ -108,10 +108,10 @@ jobs:
   #       run: mvn install -DskipTests --batch-mode
 
   # ──────────────────────────────────────────────
-  # Stage 5 — SonarQube Scan
+  # Stage 5 — Tests + Coverage + SonarQube Scan
   # ──────────────────────────────────────────────
   sonarqube:
-    name: 🔍 SonarQube Analysis
+    name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube
     runs-on: self-hosted
     defaults:
       run:
@@ -130,18 +130,17 @@ jobs:
           cache: maven
           cache-dependency-path: gamefy_back/pom.xml
 
-      - name: Compile sources
-        run: mvn compile -DskipTests --batch-mode
-
-      - name: SonarQube Scan
+      - name: Run Tests + Generate JaCoCo Coverage Report + SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          mvn sonar:sonar \
+          mvn verify sonar:sonar \
+            -Dspring.profiles.active=test \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.projectKey=gamefy-backend \
             -Dsonar.projectName="gamefy-backend" \
             -Dsonar.java.source=21 \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             --batch-mode
