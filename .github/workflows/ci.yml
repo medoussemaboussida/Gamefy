@@ -1,4 +1,4 @@
-name: Gamefy Backend CI
+name: Gamefy CI — Backend + Frontend
 
 on:
   push:
@@ -107,11 +107,11 @@ jobs:
   #     - name: mvn install
   #       run: mvn install -DskipTests --batch-mode
 
-  # ──────────────────────────────────────────────
-  # Stage 5 — Tests + Coverage + SonarQube Scan
-  # ──────────────────────────────────────────────
-  sonarqube:
-    name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 5 — Backend: Tests + Coverage + SonarQube Scan
+  # ─────────────────────────────────────────────────────────────────
+  sonarqube-backend:
+    name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube (Backend)
     runs-on: self-hosted
     defaults:
       run:
@@ -144,3 +144,38 @@ jobs:
             -Dsonar.java.source=21 \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             --batch-mode
+
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 6 — Frontend: SonarQube Scan (Front Office + Back Office)
+  # Runs in PARALLEL with Stage 5 — no dependency between them
+  # ─────────────────────────────────────────────────────────────────
+  sonarqube-frontend:
+    name: 🔍 SonarQube (Front Office + Back Office)
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Front Office (React / JavaScript) ───────────────────────
+      - name: 🔍 Scan Front Office
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        working-directory: front_office
+        run: |
+          sonar-scanner \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN
+
+      # ── Back Office (React / TypeScript) ────────────────────────
+      - name: 🔍 Scan Back Office
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        working-directory: back_office
+        run: |
+          sonar-scanner \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN
