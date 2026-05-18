@@ -158,6 +158,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: ⬢ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       # ── Front Office (React / JavaScript) ───────────────────────
       - name: 🔍 Scan Front Office
         uses: SonarSource/sonarqube-scan-action@v5
