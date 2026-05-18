@@ -33,3 +33,4 @@ build/
 .vscode/
 src/main/resources/application.properties
 src/main/resources/application-secrets.properties
+gamefy_back/src/test/resources/application-test.properties
