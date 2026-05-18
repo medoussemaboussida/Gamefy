@@ -160,22 +160,18 @@ jobs:
 
       # ── Front Office (React / JavaScript) ───────────────────────
       - name: 🔍 Scan Front Office
+        uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          projectBaseDir: front_office
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        working-directory: front_office
-        run: |
-          sonar-scanner \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.token=$SONAR_TOKEN
 
       # ── Back Office (React / TypeScript) ────────────────────────
       - name: 🔍 Scan Back Office
+        uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          projectBaseDir: back_office
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        working-directory: back_office
-        run: |
-          sonar-scanner \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.token=$SONAR_TOKEN
