@@ -1,8 +1,22 @@
-import { apiClient } from "./apiClient";
+import axios from "axios";
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
+
+/**
+ * Lightweight axios client for chatbot context fetching.
+ * Unlike apiClient, this does NOT redirect on 401/403 — it just fails silently
+ * so Promise.allSettled can handle it gracefully on public pages (vitrine).
+ */
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+const chatbotClient = axios.create({ baseURL: BASE_URL });
+chatbotClient.interceptors.request.use((config) => {
+    const jwt = localStorage.getItem("accessToken");
+    if (jwt) config.headers.Authorization = `Bearer ${jwt}`;
+    return config;
+});
+chatbotClient.interceptors.response.use((res) => res.data);
 
 /**
  * Fetches all Gamefy context data from backend APIs in parallel.
@@ -15,14 +29,17 @@ export const fetchChatbotContext = async () => {
     const currentMonth = months[currentDate.getMonth()];
     const currentYear = String(currentDate.getFullYear());
 
-    const [fixedPrices, activeOffer, workSchedule, events, gamingPacks, coachingPacks] =
+    const [fixedPrices, activeOffer, workSchedule, events, gamingPacks, coachingPacks, coaches, games, pcSummary] =
         await Promise.allSettled([
-            apiClient.get("/gamefy/fixed-prices"),
-            apiClient.get("/gamefy/offers/active").catch(() => null),
-            apiClient.get(`/gamefy/work-days-schedules/public?month=${currentMonth}&year=${currentYear}`),
-            apiClient.get("/gamefy/events/active"),
-            apiClient.get("/gamefy/pack-gamefies"),
-            apiClient.get("/gamefy/pack-coachings/all"),
+            chatbotClient.get("/gamefy/fixed-prices"),
+            chatbotClient.get("/gamefy/offers/active").catch(() => null),
+            chatbotClient.get(`/gamefy/work-days-schedules/public?month=${currentMonth}&year=${currentYear}`),
+            chatbotClient.get("/gamefy/events/active"),
+            chatbotClient.get("/gamefy/pack-gamefies"),
+            chatbotClient.get("/gamefy/pack-coachings/all"),
+            chatbotClient.get("/gamefy/coaches/profile/public/all"),
+            chatbotClient.get("/gamefy/pc-games/public"),
+            chatbotClient.get("/gamefy/pcs/public/summary"),
         ]);
 
     return {
@@ -32,6 +49,9 @@ export const fetchChatbotContext = async () => {
         events: events.status === "fulfilled" ? events.value : [],
         gamingPacks: gamingPacks.status === "fulfilled" ? gamingPacks.value : [],
         coachingPacks: coachingPacks.status === "fulfilled" ? coachingPacks.value : [],
+        coaches: coaches.status === "fulfilled" ? coaches.value : [],
+        games: games.status === "fulfilled" ? games.value : [],
+        pcSummary: pcSummary.status === "fulfilled" ? pcSummary.value : {},
         fetchedAt: currentDate.toISOString(),
         currentMonth,
         currentYear,
@@ -128,6 +148,31 @@ const buildSystemPrompt = (context) => {
         ).join("\n");
     }
 
+    // Format coaches
+    let coachesInfo = "No coaches available at the moment.";
+    if (context.coaches && context.coaches.length > 0) {
+        coachesInfo = context.coaches.map(c =>
+            `- ${c.firstName} ${c.lastName} | Game: ${c.game} | Hourly Price: ${Number(c.hourlyPrice).toFixed(3)} DT${c.bio ? ` | Bio: ${c.bio}` : ""}`
+        ).join("\n");
+    }
+
+    // Format available games
+    let gamesInfo = "No games data available.";
+    if (context.games && context.games.length > 0) {
+        gamesInfo = context.games.join(", ");
+    }
+
+    // Format PC inventory
+    let pcInventoryInfo = "No PC inventory data available.";
+    if (context.pcSummary && Object.keys(context.pcSummary).length > 0) {
+        pcInventoryInfo = Object.entries(context.pcSummary).map(([type, stats]) => {
+            const details = Object.entries(stats)
+                .map(([key, val]) => `${key}: ${val}`)
+                .join(", ");
+            return `${type}: ${details}`;
+        }).join("\n");
+    }
+
     return `You are Gamefy AI Assistant, the friendly and knowledgeable virtual helper for Gamefy — a premium gaming center / cyber café.
 
 Your personality: You are enthusiastic about gaming, helpful, concise, and professional. Use a friendly tone with gaming vibes. You can use emojis sparingly. Keep answers concise and to the point.
@@ -139,14 +184,17 @@ IMPORTANT RULES:
 - Format prices in DT (Tunisian Dinar) with 3 decimal places.
 - All times (schedule, events) are in LOCAL time (Tunisia). Display them exactly as provided — NEVER mention UTC or any timezone. Just say the time naturally like "11:00 AM" or "from 11:00 to 01:00".
 - Be helpful about how things work at Gamefy: reservations, packs, events, coaching, payments (Stripe card or cash at the center).
+- When asked about coaches, provide their name, game specialty, hourly price, and bio.
+- When asked about games, list the games available on Gamefy PCs.
+- When asked about PCs, provide the counts by type (GAMING, VIP) and their availability status.
 
 === CURRENT DATE ===
 ${today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
 
 === ROOM TYPES ===
-Gamefy has 3 room types:
+Gamefy has 2 room types for gaming plus coaching rooms:
 1. PC ROOM (GAMING) — Standard gaming PCs with high-end specs
-2. VIP ROOM — Premium VIP gaming experience with better equipment
+2. VIP ROOM — Premium VIP gaming experience with better equipment and a more comfortable, private environment
 3. COACHING ROOM — Rooms for coaching sessions with professional esports coaches
 
 === PRICING (per PC, per session) ===
@@ -167,6 +215,15 @@ ${gamingPacksInfo}
 
 === COACHING PACKS ===
 ${coachingPacksInfo}
+
+=== OUR COACHES ===
+${coachesInfo}
+
+=== AVAILABLE GAMES ON OUR PCs ===
+${gamesInfo}
+
+=== PC INVENTORY ===
+${pcInventoryInfo}
 
 === HOW RESERVATIONS WORK ===
 1. Choose a room type (PC Room, VIP Room, or Coaching Room)

@@ -21,6 +21,14 @@ public class PCController {
     public ResponseEntity<List<PcDto>> getAllPCs() {
         return ResponseEntity.ok(service.getAllPCs());
     }
+
+    /**
+     * Public endpoint for the chatbot — returns PC inventory summary by type and status.
+     */
+    @GetMapping("/public/summary")
+    public ResponseEntity<java.util.Map<String, java.util.Map<String, Long>>> getPcSummaryPublic() {
+        return ResponseEntity.ok(service.getPcSummary());
+    }
     @GetMapping("/games")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER', 'COACH')")
     public ResponseEntity<List<String>> getAllPCGames() {

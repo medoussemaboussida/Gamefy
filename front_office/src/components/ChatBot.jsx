@@ -8,6 +8,9 @@ const QUICK_QUESTIONS = [
     "🕐 Opening hours today?",
     "🏆 Upcoming events?",
     "📦 Available packs?",
+    "🎮 What games do you have?",
+    "🧑‍🏫 Who are your coaches?",
+    "🖥️ How many PCs?",
 ];
 
 const ChatBot = () => {

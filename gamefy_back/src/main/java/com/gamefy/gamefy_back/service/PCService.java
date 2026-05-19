@@ -26,6 +26,24 @@ public class PCService {
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Returns PC inventory summary grouped by type (GAMING, VIP)
+     * with total count and breakdown by status (AVAILABLE, OUT_OF_SERVICE, MAINTENANCE).
+     */
+    public java.util.Map<String, java.util.Map<String, Long>> getPcSummary() {
+        java.util.Map<String, java.util.Map<String, Long>> summary = new java.util.LinkedHashMap<>();
+        java.util.List<PC> allPcs = repository.findAll();
+
+        for (PC pc : allPcs) {
+            String type = pc.getPcType().name();
+            summary.computeIfAbsent(type, k -> new java.util.LinkedHashMap<>());
+            java.util.Map<String, Long> typeMap = summary.get(type);
+            typeMap.merge("total", 1L, Long::sum);
+            typeMap.merge(pc.getStatus().name(), 1L, Long::sum);
+        }
+        return summary;
+    }
     public List<String> getAllGamesEnums() {
         return pcGameRepository.findAll().stream()
                 .map(PcGame::getGameName)

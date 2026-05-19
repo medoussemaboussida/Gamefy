@@ -59,6 +59,14 @@ public class CoachProfileController {
         return ResponseEntity.ok(stats);
     }
 
+    /**
+     * Public endpoint for the chatbot — returns all coach profiles.
+     */
+    @GetMapping("/public/all")
+    public ResponseEntity<java.util.List<CoachProfileDto>> getAllCoachesPublic() {
+        return ResponseEntity.ok(coachProfileService.getAllProfiles());
+    }
+
     // Admin overrides
     @PutMapping("/{userId}")
     @PreAuthorize("hasAuthority('ADMIN')")

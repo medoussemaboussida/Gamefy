@@ -31,6 +31,12 @@ public class CoachProfileService {
         return mapToDto(profile);
     }
 
+    public java.util.List<CoachProfileDto> getAllProfiles() {
+        return coachProfileRepository.findAll().stream()
+                .map(this::mapToDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     @Transactional
     public CoachProfileDto saveProfile(Integer userId, UpdateCoachProfileDto dto) {
         User coach = userRepository.findById(userId)

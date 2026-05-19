@@ -23,8 +23,8 @@ import NotificationBell from "./components/NotificationBell";
 import ChatBot from "./components/ChatBot";
 import VirtualTourPage from "./pages/VirtualTourPage";
 
-// Pages where the floating bell should NOT appear
-const PUBLIC_ROUTES = ["/", "/signin", "/signup", "/become-coach", "/forgot-password", "/reset-password", "/verify-2fa", "/virtual-tour"];
+// Pages where the floating chatbot & bell should NOT appear (auth pages only)
+const PUBLIC_ROUTES = ["/signin", "/signup", "/become-coach", "/forgot-password", "/reset-password", "/verify-2fa"];
 
 function App() {
   const location = useLocation();

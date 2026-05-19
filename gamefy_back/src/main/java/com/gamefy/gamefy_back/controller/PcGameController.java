@@ -22,6 +22,16 @@ public class PcGameController {
         return ResponseEntity.ok(pcGameService.getAllGames());
     }
 
+    /**
+     * Public endpoint for the chatbot — returns all game names.
+     */
+    @GetMapping("/public")
+    public ResponseEntity<List<String>> getAllGamesPublic() {
+        return ResponseEntity.ok(pcGameService.getAllGames().stream()
+                .map(PcGame::getGameName)
+                .collect(java.util.stream.Collectors.toList()));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'WEB_MASTER')")
     public ResponseEntity<PcGame> getGameById(@PathVariable Integer id) {
