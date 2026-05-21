@@ -1,0 +1,29 @@
+# ── Build artifacts & IDE files ──
+target/
+!target/*.jar
+.idea/
+.cursor/
+*.iml
+
+# ── OS junk ──
+.DS_Store
+Thumbs.db
+
+# ── Git ──
+.git
+.gitignore
+.gitattributes
+
+# ── CI/CD ──
+.github/
+
+# ── Docker (prevent recursion) ──
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# ── Documentation ──
+*.md
+
+# ── Uploaded user files (should be volume-mounted, not baked in) ──
+uploads/

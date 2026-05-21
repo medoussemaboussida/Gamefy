@@ -1,0 +1,28 @@
+# ── Dependencies (will be installed fresh via npm ci) ──
+node_modules/
+
+# ── Build output ──
+dist/
+
+# ── Git ──
+.git
+.gitignore
+
+# ── CI/CD ──
+.github/
+
+# ── IDE / Editor ──
+.vscode/
+.idea/
+.cursor/
+
+# ── Docker (prevent recursion) ──
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# ── Misc ──
+*.md
+.env
+.vite/
+sonar-project.properties

@@ -22,6 +22,7 @@ import CoachPacks from "./pages/coach/CoachPacks";
 import NotificationBell from "./components/NotificationBell";
 import ChatBot from "./components/ChatBot";
 import VirtualTourPage from "./pages/VirtualTourPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 // Pages where the floating chatbot & bell should NOT appear (auth pages only)
 const PUBLIC_ROUTES = ["/signin", "/signup", "/become-coach", "/forgot-password", "/reset-password", "/verify-2fa"];
@@ -64,8 +65,8 @@ function App() {
         <Route path="/coach/coachRoom" element={<CoachRoom />} />
         <Route path="/coach/packs" element={<CoachPacks />} />
 
-
         {/* Add more routes as needed */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
 
       {/* Floating AI Chatbot — visible on authenticated pages only */}

@@ -1,0 +1,28 @@
+# ── Dependencies ──
+node_modules/
+
+# ── Build output ──
+dist/
+
+# ── Git ──
+.git
+.gitignore
+
+# ── CI/CD ──
+.github/
+
+# ── IDE / Editor ──
+.vscode/
+.idea/
+.cursor/
+
+# ── Docker ──
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# ── Misc ──
+*.md
+.env
+banner.png
+sonar-project.properties

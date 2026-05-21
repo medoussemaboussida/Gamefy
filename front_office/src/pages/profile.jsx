@@ -162,6 +162,23 @@ const ProfilePage = () => {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
+    const formatTotalHours = (totalHours) => {
+        if (!totalHours) return "0 hours";
+        
+        const hours = Math.floor(totalHours);
+        const minutes = Math.round((totalHours - hours) * 60);
+
+        if (hours === 0 && minutes > 0) {
+            return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+        }
+        
+        if (minutes === 0) {
+            return `${hours} hour${hours !== 1 ? 's' : ''}`;
+        }
+
+        return `${hours} hour${hours !== 1 ? 's' : ''} and ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    };
+
     // Wait for both the user profile AND the events to load
     if (isLoadingUser || isLoading) {
         return (
@@ -372,7 +389,7 @@ const ProfilePage = () => {
                                     <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
                                         <span className="text-white/60 font-medium">Total Hours</span>
                                         <span className="text-[#1CF3CA] font-bold text-sm">
-                                            {user.totalHours ?? 0} h
+                                            {formatTotalHours(user.totalHours)}
                                         </span>
                                     </div>
                                 )}
