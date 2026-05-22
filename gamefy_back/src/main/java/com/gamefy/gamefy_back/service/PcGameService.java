@@ -5,6 +5,8 @@ import com.gamefy.gamefy_back.exception.GameExceptions.GameNotFoundException;
 import com.gamefy.gamefy_back.model.PcGame;
 import com.gamefy.gamefy_back.repository.PcGameRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +20,12 @@ public class PcGameService {
 
     private final PcGameRepository pcGameRepository;
 
+    @Cacheable(value = "games")
     public List<PcGame> getAllGames() {
         return pcGameRepository.findAll();
     }
 
+    @Cacheable(value = "games", key = "'names'")
     public List<String> getAllGameNames() {
         return pcGameRepository.findAll().stream()
                 .map(PcGame::getGameName)
@@ -33,6 +37,7 @@ public class PcGameService {
                 .orElseThrow(() -> new GameNotFoundException(id.toString()));
     }
 
+    @CacheEvict(value = {"games", "pcs"}, allEntries = true)
     public PcGame createGame(PcGame pcGame) {
         if (pcGameRepository.findByGameName(pcGame.getGameName()).isPresent()) {
             throw new GameAlreadyExistsException(pcGame.getGameName());
@@ -40,6 +45,7 @@ public class PcGameService {
         return pcGameRepository.save(pcGame);
     }
 
+    @CacheEvict(value = {"games", "pcs"}, allEntries = true)
     public PcGame updateGame(Integer id, PcGame pcGame) {
         PcGame existing = getGameById(id);
         
@@ -54,6 +60,7 @@ public class PcGameService {
         return pcGameRepository.save(existing);
     }
 
+    @CacheEvict(value = {"games", "pcs"}, allEntries = true)
     public void deleteGame(Integer id) {
         if (!pcGameRepository.existsById(id)) {
             throw new GameNotFoundException(id.toString());

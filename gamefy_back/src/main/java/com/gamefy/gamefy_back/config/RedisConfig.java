@@ -90,12 +90,15 @@ public class RedisConfig {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory,
                                           ObjectMapper redisObjectMapper) {
-        log.info("Initializing Redis Cache Manager with per-cache TTLs: users(10m), reservations(2m), payments(10m)");
+        log.info("Initializing Redis Cache Manager — TTL: users(10m), reservations(2m), payments(10m) | No-TTL (evict-on-write): pcs, games, offers");
         RedisCacheConfiguration defaultConfig = buildCacheConfig(Duration.ofMinutes(10), redisObjectMapper);
 
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
         cacheConfigs.put("users",        buildCacheConfig(Duration.ofMinutes(10), redisObjectMapper));
         cacheConfigs.put("reservations", buildCacheConfig(Duration.ofMinutes(2),  redisObjectMapper));
+        cacheConfigs.put("pcs",          buildCacheConfig(Duration.ZERO, redisObjectMapper));
+        cacheConfigs.put("games",        buildCacheConfig(Duration.ZERO, redisObjectMapper));
+        cacheConfigs.put("offers",       buildCacheConfig(Duration.ZERO, redisObjectMapper));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)

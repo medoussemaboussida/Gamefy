@@ -8,6 +8,8 @@ import com.gamefy.gamefy_back.model.PcGame;
 import com.gamefy.gamefy_back.repository.PCRepository;
 import com.gamefy.gamefy_back.repository.PcGameRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class PCService {
 
     private final PCRepository repository;
     private final PcGameRepository pcGameRepository;
+    @Cacheable(value = "pcs")
     public List<PcDto> getAllPCs() {
         return repository.findAll().stream()
                 .map(this::mapToDto)
@@ -31,6 +34,7 @@ public class PCService {
      * Returns PC inventory summary grouped by type (GAMING, VIP)
      * with total count and breakdown by status (AVAILABLE, OUT_OF_SERVICE, MAINTENANCE).
      */
+    @Cacheable(value = "pcs", key = "'summary'")
     public java.util.Map<String, java.util.Map<String, Long>> getPcSummary() {
         java.util.Map<String, java.util.Map<String, Long>> summary = new java.util.LinkedHashMap<>();
         java.util.List<PC> allPcs = repository.findAll();
@@ -56,12 +60,14 @@ public class PCService {
         return mapToDto(pc);
     }
 
+    @CacheEvict(value = "pcs", allEntries = true)
     public PcDto createPC(PcDto dto) {
         PC pc = mapToEntity(dto);
         pc = repository.save(pc);
         return mapToDto(pc);
     }
 
+    @CacheEvict(value = "pcs", allEntries = true)
     public PcDto updatePC(Integer id, PcDto dto) {
         PC existing = repository.findById(id)
                 .orElseThrow(() -> new PcNotFoundException(id));
@@ -82,6 +88,7 @@ public class PCService {
         return mapToDto(existing);
     }
 
+    @CacheEvict(value = "pcs", allEntries = true)
     public void deletePC(Integer id) {
         if (!repository.existsById(id)) {
             throw new PcNotFoundException(id);

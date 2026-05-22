@@ -6,6 +6,8 @@ import com.gamefy.gamefy_back.model.Offer;
 import com.gamefy.gamefy_back.model.enums.Offer_Status;
 import com.gamefy.gamefy_back.repository.OfferRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,12 +21,14 @@ public class OfferService {
 
     private final OfferRepository repository;
 
+    @Cacheable(value = "offers", key = "'active'")
     public OfferDto getActiveOffer() {
         return repository.findFirstByStatus(Offer_Status.ACTIVE)
                 .map(this::mapToDto)
                 .orElse(null);
     }
 
+    @Cacheable(value = "offers")
     public List<OfferDto> getAllOffers() {
         return repository.findAll().stream()
                 .map(this::mapToDto)
@@ -37,12 +41,14 @@ public class OfferService {
         return mapToDto(offer);
     }
 
+    @CacheEvict(value = "offers", allEntries = true)
     public OfferDto createOffer(OfferDto dto) {
         Offer offer = mapToEntity(dto);
         offer = repository.save(offer);
         return mapToDto(offer);
     }
 
+    @CacheEvict(value = "offers", allEntries = true)
     public OfferDto updateOffer(Integer id, OfferDto dto) {
         Offer existing = repository.findById(id)
                 .orElseThrow(() -> new OfferNotFoundException(id));
@@ -55,6 +61,7 @@ public class OfferService {
         return mapToDto(existing);
     }
 
+    @CacheEvict(value = "offers", allEntries = true)
     public void deleteOffer(Integer id) {
         if (!repository.existsById(id)) {
             throw new OfferNotFoundException(id);
