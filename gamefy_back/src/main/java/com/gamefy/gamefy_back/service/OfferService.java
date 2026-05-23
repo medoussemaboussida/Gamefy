@@ -21,7 +21,7 @@ public class OfferService {
 
     private final OfferRepository repository;
 
-    @Cacheable(value = "offers", key = "'active'")
+    @Cacheable(value = "offers", key = "'active'", unless = "#result == null")
     public OfferDto getActiveOffer() {
         return repository.findFirstByStatus(Offer_Status.ACTIVE)
                 .map(this::mapToDto)

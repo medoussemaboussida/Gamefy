@@ -152,4 +152,13 @@ public class ReservationController {
         String status = body.get("status");
         return ResponseEntity.ok(service.updateStatus(id, status));
     }
+
+    /**
+     * Public endpoint for the front-office chatbot.
+     * Returns aggregated booking trends (by day, time slot, room type).
+     */
+    @GetMapping("/public/booking-trends")
+    public ResponseEntity<Map<String, Object>> getBookingTrends() {
+        return ResponseEntity.ok(service.getBookingTrends());
+    }
 }

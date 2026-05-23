@@ -22,4 +22,27 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
            "OR LOWER(c.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "ORDER BY r.startTime DESC")
     List<Reservation> searchByCoachOrPlayerName(@Param("keyword") String keyword);
+
+    // ─── Booking Trends (last 30 days, CONFIRMED only) ──────────────────────
+
+    @Query(value = "SELECT EXTRACT(DOW FROM start_time) AS dow, COUNT(*) AS cnt " +
+                   "FROM reservation " +
+                   "WHERE status = 'CONFIRMED' AND start_time >= NOW() - INTERVAL '30 days' " +
+                   "GROUP BY dow ORDER BY dow",
+           nativeQuery = true)
+    List<Object[]> countByDayOfWeek();
+
+    @Query(value = "SELECT EXTRACT(HOUR FROM start_time) AS hr, COUNT(*) AS cnt " +
+                   "FROM reservation " +
+                   "WHERE status = 'CONFIRMED' AND start_time >= NOW() - INTERVAL '30 days' " +
+                   "GROUP BY hr ORDER BY hr",
+           nativeQuery = true)
+    List<Object[]> countByHourOfDay();
+
+    @Query(value = "SELECT reservation_type AS rtype, COUNT(*) AS cnt " +
+                   "FROM reservation " +
+                   "WHERE status = 'CONFIRMED' AND start_time >= NOW() - INTERVAL '30 days' " +
+                   "GROUP BY rtype ORDER BY cnt DESC",
+           nativeQuery = true)
+    List<Object[]> countByReservationType();
 }

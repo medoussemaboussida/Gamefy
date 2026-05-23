@@ -11,6 +11,7 @@ const QUICK_QUESTIONS = [
     "🎮 What games do you have?",
     "🧑‍🏫 Who are your coaches?",
     "🖥️ How many PCs?",
+    "📊 Best time to book?",
 ];
 
 const ChatBot = () => {

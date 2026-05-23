@@ -24,12 +24,12 @@ import ChatBot from "./components/ChatBot";
 import VirtualTourPage from "./pages/VirtualTourPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
-// Pages where the floating chatbot & bell should NOT appear (auth pages only)
-const PUBLIC_ROUTES = ["/signin", "/signup", "/become-coach", "/forgot-password", "/reset-password", "/verify-2fa"];
+// Show chatbot ONLY on authenticated player/coach routes
+const AUTHENTICATED_ROUTES = ["/player", "/coach"];
 
 function App() {
   const location = useLocation();
-  const showChatBot = !PUBLIC_ROUTES.includes(location.pathname);
+  const showChatBot = AUTHENTICATED_ROUTES.some(route => location.pathname.startsWith(route));
 
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
@@ -69,7 +69,7 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
 
-      {/* Floating AI Chatbot — visible on authenticated pages only */}
+      {/* Floating AI Chatbot — visible on authenticated player/coach pages only */}
       {showChatBot && <ChatBot />}
     </div>
   )

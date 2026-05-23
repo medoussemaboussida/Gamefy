@@ -29,7 +29,7 @@ export const fetchChatbotContext = async () => {
     const currentMonth = months[currentDate.getMonth()];
     const currentYear = String(currentDate.getFullYear());
 
-    const [fixedPrices, activeOffer, workSchedule, events, gamingPacks, coachingPacks, coaches, games, pcSummary] =
+    const [fixedPrices, activeOffer, workSchedule, events, gamingPacks, coachingPacks, coaches, games, pcSummary, bookingTrends] =
         await Promise.allSettled([
             chatbotClient.get("/gamefy/fixed-prices"),
             chatbotClient.get("/gamefy/offers/active").catch(() => null),
@@ -40,6 +40,7 @@ export const fetchChatbotContext = async () => {
             chatbotClient.get("/gamefy/coaches/profile/public/all"),
             chatbotClient.get("/gamefy/pc-games/public"),
             chatbotClient.get("/gamefy/pcs/public/summary"),
+            chatbotClient.get("/gamefy/reservations/public/booking-trends"),
         ]);
 
     return {
@@ -52,6 +53,7 @@ export const fetchChatbotContext = async () => {
         coaches: coaches.status === "fulfilled" ? coaches.value : [],
         games: games.status === "fulfilled" ? games.value : [],
         pcSummary: pcSummary.status === "fulfilled" ? pcSummary.value : {},
+        bookingTrends: bookingTrends.status === "fulfilled" ? bookingTrends.value : null,
         fetchedAt: currentDate.toISOString(),
         currentMonth,
         currentYear,
@@ -187,6 +189,7 @@ IMPORTANT RULES:
 - When asked about coaches, provide their name, game specialty, hourly price, and bio.
 - When asked about games, list the games available on Gamefy PCs.
 - When asked about PCs, provide the counts by type (GAMING, VIP) and their availability status.
+- When asked about best times to book or when it's quietest/busiest, use the BOOKING TRENDS data to give data-backed recommendations. Suggest quieter days and time slots for a better experience.
 
 === CURRENT DATE ===
 ${today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
@@ -224,6 +227,28 @@ ${gamesInfo}
 
 === PC INVENTORY ===
 ${pcInventoryInfo}
+
+=== BOOKING TRENDS (${context.bookingTrends ? context.bookingTrends.period : 'N/A'}) ===
+${(() => {
+    if (!context.bookingTrends) return "No booking trend data available.";
+    const bt = context.bookingTrends;
+    let info = "";
+    if (bt.byDayOfWeek) {
+        info += "Reservations by day: " + Object.entries(bt.byDayOfWeek).map(([d, c]) => `${d}: ${c}`).join(", ") + "\n";
+    }
+    if (bt.busiestDay) info += `Busiest day: ${bt.busiestDay}\n`;
+    if (bt.quietestDay) info += `Quietest day: ${bt.quietestDay}\n`;
+    if (bt.byTimeSlot) {
+        info += "Reservations by time slot: " + Object.entries(bt.byTimeSlot).map(([s, c]) => `${s}: ${c}`).join(", ") + "\n";
+    }
+    if (bt.busiestTimeSlot) info += `Busiest time slot: ${bt.busiestTimeSlot}\n`;
+    if (bt.quietestTimeSlot) info += `Quietest time slot: ${bt.quietestTimeSlot}\n`;
+    if (bt.byRoomType) {
+        info += "By room type: " + Object.entries(bt.byRoomType).map(([t, c]) => `${t}: ${c}`).join(", ") + "\n";
+    }
+    if (bt.totalConfirmedReservations !== undefined) info += `Total confirmed reservations: ${bt.totalConfirmedReservations}`;
+    return info;
+})()}
 
 === HOW RESERVATIONS WORK ===
 1. Choose a room type (PC Room, VIP Room, or Coaching Room)
