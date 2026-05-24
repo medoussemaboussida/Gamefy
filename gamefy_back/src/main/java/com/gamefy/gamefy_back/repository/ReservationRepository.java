@@ -25,24 +25,12 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
 
     // ─── Booking Trends (last 30 days, CONFIRMED only) ──────────────────────
 
-    @Query(value = "SELECT EXTRACT(DOW FROM start_time) AS dow, COUNT(*) AS cnt " +
+    @Query(value = "SELECT reservation_type AS rtype, " +
+                   "EXTRACT(DOW FROM start_time) AS dow, " +
+                   "EXTRACT(HOUR FROM start_time) AS hr, COUNT(*) AS cnt " +
                    "FROM reservation " +
                    "WHERE status = 'CONFIRMED' AND start_time >= NOW() - INTERVAL '30 days' " +
-                   "GROUP BY dow ORDER BY dow",
+                   "GROUP BY rtype, dow, hr ORDER BY rtype, dow, hr",
            nativeQuery = true)
-    List<Object[]> countByDayOfWeek();
-
-    @Query(value = "SELECT EXTRACT(HOUR FROM start_time) AS hr, COUNT(*) AS cnt " +
-                   "FROM reservation " +
-                   "WHERE status = 'CONFIRMED' AND start_time >= NOW() - INTERVAL '30 days' " +
-                   "GROUP BY hr ORDER BY hr",
-           nativeQuery = true)
-    List<Object[]> countByHourOfDay();
-
-    @Query(value = "SELECT reservation_type AS rtype, COUNT(*) AS cnt " +
-                   "FROM reservation " +
-                   "WHERE status = 'CONFIRMED' AND start_time >= NOW() - INTERVAL '30 days' " +
-                   "GROUP BY rtype ORDER BY cnt DESC",
-           nativeQuery = true)
-    List<Object[]> countByReservationType();
+    List<Object[]> countByTypeDayAndHour();
 }

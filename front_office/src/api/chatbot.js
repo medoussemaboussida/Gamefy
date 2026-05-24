@@ -233,19 +233,18 @@ ${(() => {
     if (!context.bookingTrends) return "No booking trend data available.";
     const bt = context.bookingTrends;
     let info = "";
-    if (bt.byDayOfWeek) {
-        info += "Reservations by day: " + Object.entries(bt.byDayOfWeek).map(([d, c]) => `${d}: ${c}`).join(", ") + "\n";
+    if (bt.byTypeDayAndTimeSlot) {
+        info += "Detailed breakdown by Room Type:\n";
+        for (const [type, days] of Object.entries(bt.byTypeDayAndTimeSlot)) {
+            info += `  ${type}:\n`;
+            for (const [day, slots] of Object.entries(days)) {
+                const slotDetails = Object.entries(slots).map(([s, c]) => `${s.split(" ")[0]}=${c}`).join(", ");
+                info += `    ${day}: ${slotDetails}\n`;
+            }
+        }
     }
-    if (bt.busiestDay) info += `Busiest day: ${bt.busiestDay}\n`;
-    if (bt.quietestDay) info += `Quietest day: ${bt.quietestDay}\n`;
-    if (bt.byTimeSlot) {
-        info += "Reservations by time slot: " + Object.entries(bt.byTimeSlot).map(([s, c]) => `${s}: ${c}`).join(", ") + "\n";
-    }
-    if (bt.busiestTimeSlot) info += `Busiest time slot: ${bt.busiestTimeSlot}\n`;
-    if (bt.quietestTimeSlot) info += `Quietest time slot: ${bt.quietestTimeSlot}\n`;
-    if (bt.byRoomType) {
-        info += "By room type: " + Object.entries(bt.byRoomType).map(([t, c]) => `${t}: ${c}`).join(", ") + "\n";
-    }
+    if (bt.busiestDay) info += `Overall busiest day: ${bt.busiestDay}\n`;
+    if (bt.quietestDay) info += `Overall quietest day: ${bt.quietestDay}\n`;
     if (bt.totalConfirmedReservations !== undefined) info += `Total confirmed reservations: ${bt.totalConfirmedReservations}`;
     return info;
 })()}

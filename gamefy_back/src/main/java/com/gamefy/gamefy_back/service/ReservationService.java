@@ -1028,63 +1028,57 @@ public class ReservationService {
 
     /**
      * Aggregates confirmed reservations from the last 30 days into booking trends:
-     * by day-of-week, by time slot, and by room type.
-     * Used by the front-office chatbot to suggest the best times to book.
+     * a 3D matrix (RoomType × Day × TimeSlot) and overall totals.
+     * Used by the front-office chatbot to suggest the best times to book specific PCs.
      */
     public Map<String, Object> getBookingTrends() {
         Map<String, Object> trends = new LinkedHashMap<>();
         trends.put("period", "Last 30 days");
 
-        // ── By day of week ──
-        // PostgreSQL EXTRACT(DOW): 0=Sunday, 1=Monday, ..., 6=Saturday
         String[] dayNames = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"};
-        Map<String, Long> byDay = new LinkedHashMap<>();
-        for (String d : dayNames) byDay.put(d, 0L);
+        String[] slotNames = {"MORNING (08:00-12:00)", "AFTERNOON (12:00-17:00)", "EVENING (17:00-22:00)", "NIGHT (22:00-08:00)"};
 
-        for (Object[] row : reservationRepository.countByDayOfWeek()) {
-            int dow = ((Number) row[0]).intValue();
-            long count = ((Number) row[1]).longValue();
-            if (dow >= 0 && dow < 7) byDay.put(dayNames[dow], count);
+        // Initialize 3D Matrix: Type -> Day -> Slot
+        Map<String, Map<String, Map<String, Long>>> matrix = new LinkedHashMap<>();
+        Map<String, Long> dayTotals = new LinkedHashMap<>();
+        long totalConfirmed = 0L;
+
+        for (Object[] row : reservationRepository.countByTypeDayAndHour()) {
+            String type = (String) row[0];
+            int dow = ((Number) row[1]).intValue();
+            int hour = ((Number) row[2]).intValue();
+            long count = ((Number) row[3]).longValue();
+
+            if (dow < 0 || dow > 6) continue;
+            
+            String day = dayNames[dow];
+            String slot;
+            if (hour >= 8 && hour < 12)       slot = slotNames[0]; // MORNING
+            else if (hour >= 12 && hour < 17)  slot = slotNames[1]; // AFTERNOON
+            else if (hour >= 17 && hour < 22)  slot = slotNames[2]; // EVENING
+            else                               slot = slotNames[3]; // NIGHT
+
+            matrix.putIfAbsent(type, new LinkedHashMap<>());
+            Map<String, Map<String, Long>> typeMap = matrix.get(type);
+            
+            typeMap.putIfAbsent(day, new LinkedHashMap<>());
+            Map<String, Long> slotMap = typeMap.get(day);
+            for (String s : slotNames) slotMap.putIfAbsent(s, 0L); // Ensure slots exist
+            
+            slotMap.merge(slot, count, Long::sum);
+            dayTotals.merge(day, count, Long::sum);
+            totalConfirmed += count;
         }
-        trends.put("byDayOfWeek", byDay);
 
-        // ── By time slot ──
-        Map<String, Long> bySlot = new LinkedHashMap<>();
-        bySlot.put("MORNING (08:00-12:00)", 0L);
-        bySlot.put("AFTERNOON (12:00-17:00)", 0L);
-        bySlot.put("EVENING (17:00-22:00)", 0L);
-        bySlot.put("NIGHT (22:00-08:00)", 0L);
+        trends.put("byTypeDayAndTimeSlot", matrix);
+        trends.put("totalConfirmedReservations", totalConfirmed);
 
-        for (Object[] row : reservationRepository.countByHourOfDay()) {
-            int hour = ((Number) row[0]).intValue();
-            long count = ((Number) row[1]).longValue();
-            if (hour >= 8 && hour < 12)       bySlot.merge("MORNING (08:00-12:00)", count, Long::sum);
-            else if (hour >= 12 && hour < 17)  bySlot.merge("AFTERNOON (12:00-17:00)", count, Long::sum);
-            else if (hour >= 17 && hour < 22)  bySlot.merge("EVENING (17:00-22:00)", count, Long::sum);
-            else                               bySlot.merge("NIGHT (22:00-08:00)", count, Long::sum);
-        }
-        trends.put("byTimeSlot", bySlot);
-
-        // ── By room type ──
-        Map<String, Long> byType = new LinkedHashMap<>();
-        for (Object[] row : reservationRepository.countByReservationType()) {
-            byType.put((String) row[0], ((Number) row[1]).longValue());
-        }
-        trends.put("byRoomType", byType);
-
-        // ── Busiest / Quietest ──
-        long total = byDay.values().stream().mapToLong(Long::longValue).sum();
-        trends.put("totalConfirmedReservations", total);
-
-        byDay.entrySet().stream().max(Map.Entry.comparingByValue())
+        dayTotals.entrySet().stream().max(Map.Entry.comparingByValue())
                 .ifPresent(e -> trends.put("busiestDay", e.getKey() + " (" + e.getValue() + " reservations)"));
-        byDay.entrySet().stream().min(Map.Entry.comparingByValue())
+        dayTotals.entrySet().stream().min(Map.Entry.comparingByValue())
                 .ifPresent(e -> trends.put("quietestDay", e.getKey() + " (" + e.getValue() + " reservations)"));
-        bySlot.entrySet().stream().max(Map.Entry.comparingByValue())
-                .ifPresent(e -> trends.put("busiestTimeSlot", e.getKey() + " (" + e.getValue() + " reservations)"));
-        bySlot.entrySet().stream().min(Map.Entry.comparingByValue())
-                .ifPresent(e -> trends.put("quietestTimeSlot", e.getKey() + " (" + e.getValue() + " reservations)"));
 
         return trends;
     }
 }
+
