@@ -46,6 +46,16 @@ public class NotificationAdmin {
     @Builder.Default
     private List<Integer> readByUserIds = new ArrayList<>();
 
+    /**
+     * Tracks which admin user IDs have dismissed (hidden) this notification.
+     * The notification is NOT deleted from the DB, just hidden for that user.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "notification_admin_dismissed_by", joinColumns = @JoinColumn(name = "notification_id"))
+    @Column(name = "user_id")
+    @Builder.Default
+    private List<Integer> dismissedByUserIds = new ArrayList<>();
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

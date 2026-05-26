@@ -49,14 +49,17 @@ public class NotificationAdminController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNotification(@PathVariable Integer id) {
-        notificationAdminService.deleteNotification(id);
+    public ResponseEntity<Void> deleteNotification(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal User currentUser) {
+        notificationAdminService.dismissNotification(id, currentUser.getId());
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteAllNotifications() {
-        notificationAdminService.deleteAllNotifications();
+    public ResponseEntity<Void> deleteAllNotifications(
+            @AuthenticationPrincipal User currentUser) {
+        notificationAdminService.dismissAllNotifications(currentUser.getId());
         return ResponseEntity.ok().build();
     }
 }

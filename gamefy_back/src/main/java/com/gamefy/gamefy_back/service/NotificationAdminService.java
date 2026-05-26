@@ -65,6 +65,7 @@ public class NotificationAdminService {
     public List<NotificationAdminDto> getNotifications(Integer adminId) {
         return notificationAdminRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
+                .filter(n -> !n.getDismissedByUserIds().contains(adminId))
                 .map(n -> mapToDto(n, adminId))
                 .collect(Collectors.toList());
     }
@@ -73,6 +74,7 @@ public class NotificationAdminService {
     public long getUnreadCount(Integer adminId) {
         return notificationAdminRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
+                .filter(n -> !n.getDismissedByUserIds().contains(adminId))
                 .filter(n -> !n.getReadByUserIds().contains(adminId))
                 .count();
     }
@@ -100,13 +102,25 @@ public class NotificationAdminService {
     }
 
     @Transactional
-    public void deleteNotification(Integer notificationId) {
-        notificationAdminRepository.deleteById(notificationId);
+    public void dismissNotification(Integer notificationId, Integer adminId) {
+        NotificationAdmin notification = notificationAdminRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        if (!notification.getDismissedByUserIds().contains(adminId)) {
+            notification.getDismissedByUserIds().add(adminId);
+            notificationAdminRepository.save(notification);
+        }
     }
 
     @Transactional
-    public void deleteAllNotifications() {
-        notificationAdminRepository.deleteAll();
+    public void dismissAllNotifications(Integer adminId) {
+        List<NotificationAdmin> all = notificationAdminRepository.findAllByOrderByCreatedAtDesc();
+        for (NotificationAdmin n : all) {
+            if (!n.getDismissedByUserIds().contains(adminId)) {
+                n.getDismissedByUserIds().add(adminId);
+            }
+        }
+        notificationAdminRepository.saveAll(all);
     }
 
     private NotificationAdminDto mapToDto(NotificationAdmin notification, Integer adminId) {
