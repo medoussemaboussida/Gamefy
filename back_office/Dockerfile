@@ -28,12 +28,11 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source files
 COPY . .
 
-# ── Build-time env vars (override at build with --build-arg) ──
+# ── Build-time env var (override at build with --build-arg) ──
+# Only VITE_API_BASE_URL is overridable (changes between localhost / production).
+# All other keys (Google Client ID) are read from .env.production by Vite.
 ARG VITE_API_BASE_URL=http://localhost:8080/api
-ARG VITE_GOOGLE_CLIENT_ID
-
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 # TypeScript check + Vite production build
 RUN npm run build
