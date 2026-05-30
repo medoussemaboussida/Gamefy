@@ -1,6 +1,7 @@
 package com.gamefy.gamefy_back.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -23,6 +24,11 @@ import jakarta.servlet.http.HttpServletResponse;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+
+    // CORS origins: configurable via env var CORS_ALLOWED_ORIGINS
+    // Defaults to localhost for local development
+    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:5174}")
+    private String[] allowedOrigins;
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
@@ -60,7 +66,7 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173", "http://localhost:5174") // Allow both back-office (5173) and front-office (5174)
+                        .allowedOrigins(allowedOrigins) // Configured via cors.allowed-origins property
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
