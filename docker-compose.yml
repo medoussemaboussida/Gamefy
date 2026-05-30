@@ -4,8 +4,8 @@
 # ============================================================
 #
 #  Usage:
-#    LOCAL DEV:   docker compose up -d
-#    PRODUCTION:  docker compose --env-file .env.production up -d
+#    LOCAL DEV:   docker compose up -d --build
+#    PRODUCTION:  docker compose --env-file .env.production up -d --build
 # ============================================================
 
 services:
@@ -46,7 +46,10 @@ services:
 
   # ─── Spring Boot Backend ──────────────────────────────────
   backend:
-    image: mohamedoussemaboussida/gamefy-backend:${TAG:-latest}
+    build:
+      context: ./gamefy_back
+      dockerfile: Dockerfile
+    image: gamefy-backend:latest
     container_name: gamefy-backend
     restart: unless-stopped
     depends_on:
@@ -71,7 +74,16 @@ services:
 
   # ─── Front-Office (React SPA via Nginx) ───────────────────
   front-office:
-    image: mohamedoussemaboussida/gamefy-front-office:${TAG:-latest}
+    build:
+      context: ./front_office
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
+        VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY:-}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+        VITE_GROQ_API_KEY: ${VITE_GROQ_API_KEY:-}
+    image: gamefy-front-office:latest
     container_name: gamefy-front-office
     restart: unless-stopped
     depends_on:
@@ -81,7 +93,13 @@ services:
 
   # ─── Back-Office (React+TS SPA via Nginx) ─────────────────
   back-office:
-    image: mohamedoussemaboussida/gamefy-back-office:${TAG:-latest}
+    build:
+      context: ./back_office
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    image: gamefy-back-office:latest
     container_name: gamefy-back-office
     restart: unless-stopped
     depends_on:
