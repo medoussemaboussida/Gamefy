@@ -193,6 +193,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: 🔧 Install docker-compose standalone
+        run: |
+          if ! command -v docker-compose &>/dev/null; then
+            echo "Installing docker-compose standalone..."
+            sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" \
+              -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+          echo "✅ $(docker-compose version)"
+
       - name: 🛑 Stop existing containers (if any)
         run: docker-compose down --remove-orphans || true
 
