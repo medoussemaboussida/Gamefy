@@ -110,76 +110,76 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   # Stage 5 — Backend: Tests + Coverage + SonarQube Scan (disabled)
   # ─────────────────────────────────────────────────────────────────
-  sonarqube-backend:
-    name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube (Backend)
-    runs-on: self-hosted
-    defaults:
-      run:
-        working-directory: gamefy_back
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-          cache-dependency-path: gamefy_back/pom.xml
-
-      - name: Run Tests + Generate JaCoCo Coverage Report + SonarQube Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          chmod +x mvnw
-          ./mvnw verify sonar:sonar \
-            -Dspring.profiles.active=test \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.token=$SONAR_TOKEN \
-            -Dsonar.projectKey=gamefy-backend \
-            -Dsonar.projectName="gamefy-backend" \
-            -Dsonar.java.source=21 \
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-            --batch-mode
+  # sonarqube-backend:
+  #   name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube (Backend)
+  #   runs-on: self-hosted
+  #   defaults:
+  #     run:
+  #       working-directory: gamefy_back
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  # 
+  #     - name: Set up JDK 21
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         distribution: temurin
+  #         java-version: '21'
+  #         cache: maven
+  #         cache-dependency-path: gamefy_back/pom.xml
+  # 
+  #     - name: Run Tests + Generate JaCoCo Coverage Report + SonarQube Scan
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  #       run: |
+  #         chmod +x mvnw
+  #         ./mvnw verify sonar:sonar \
+  #           -Dspring.profiles.active=test \
+  #           -Dsonar.host.url=$SONAR_HOST_URL \
+  #           -Dsonar.token=$SONAR_TOKEN \
+  #           -Dsonar.projectKey=gamefy-backend \
+  #           -Dsonar.projectName="gamefy-backend" \
+  #           -Dsonar.java.source=21 \
+  #           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+  #           --batch-mode
 
   # ─────────────────────────────────────────────────────────────────
   # Stage 6 — Frontend: SonarQube Scan (disabled)
   # ─────────────────────────────────────────────────────────────────
-  sonarqube-frontend:
-    name: 🔍 SonarQube (Front Office + Back Office)
-    runs-on: self-hosted
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: ⬢ Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      # ── Front Office (React / JavaScript) ───────────────────────
-      - name: 🔍 Scan Front Office
-        uses: SonarSource/sonarqube-scan-action@v5
-        with:
-          projectBaseDir: front_office
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-      # ── Back Office (React / TypeScript) ────────────────────────
-      - name: 🔍 Scan Back Office
-        uses: SonarSource/sonarqube-scan-action@v5
-        with:
-          projectBaseDir: back_office
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  # sonarqube-frontend:
+  #   name: 🔍 SonarQube (Front Office + Back Office)
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  # 
+  #     - name: ⬢ Set up Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '22'
+  # 
+  #     # ── Front Office (React / JavaScript) ───────────────────────
+  #     - name: 🔍 Scan Front Office
+  #       uses: SonarSource/sonarqube-scan-action@v5
+  #       with:
+  #         projectBaseDir: front_office
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  # 
+  #     # ── Back Office (React / TypeScript) ────────────────────────
+  #     - name: 🔍 Scan Back Office
+  #       uses: SonarSource/sonarqube-scan-action@v5
+  #       with:
+  #         projectBaseDir: back_office
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   # ─────────────────────────────────────────────────────────────────
   # Stage 7 — Docker: Pull & Run with Docker Compose
@@ -188,7 +188,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   docker-compose:
     name: 🐳 Docker Compose Pull & Run
-    needs: [sonarqube-backend, sonarqube-frontend]
+    # needs: [sonarqube-backend, sonarqube-frontend]  # re-enable when SonarQube is back
     runs-on: self-hosted
     steps:
       - name: Checkout code
@@ -205,20 +205,20 @@ jobs:
           echo "✅ $(docker-compose version)"
 
       - name: 🛑 Stop existing containers (if any)
-        run: docker-compose down --remove-orphans || true
+        run: sudo docker-compose down --remove-orphans || true
 
       - name: 📋 Load production environment
         run: cp .env.production .env
 
       - name: 📥 Pull latest images from Docker Hub
-        run: docker-compose pull
+        run: sudo docker-compose pull
 
       - name: 🚀 Start all services
-        run: docker-compose up -d
+        run: sudo docker-compose up -d
 
       - name: ✅ Verify services are running
         run: |
           echo "⏳ Waiting 30s for services to start..."
           sleep 30
-          docker-compose ps
+          sudo docker-compose ps
 
