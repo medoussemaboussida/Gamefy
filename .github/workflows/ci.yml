@@ -135,7 +135,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          mvn verify sonar:sonar \
+          chmod +x mvnw
+          ./mvnw verify sonar:sonar \
             -Dspring.profiles.active=test \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
