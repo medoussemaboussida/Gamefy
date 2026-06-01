@@ -424,7 +424,7 @@ export default function EventManagement() {
             >
                 <div className="relative group">
                     <img
-                        src={`http://localhost:8080/api/uploads/event_photos/${selectedEvent?.photo}`}
+                        src={`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/uploads/event_photos/${selectedEvent?.photo}`}
                         alt={selectedEvent?.title}
                         className="w-full h-auto max-h-[80vh] object-contain mx-auto"
                     />

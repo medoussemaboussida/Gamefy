@@ -197,7 +197,7 @@ const ProfilePage = () => {
     }
 
     const profilePhotoUrl = user.profilePhoto
-        ? (user.profilePhoto.startsWith("http") ? user.profilePhoto : `http://localhost:8080/api${user.profilePhoto.startsWith("/") ? "" : "/"}${user.profilePhoto}`)
+        ? (user.profilePhoto.startsWith("http") ? user.profilePhoto : `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}${user.profilePhoto.startsWith("/") ? "" : "/"}${user.profilePhoto}`)
         : null;
 
     return (

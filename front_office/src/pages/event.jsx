@@ -301,7 +301,7 @@ const EventsPage = () => {
                                                 <div className="relative h-[250px] overflow-hidden">
                                                     {event.photo ? (
                                                         <img
-                                                            src={`http://localhost:8080/api/uploads/event_photos/${event.photo}`}
+                                                            src={`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/uploads/event_photos/${event.photo}`}
                                                             alt={event.title}
                                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                                         />
