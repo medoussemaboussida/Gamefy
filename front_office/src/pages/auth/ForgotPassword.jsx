@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import wallpaper from "../../assets/images/Auth_second_wallpaper.png";
+import wallpaper from "../../assets/images/auth_second_wallpaper.png";
 import { authApi } from "../../api/auth";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";

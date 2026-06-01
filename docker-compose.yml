@@ -4,8 +4,9 @@
 # ============================================================
 #
 #  Usage:
-#    LOCAL DEV:   docker compose up -d --build
-#    PRODUCTION:  docker compose --env-file .env.production up -d --build
+#    LOCAL DEV:     docker compose up -d --build
+#    PRODUCTION:    docker compose --env-file .env.production up -d
+#    BUILD LOCALLY: docker compose build (only if you need to rebuild images)
 # ============================================================
 
 services:
@@ -46,10 +47,10 @@ services:
 
   # ─── Spring Boot Backend ──────────────────────────────────
   backend:
-    build:
-      context: ./gamefy_back
-      dockerfile: Dockerfile
-    image: gamefy-backend:latest
+    image: mohamedoussemaboussida/gamefy-backend:latest
+    # build:
+    #   context: ./gamefy_back
+    #   dockerfile: Dockerfile
     container_name: gamefy-backend
     restart: unless-stopped
     depends_on:
@@ -74,12 +75,12 @@ services:
 
   # ─── Front-Office (React SPA via Nginx) ───────────────────
   front-office:
-    build:
-      context: ./front_office
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
-    image: gamefy-front-office:latest
+    image: mohamedoussemaboussida/gamefy-front-office:latest
+    # build:
+    #   context: ./front_office
+    #   dockerfile: Dockerfile
+    #   args:
+    #     VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
     container_name: gamefy-front-office
     restart: unless-stopped
     depends_on:
@@ -89,12 +90,12 @@ services:
 
   # ─── Back-Office (React+TS SPA via Nginx) ─────────────────
   back-office:
-    build:
-      context: ./back_office
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
-    image: gamefy-back-office:latest
+    image: mohamedoussemaboussida/gamefy-back-office:latest
+    # build:
+    #   context: ./back_office
+    #   dockerfile: Dockerfile
+    #   args:
+    #     VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
     container_name: gamefy-back-office
     restart: unless-stopped
     depends_on:

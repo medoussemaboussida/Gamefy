@@ -13,7 +13,7 @@ interface UserMetaCardProps {
 }
 
 export default function UserMetaCard({ user, onUserUpdate }: UserMetaCardProps) {
-  const { isOpen, openModal, closeModal } = useModal();
+  const { isOpen, closeModal } = useModal();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({

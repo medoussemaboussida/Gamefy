@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Loader2, ShieldCheck } from "lucide-react";
-import wallpaper from "../../assets/images/Auth_second_wallpaper.png";
+import wallpaper from "../../assets/images/auth_second_wallpaper.png";
 import { authApi } from "../../api/auth";
 import toast from "react-hot-toast";
 import { useUser } from "../../context/UserContext";

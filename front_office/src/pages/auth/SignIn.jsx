@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Check, Loader2 } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
 import logo from "../../assets/images/auth_logo.png";
-import wallpaper from "../../assets/images/Auth_second_wallpaper.png";
+import wallpaper from "../../assets/images/auth_second_wallpaper.png";
 import google_icon from "../../assets/icons/google.png";
 import { authApi } from "../../api/auth";
 import toast from "react-hot-toast";
