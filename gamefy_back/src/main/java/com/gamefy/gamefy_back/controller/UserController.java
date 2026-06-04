@@ -49,6 +49,12 @@ public class UserController {
         return ResponseEntity.ok(service.getCoaches());
     }
 
+    @GetMapping("/staff-contacts")
+    @PreAuthorize("hasAnyAuthority('COACH', 'PLAYER')")
+    public ResponseEntity<java.util.Map<String, String>> getStaffContacts() {
+        return ResponseEntity.ok(service.getStaffContacts());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Integer id) {
         return ResponseEntity.ok(service.getUserById(id));

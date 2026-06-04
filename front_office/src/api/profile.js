@@ -51,6 +51,14 @@ export const profileApi = {
                 "Content-Type": "multipart/form-data",
             },
         });
+    },
+
+    /**
+     * Get staff contacts (admin and webmaster)
+     * @returns {Promise<Object>}
+     */
+    getStaffContacts: async () => {
+        return apiClient.get("/gamefy/users/staff-contacts");
     }
 };
 

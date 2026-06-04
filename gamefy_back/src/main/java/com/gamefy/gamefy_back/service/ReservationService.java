@@ -726,6 +726,7 @@ public class ReservationService {
                 .paymentType(reservation.getPaymentType())
                 .createdAt(reservation.getCreatedAt())
                 .playerName(reservation.getPlayer().getFirstName() + " " + reservation.getPlayer().getLastName())
+                .playerEmail(reservation.getPlayer().getEmail())
                 .pcNumbers(reservation.getPcAvailabilities().stream()
                         .map(pa -> pa.getPc().getPcNumber())
                         .collect(Collectors.toList()))

@@ -61,6 +61,15 @@ public class UserService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    public java.util.Map<String, String> getStaffContacts() {
+        java.util.Map<String, String> contacts = new java.util.HashMap<>();
+        repository.findByRole(Roles.ADMIN).stream().findFirst()
+                .ifPresent(admin -> contacts.put("adminEmail", admin.getEmail()));
+        repository.findByRole(Roles.WEB_MASTER).stream().findFirst()
+                .ifPresent(webmaster -> contacts.put("webmasterEmail", webmaster.getEmail()));
+        return contacts;
+    }
+
     @CacheEvict(value = "users", allEntries = true)
     public UserResponseDto createUser(CreateUserDto request) {
         if (repository.findByEmail(request.getEmail()).isPresent()) {

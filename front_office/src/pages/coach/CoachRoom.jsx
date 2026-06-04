@@ -162,9 +162,16 @@ const CoachRoom = () => {
                                                         <div className="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#2BDFC8] to-blue-500 shadow-lg shadow-black/20">
                                                             <User size={18} className="text-white" />
                                                         </div>
-                                                        <span className="font-black text-base tracking-tight text-white">
-                                                            {res.playerName || "Unknown"}
-                                                        </span>
+                                                        <div className="flex flex-col">
+                                                            <span className="font-black text-base tracking-tight text-white">
+                                                                {res.playerName || "Unknown"}
+                                                            </span>
+                                                            {res.playerEmail && (
+                                                                <span className="text-[14px] text-white/40 font-medium">
+                                                                    {res.playerEmail}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 lg:px-8 py-5">
@@ -207,9 +214,16 @@ const CoachRoom = () => {
                                                 <div className="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#2BDFC8] to-blue-500 shadow-lg shadow-black/20">
                                                     <User size={18} className="text-white" />
                                                 </div>
-                                                <span className="font-black text-sm tracking-tight text-white truncate">
-                                                    {res.playerName || "Unknown"}
-                                                </span>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="font-black text-sm tracking-tight text-white truncate">
+                                                        {res.playerName || "Unknown"}
+                                                    </span>
+                                                    {res.playerEmail && (
+                                                        <span className="text-[12px] text-white/40 font-medium truncate">
+                                                            {res.playerEmail}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <span className={`shrink-0 inline-flex items-center px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${statusColors[res.status] || "bg-white/5 text-white border-white/10"}`}>
                                                 {res.status}

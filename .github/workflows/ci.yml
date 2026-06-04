@@ -182,43 +182,84 @@ jobs:
   #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   # ─────────────────────────────────────────────────────────────────
-  # Stage 7 — Docker: Pull & Run with Docker Compose
-  # Images are pre-built and pushed to Docker Hub manually.
-  # The pipeline only pulls the latest images and runs the stack.
+  # Stage 7 — Docker: Pull & Run with Docker Compose (disabled)
   # ─────────────────────────────────────────────────────────────────
-  docker-compose:
-    name: 🐳 Docker Compose Pull & Run
-    # needs: [sonarqube-backend, sonarqube-frontend]  # re-enable when SonarQube is back
+  # docker-compose:
+  #   name: 🐳 Docker Compose Pull & Run
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: 🔧 Install docker-compose standalone
+  #       run: |
+  #         if ! command -v docker-compose &>/dev/null; then
+  #           echo "Installing docker-compose standalone..."
+  #           sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" \
+  #             -o /usr/local/bin/docker-compose
+  #           sudo chmod +x /usr/local/bin/docker-compose
+  #         fi
+  #         echo "✅ $(docker-compose version)"
+  #
+  #     - name: 🛑 Stop existing containers (if any)
+  #       run: sudo docker-compose down --remove-orphans || true
+  #
+  #     - name: 📋 Load production environment
+  #       run: cp .env.production .env
+  #
+  #     - name: 📥 Pull latest images from Docker Hub
+  #       run: sudo docker-compose pull
+  #
+  #     - name: 🚀 Start all services
+  #       run: sudo docker-compose up -d
+  #
+  #     - name: ✅ Verify services are running
+  #       run: |
+  #         echo "⏳ Waiting 30s for services to start..."
+  #         sleep 30
+  #         sudo docker-compose ps
+
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 8 — Security: Aqua Trivy Vulnerability Scan
+  # Scans Docker Hub images for CRITICAL & HIGH vulnerabilities.
+  # ─────────────────────────────────────────────────────────────────
+  trivy-scan:
+    name: 🛡️ Aqua Trivy — Docker Image Scan
     runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔧 Install docker-compose standalone
-        run: |
-          if ! command -v docker-compose &>/dev/null; then
-            echo "Installing docker-compose standalone..."
-            sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" \
-              -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
-          fi
-          echo "✅ $(docker-compose version)"
+      # ── Scan Backend Image ──────────────────────────────────────
+      - name: 🔍 Scan Backend Image
+        uses: aquasec/trivy-action@master
+        with:
+          image-ref: 'mohamedoussemaboussida/gamefy-backend:latest'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 
-      - name: 🛑 Stop existing containers (if any)
-        run: sudo docker-compose down --remove-orphans || true
+      # ── Scan Front-Office Image ─────────────────────────────────
+      - name: 🔍 Scan Front-Office Image
+        uses: aquasec/trivy-action@master
+        with:
+          image-ref: 'mohamedoussemaboussida/gamefy-front-office:latest'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 
-      - name: 📋 Load production environment
-        run: cp .env.production .env
-
-      - name: 📥 Pull latest images from Docker Hub
-        run: sudo docker-compose pull
-
-      - name: 🚀 Start all services
-        run: sudo docker-compose up -d
-
-      - name: ✅ Verify services are running
-        run: |
-          echo "⏳ Waiting 30s for services to start..."
-          sleep 30
-          sudo docker-compose ps
+      # ── Scan Back-Office Image ──────────────────────────────────
+      - name: 🔍 Scan Back-Office Image
+        uses: aquasec/trivy-action@master
+        with:
+          image-ref: 'mohamedoussemaboussida/gamefy-back-office:latest'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 

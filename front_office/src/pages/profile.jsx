@@ -24,6 +24,7 @@ const ProfilePage = () => {
     const [isEventsModalOpen, setIsEventsModalOpen] = useState(false);
     const [participatedEvents, setParticipatedEvents] = useState([]);
     const [descriptionModal, setDescriptionModal] = useState({ open: false, title: "", description: "" });
+    const [staffContacts, setStaffContacts] = useState(null);
     const fileInputRef = useRef(null);
 
     // Only fetch events (profile comes from context)
@@ -52,6 +53,14 @@ const ProfilePage = () => {
         };
         fetchEvents();
     }, []);
+
+    useEffect(() => {
+        if (user && user.role === "COACH") {
+            profileApi.getStaffContacts()
+                .then(setStaffContacts)
+                .catch(err => console.error("Failed to fetch staff contacts", err));
+        }
+    }, [user]);
 
     const handleLogout = async () => {
         try {
@@ -385,6 +394,38 @@ const ProfilePage = () => {
                                             : "N/A"}
                                     </span>
                                 </div>
+                                {user.role === "COACH" && staffContacts && (
+                                    <>
+                                        {staffContacts.adminEmail && (
+                                            <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+                                                <div className="flex flex-col">
+                                                    <span className="text-white/60 font-medium">Platform Admin</span>
+                                                    <span className="text-white/30 text-xs mt-1">For general inquiries</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Mail size={14} className="text-[#DD00B8]" />
+                                                    <a href={`mailto:${staffContacts.adminEmail}`} className="text-[#1CF3CA] text-sm hover:underline">
+                                                        {staffContacts.adminEmail}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {staffContacts.webmasterEmail && (
+                                            <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+                                                <div className="flex flex-col">
+                                                    <span className="text-white/60 font-medium">Support Team</span>
+                                                    <span className="text-white/30 text-xs mt-1">For technical issues</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Mail size={14} className="text-[#DD00B8]" />
+                                                    <a href={`mailto:${staffContacts.webmasterEmail}`} className="text-[#1CF3CA] text-sm hover:underline">
+                                                        {staffContacts.webmasterEmail}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
                                 {user.role === "PLAYER" && (
                                     <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
                                         <span className="text-white/60 font-medium">Total Hours</span>
