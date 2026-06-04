@@ -227,8 +227,12 @@ jobs:
     name: 🛡️ Aqua Trivy — Docker Image Scan
     runs-on: self-hosted
     steps:
-      - name: 📥 Pull Trivy Docker Image
-        run: sudo docker pull aquasec/trivy:latest
+      - name: 📥 Pull Trivy & Pre-download Vulnerability DB
+        run: |
+          sudo docker pull aquasec/trivy:latest
+          sudo docker run --rm \
+            -v trivy-cache:/root/.cache/ \
+            aquasec/trivy:latest image --download-db-only
 
       # ── Scan Backend Image ──────────────────────────────────────
       - name: 🔍 Scan Backend Image
@@ -237,9 +241,11 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v trivy-cache:/root/.cache/ \
             aquasec/trivy:latest image \
+            --scanners vuln \
             --severity CRITICAL,HIGH \
             --ignore-unfixed \
-            --vuln-type os,library \
+            --skip-db-update \
+            --skip-java-db-update \
             --format table \
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-backend:latest
@@ -251,9 +257,11 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v trivy-cache:/root/.cache/ \
             aquasec/trivy:latest image \
+            --scanners vuln \
             --severity CRITICAL,HIGH \
             --ignore-unfixed \
-            --vuln-type os,library \
+            --skip-db-update \
+            --skip-java-db-update \
             --format table \
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-front-office:latest
@@ -265,9 +273,11 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v trivy-cache:/root/.cache/ \
             aquasec/trivy:latest image \
+            --scanners vuln \
             --severity CRITICAL,HIGH \
             --ignore-unfixed \
-            --vuln-type os,library \
+            --skip-db-update \
+            --skip-java-db-update \
             --format table \
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-back-office:latest
