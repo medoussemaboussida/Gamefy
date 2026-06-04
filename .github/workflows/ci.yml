@@ -227,6 +227,11 @@ jobs:
     name: 🛡️ Aqua Trivy — Docker Image Scan
     runs-on: self-hosted
     steps:
+      - name: 🧹 Clean stale Trivy cache locks
+        run: |
+          sudo docker volume rm trivy-cache || true
+          sudo docker volume create trivy-cache
+
       - name: 📥 Pull Trivy & Pre-download Vulnerability DB
         run: |
           sudo docker pull aquasec/trivy:latest
