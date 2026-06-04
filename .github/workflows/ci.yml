@@ -247,7 +247,7 @@ jobs:
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-front-office:latest
 
-      # ── Scan Back-Office Image (reuses cached DB) ───────────────
+      # ── Scan Back-Office Image (reuses cached DB ) ───────────────
       - name: 🔍 Scan Back-Office Image
         run: |
           sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
