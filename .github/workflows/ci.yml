@@ -227,30 +227,22 @@ jobs:
     name: 🛡️ Aqua Trivy — Docker Image Scan
     runs-on: self-hosted
     steps:
-      - name: 🧹 Clean stale Trivy cache locks
-        run: |
-          sudo docker volume rm trivy-cache || true
-          sudo docker volume create trivy-cache
-
-      - name: 📥 Pull Trivy & Pre-download Vulnerability DB
+      - name: 📥 Prepare Trivy
         run: |
           sudo docker pull aquasec/trivy:latest
-          sudo docker run --rm \
-            -v trivy-cache:/root/.cache/ \
-            aquasec/trivy:latest image --download-db-only
+          sudo rm -rf /tmp/trivy-cache
+          sudo mkdir -p /tmp/trivy-cache
 
       # ── Scan Backend Image ──────────────────────────────────────
       - name: 🔍 Scan Backend Image
         run: |
           sudo docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            -v trivy-cache:/root/.cache/ \
+            -v /tmp/trivy-cache:/root/.cache/ \
             aquasec/trivy:latest image \
             --scanners vuln \
             --severity CRITICAL,HIGH \
             --ignore-unfixed \
-            --skip-db-update \
-            --skip-java-db-update \
             --format table \
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-backend:latest
@@ -258,9 +250,10 @@ jobs:
       # ── Scan Front-Office Image ─────────────────────────────────
       - name: 🔍 Scan Front-Office Image
         run: |
+          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
           sudo docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            -v trivy-cache:/root/.cache/ \
+            -v /tmp/trivy-cache:/root/.cache/ \
             aquasec/trivy:latest image \
             --scanners vuln \
             --severity CRITICAL,HIGH \
@@ -274,9 +267,10 @@ jobs:
       # ── Scan Back-Office Image ──────────────────────────────────
       - name: 🔍 Scan Back-Office Image
         run: |
+          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
           sudo docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            -v trivy-cache:/root/.cache/ \
+            -v /tmp/trivy-cache:/root/.cache/ \
             aquasec/trivy:latest image \
             --scanners vuln \
             --severity CRITICAL,HIGH \
