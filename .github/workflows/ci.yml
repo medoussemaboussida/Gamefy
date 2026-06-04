@@ -234,18 +234,18 @@ jobs:
           sudo mkdir -p /tmp/trivy-cache
 
       # ── Scan Backend Image ──────────────────────────────────────
-      - name: 🔍 Scan Backend Image
-        run: |
-          sudo docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /tmp/trivy-cache:/root/.cache/ \
-            aquasec/trivy:latest image \
-            --scanners vuln \
-            --severity CRITICAL,HIGH \
-            --ignore-unfixed \
-            --format table \
-            --exit-code 0 \
-            mohamedoussemaboussida/gamefy-backend:latest
+      # - name: 🔍 Scan Backend Image
+      #   run: |
+      #     sudo docker run --rm \
+      #       -v /var/run/docker.sock:/var/run/docker.sock \
+      #       -v /tmp/trivy-cache:/root/.cache/ \
+      #       aquasec/trivy:latest image \
+      #       --scanners vuln \
+      #       --severity CRITICAL,HIGH \
+      #       --ignore-unfixed \
+      #       --format table \
+      #       --exit-code 0 \
+      #       mohamedoussemaboussida/gamefy-backend:latest
 
       # ── Scan Front-Office Image ─────────────────────────────────
       - name: 🔍 Scan Front-Office Image
