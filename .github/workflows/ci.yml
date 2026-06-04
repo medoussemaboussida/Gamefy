@@ -233,24 +233,9 @@ jobs:
           sudo rm -rf /tmp/trivy-cache
           sudo mkdir -p /tmp/trivy-cache
 
-      # ── Scan Backend Image ──────────────────────────────────────
-      # - name: 🔍 Scan Backend Image
-      #   run: |
-      #     sudo docker run --rm \
-      #       -v /var/run/docker.sock:/var/run/docker.sock \
-      #       -v /tmp/trivy-cache:/root/.cache/ \
-      #       aquasec/trivy:latest image \
-      #       --scanners vuln \
-      #       --severity CRITICAL,HIGH \
-      #       --ignore-unfixed \
-      #       --format table \
-      #       --exit-code 0 \
-      #       mohamedoussemaboussida/gamefy-backend:latest
-
-      # ── Scan Front-Office Image ─────────────────────────────────
+      # ── Scan Front-Office Image (downloads DB) ──────────────────
       - name: 🔍 Scan Front-Office Image
         run: |
-          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
           sudo docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v /tmp/trivy-cache:/root/.cache/ \
@@ -262,7 +247,7 @@ jobs:
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-front-office:latest
 
-      # ── Scan Back-Office Image ──────────────────────────────────
+      # ── Scan Back-Office Image (reuses cached DB) ───────────────
       - name: 🔍 Scan Back-Office Image
         run: |
           sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
@@ -273,7 +258,25 @@ jobs:
             --scanners vuln \
             --severity CRITICAL,HIGH \
             --ignore-unfixed \
+            --skip-db-update \
+            --skip-java-db-update \
             --format table \
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-back-office:latest
 
+      # ── Scan Backend Image (reuses cached DB) ───────────────────
+      - name: 🔍 Scan Backend Image
+        run: |
+          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
+          sudo docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /tmp/trivy-cache:/root/.cache/ \
+            aquasec/trivy:latest image \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --skip-db-update \
+            --skip-java-db-update \
+            --format table \
+            --exit-code 0 \
+            mohamedoussemaboussida/gamefy-backend:latest
