@@ -258,8 +258,6 @@ jobs:
             --scanners vuln \
             --severity CRITICAL,HIGH \
             --ignore-unfixed \
-            --skip-db-update \
-            --skip-java-db-update \
             --format table \
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-front-office:latest
@@ -275,8 +273,6 @@ jobs:
             --scanners vuln \
             --severity CRITICAL,HIGH \
             --ignore-unfixed \
-            --skip-db-update \
-            --skip-java-db-update \
             --format table \
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-back-office:latest
