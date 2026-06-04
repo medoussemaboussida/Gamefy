@@ -276,6 +276,7 @@ jobs:
             --severity CRITICAL,HIGH \
             --ignore-unfixed \
             --skip-db-update \
+            --timeout 30m \
             --format table \
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-backend:latest
