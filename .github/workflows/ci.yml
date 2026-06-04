@@ -227,39 +227,48 @@ jobs:
     name: 🛡️ Aqua Trivy — Docker Image Scan
     runs-on: self-hosted
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: 📥 Pull Trivy Docker Image
+        run: sudo docker pull aquasec/trivy:latest
 
       # ── Scan Backend Image ──────────────────────────────────────
       - name: 🔍 Scan Backend Image
-        uses: aquasec/trivy-action@master
-        with:
-          image-ref: 'mohamedoussemaboussida/gamefy-backend:latest'
-          format: 'table'
-          exit-code: '0'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+        run: |
+          sudo docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v trivy-cache:/root/.cache/ \
+            aquasec/trivy:latest image \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --vuln-type os,library \
+            --format table \
+            --exit-code 0 \
+            mohamedoussemaboussida/gamefy-backend:latest
 
       # ── Scan Front-Office Image ─────────────────────────────────
       - name: 🔍 Scan Front-Office Image
-        uses: aquasec/trivy-action@master
-        with:
-          image-ref: 'mohamedoussemaboussida/gamefy-front-office:latest'
-          format: 'table'
-          exit-code: '0'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+        run: |
+          sudo docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v trivy-cache:/root/.cache/ \
+            aquasec/trivy:latest image \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --vuln-type os,library \
+            --format table \
+            --exit-code 0 \
+            mohamedoussemaboussida/gamefy-front-office:latest
 
       # ── Scan Back-Office Image ──────────────────────────────────
       - name: 🔍 Scan Back-Office Image
-        uses: aquasec/trivy-action@master
-        with:
-          image-ref: 'mohamedoussemaboussida/gamefy-back-office:latest'
-          format: 'table'
-          exit-code: '0'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+        run: |
+          sudo docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v trivy-cache:/root/.cache/ \
+            aquasec/trivy:latest image \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --vuln-type os,library \
+            --format table \
+            --exit-code 0 \
+            mohamedoussemaboussida/gamefy-back-office:latest
 
