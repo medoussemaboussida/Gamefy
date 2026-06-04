@@ -264,7 +264,7 @@ jobs:
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-back-office:latest
 
-      # ── Scan Backend Image (reuses cached DB) ───────────────────
+      # ── Scan Backend Image (reuses cached DB, but downloads Java DB) ─
       - name: 🔍 Scan Backend Image
         run: |
           sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
@@ -276,7 +276,6 @@ jobs:
             --severity CRITICAL,HIGH \
             --ignore-unfixed \
             --skip-db-update \
-            --skip-java-db-update \
             --format table \
             --exit-code 0 \
             mohamedoussemaboussida/gamefy-backend:latest
