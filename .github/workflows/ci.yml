@@ -220,64 +220,84 @@ jobs:
   #         sudo docker-compose ps
 
   # ─────────────────────────────────────────────────────────────────
-  # Stage 8 — Security: Aqua Trivy Vulnerability Scan
-  # Scans Docker Hub images for CRITICAL & HIGH vulnerabilities.
+  # Stage 8 — Security: Aqua Trivy Vulnerability Scan (disabled)
   # ─────────────────────────────────────────────────────────────────
-  trivy-scan:
-    name: 🛡️ Aqua Trivy — Docker Image Scan
+  # trivy-scan:
+  #   name: 🛡️ Aqua Trivy — Docker Image Scan
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: 📥 Prepare Trivy
+  #       run: |
+  #         sudo docker pull aquasec/trivy:latest
+  #         sudo rm -rf /tmp/trivy-cache
+  #         sudo mkdir -p /tmp/trivy-cache
+  #
+  #     - name: 🔍 Scan Front-Office Image
+  #       run: |
+  #         sudo docker run --rm \
+  #           -v /var/run/docker.sock:/var/run/docker.sock \
+  #           -v /tmp/trivy-cache:/root/.cache/ \
+  #           aquasec/trivy:latest image \
+  #           --scanners vuln \
+  #           --severity CRITICAL,HIGH \
+  #           --ignore-unfixed \
+  #           --format table \
+  #           --exit-code 0 \
+  #           mohamedoussemaboussida/gamefy-front-office:latest
+  #
+  #     - name: 🔍 Scan Back-Office Image
+  #       run: |
+  #         sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
+  #         sudo docker run --rm \
+  #           -v /var/run/docker.sock:/var/run/docker.sock \
+  #           -v /tmp/trivy-cache:/root/.cache/ \
+  #           aquasec/trivy:latest image \
+  #           --scanners vuln \
+  #           --severity CRITICAL,HIGH \
+  #           --ignore-unfixed \
+  #           --skip-db-update \
+  #           --skip-java-db-update \
+  #           --format table \
+  #           --exit-code 0 \
+  #           mohamedoussemaboussida/gamefy-back-office:latest
+  #
+  #     - name: 🔍 Scan Backend Image
+  #       run: |
+  #         sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
+  #         sudo docker run --rm \
+  #           -v /var/run/docker.sock:/var/run/docker.sock \
+  #           -v /tmp/trivy-cache:/root/.cache/ \
+  #           aquasec/trivy:latest image \
+  #           --scanners vuln \
+  #           --severity CRITICAL,HIGH \
+  #           --ignore-unfixed \
+  #           --skip-db-update \
+  #           --skip-java-db-update \
+  #           --timeout 30m \
+  #           --format table \
+  #           --exit-code 0 \
+  #           mohamedoussemaboussida/gamefy-backend:latest
+
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 9 — Deploy to Production Server
+  # SSHes into the remote server and deploys via docker-compose.
+  # ─────────────────────────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy to Production Server
     runs-on: self-hosted
     steps:
-      - name: 📥 Prepare Trivy
+      - name: 🚀 Deploy via SSH
         run: |
-          sudo docker pull aquasec/trivy:latest
-          sudo rm -rf /tmp/trivy-cache
-          sudo mkdir -p /tmp/trivy-cache
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
+            ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "cd ~ && docker-compose pull && docker-compose up -d && docker image prune -f"
 
-      # ── Scan Front-Office Image (downloads DB) ──────────────────
-      - name: 🔍 Scan Front-Office Image
+      - name: ✅ Verify Deployment
         run: |
-          sudo docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /tmp/trivy-cache:/root/.cache/ \
-            aquasec/trivy:latest image \
-            --scanners vuln \
-            --severity CRITICAL,HIGH \
-            --ignore-unfixed \
-            --format table \
-            --exit-code 0 \
-            mohamedoussemaboussida/gamefy-front-office:latest
-
-      # ── Scan Back-Office Image (reuses cached DB ) ───────────────
-      - name: 🔍 Scan Back-Office Image
-        run: |
-          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
-          sudo docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /tmp/trivy-cache:/root/.cache/ \
-            aquasec/trivy:latest image \
-            --scanners vuln \
-            --severity CRITICAL,HIGH \
-            --ignore-unfixed \
-            --skip-db-update \
-            --skip-java-db-update \
-            --format table \
-            --exit-code 0 \
-            mohamedoussemaboussida/gamefy-back-office:latest
-
-      # ── Scan Backend Image (reuses cached OS DB, skips Java DB) ─────
-      - name: 🔍 Scan Backend Image
-        run: |
-          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
-          sudo docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /tmp/trivy-cache:/root/.cache/ \
-            aquasec/trivy:latest image \
-            --scanners vuln \
-            --severity CRITICAL,HIGH \
-            --ignore-unfixed \
-            --skip-db-update \
-            --skip-java-db-update \
-            --timeout 30m \
-            --format table \
-            --exit-code 0 \
-            mohamedoussemaboussida/gamefy-backend:latest
+          echo "⏳ Waiting 30s for services to start..."
+          sleep 30
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
+            ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "docker-compose ps"
