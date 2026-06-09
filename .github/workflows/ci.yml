@@ -104,7 +104,9 @@ jobs:
           cache-dependency-path: gamefy_back/pom.xml
   
       - name: mvn install
-        run: mvn clean install -DskipTests --batch-mode
+        run: |
+          chmod +x mvnw
+          ./mvnw clean install -DskipTests --batch-mode
 
   # ──────────────────────────────────────────────
   # Stage 5 — Test
@@ -129,7 +131,9 @@ jobs:
           cache-dependency-path: gamefy_back/pom.xml
   
       - name: mvn test
-        run: mvn test --batch-mode
+        run: |
+          chmod +x mvnw
+          ./mvnw test --batch-mode
 
   # ─────────────────────────────────────────────────────────────────
   # Stage 6 — Backend: Tests + Coverage + SonarQube Scan
