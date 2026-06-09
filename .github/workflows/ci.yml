@@ -245,7 +245,7 @@ jobs:
   #         sudo docker-compose ps
 
   # ─────────────────────────────────────────────────────────────────
-  # Stage 8 — Security: Aqua Trivy Vulnerability Scan (disabled)
+  # Stage 8  — Security: Aqua Trivy Vulnerability Scan (disabled)
   # ─────────────────────────────────────────────────────────────────
   trivy-scan:
     name: 🛡️ Aqua Trivy — Docker Image Scan
