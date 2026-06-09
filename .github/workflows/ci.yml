@@ -173,7 +173,7 @@ jobs:
             --batch-mode
 
   # ─────────────────────────────────────────────────────────────────
-  # Stage 6 — Frontend: SonarQube Scan (disabled)
+  # Stage 7 — Frontend: SonarQube Scan
   # ─────────────────────────────────────────────────────────────────
   sonarqube-frontend:
     name: 🔍 SonarQube (Front Office + Back Office)
@@ -209,7 +209,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   # ─────────────────────────────────────────────────────────────────
-  # Stage 7 — Docker: Pull & Run with Docker Compose (disabled)
+  # Stage 8 — Docker: Pull & Run with Docker Compose (disabled)
   # ─────────────────────────────────────────────────────────────────
   # docker-compose:
   #   name: 🐳 Docker Compose Pull & Run
@@ -247,7 +247,7 @@ jobs:
   #         sudo docker-compose ps
 
   # ─────────────────────────────────────────────────────────────────
-  # Stage 8  — Security: Aqua Trivy Vulnerability Scan (disabled)
+  # Stage 9  — Security: Aqua Trivy Vulnerability Scan (disabled)
   # ─────────────────────────────────────────────────────────────────
   # trivy-scan:
   #   name: 🛡️ Aqua Trivy — Docker Image Scan
@@ -303,10 +303,10 @@ jobs:
   #           --timeout 30m \
   #           --format table \
   #           --exit-code 0 \
-            mohamedoussemaboussida/gamefy-backend:latest
+  # mohamedoussemaboussida/gamefy-backend:latest
 
   # ─────────────────────────────────────────────────────────────────
-  # Stage 9 — Deploy to Production Server
+  # Stage 10 — Deploy to Production Server
   # SSHes into the remote server and deploys via docker-compose.
   # ─────────────────────────────────────────────────────────────────
   # deploy:
