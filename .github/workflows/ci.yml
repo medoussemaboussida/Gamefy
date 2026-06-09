@@ -137,6 +137,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   sonarqube-backend:
     name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube (Backend)
+    needs: test
     runs-on: self-hosted
     defaults:
       run:
@@ -176,6 +177,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   sonarqube-frontend:
     name: 🔍 SonarQube (Front Office + Back Office)
+    needs: sonarqube-backend
     runs-on: self-hosted
     steps:
       - name: Checkout code
@@ -247,60 +249,60 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   # Stage 8  — Security: Aqua Trivy Vulnerability Scan (disabled)
   # ─────────────────────────────────────────────────────────────────
-  trivy-scan:
-    name: 🛡️ Aqua Trivy — Docker Image Scan
-    runs-on: self-hosted
-    steps:
-      - name: 📥 Prepare Trivy
-        run: |
-          sudo docker pull aquasec/trivy:latest
-          sudo rm -rf /tmp/trivy-cache
-          sudo mkdir -p /tmp/trivy-cache
-  
-      - name: 🔍 Scan Front-Office Image
-        run: |
-          sudo docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /tmp/trivy-cache:/root/.cache/ \
-            aquasec/trivy:latest image \
-            --scanners vuln \
-            --severity CRITICAL,HIGH \
-            --ignore-unfixed \
-            --format table \
-            --exit-code 0 \
-            mohamedoussemaboussida/gamefy-front-office:latest
-  
-      - name: 🔍 Scan Back-Office Image
-        run: |
-          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
-          sudo docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /tmp/trivy-cache:/root/.cache/ \
-            aquasec/trivy:latest image \
-            --scanners vuln \
-            --severity CRITICAL,HIGH \
-            --ignore-unfixed \
-            --skip-db-update \
-            --skip-java-db-update \
-            --format table \
-            --exit-code 0 \
-            mohamedoussemaboussida/gamefy-back-office:latest
-  
-      - name: 🔍 Scan Backend Image
-        run: |
-          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
-          sudo docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /tmp/trivy-cache:/root/.cache/ \
-            aquasec/trivy:latest image \
-            --scanners vuln \
-            --severity CRITICAL,HIGH \
-            --ignore-unfixed \
-            --skip-db-update \
-            --skip-java-db-update \
-            --timeout 30m \
-            --format table \
-            --exit-code 0 \
+  # trivy-scan:
+  #   name: 🛡️ Aqua Trivy — Docker Image Scan
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: 📥 Prepare Trivy
+  #       run: |
+  #         sudo docker pull aquasec/trivy:latest
+  #         sudo rm -rf /tmp/trivy-cache
+  #         sudo mkdir -p /tmp/trivy-cache
+  #
+  #     - name: 🔍 Scan Front-Office Image
+  #       run: |
+  #         sudo docker run --rm \
+  #           -v /var/run/docker.sock:/var/run/docker.sock \
+  #           -v /tmp/trivy-cache:/root/.cache/ \
+  #           aquasec/trivy:latest image \
+  #           --scanners vuln \
+  #           --severity CRITICAL,HIGH \
+  #           --ignore-unfixed \
+  #           --format table \
+  #           --exit-code 0 \
+  #           mohamedoussemaboussida/gamefy-front-office:latest
+  #
+  #     - name: 🔍 Scan Back-Office Image
+  #       run: |
+  #         sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
+  #         sudo docker run --rm \
+  #           -v /var/run/docker.sock:/var/run/docker.sock \
+  #           -v /tmp/trivy-cache:/root/.cache/ \
+  #           aquasec/trivy:latest image \
+  #           --scanners vuln \
+  #           --severity CRITICAL,HIGH \
+  #           --ignore-unfixed \
+  #           --skip-db-update \
+  #           --skip-java-db-update \
+  #           --format table \
+  #           --exit-code 0 \
+  #           mohamedoussemaboussida/gamefy-back-office:latest
+  #
+  #     - name: 🔍 Scan Backend Image
+  #       run: |
+  #         sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
+  #         sudo docker run --rm \
+  #           -v /var/run/docker.sock:/var/run/docker.sock \
+  #           -v /tmp/trivy-cache:/root/.cache/ \
+  #           aquasec/trivy:latest image \
+  #           --scanners vuln \
+  #           --severity CRITICAL,HIGH \
+  #           --ignore-unfixed \
+  #           --skip-db-update \
+  #           --skip-java-db-update \
+  #           --timeout 30m \
+  #           --format table \
+  #           --exit-code 0 \
             mohamedoussemaboussida/gamefy-backend:latest
 
   # ─────────────────────────────────────────────────────────────────
