@@ -11,175 +11,200 @@ jobs:
   # ──────────────────────────────────────────────
   # Stage 1 — Clean (temporarily disabled)
   # ──────────────────────────────────────────────
-  # clean:
-  #   name: 🧹 Maven Clean
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  #
-  #     - name: mvn clean
-  #       run: mvn clean --batch-mode
+  clean:
+    name: 🧹 Maven Clean
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+  
+      - name: mvn clean
+        run: mvn clean --batch-mode
 
   # ──────────────────────────────────────────────
   # Stage 2 — Compile (temporarily disabled)
   # ──────────────────────────────────────────────
-  # compile:
-  #   name: 🔨 Maven Compile
-  #   needs: clean
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  #
-  #     - name: mvn compile
-  #       run: mvn compile --batch-mode
+  compile:
+    name: 🔨 Maven Compile
+    needs: clean
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+  
+      - name: mvn compile
+        run: mvn compile --batch-mode
 
   # ──────────────────────────────────────────────
   # Stage 3 — Package (temporarily disabled)
   # ──────────────────────────────────────────────
-  # package:
-  #   name: 📦 Maven Package
-  #   needs: compile
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  #
-  #     - name: mvn package
-  #       run: mvn package -DskipTests --batch-mode
+  package:
+    name: 📦 Maven Package
+    needs: compile
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+  
+      - name: mvn package
+        run: mvn package -DskipTests --batch-mode
 
   # ──────────────────────────────────────────────
   # Stage 4 — Install (temporarily disabled)
   # ──────────────────────────────────────────────
-  # install:
-  #   name: 🚀 Maven Install
-  #   needs: package
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  #
-  #     - name: mvn install
-  #       run: mvn install -DskipTests --batch-mode
+  install:
+    name: 🚀 Maven Install
+    needs: package
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+  
+      - name: mvn install
+        run: mvn install -DskipTests --batch-mode
+
+  # ──────────────────────────────────────────────
+  # Stage 5 — Test
+  # ──────────────────────────────────────────────
+  test:
+    name: 🧪 Maven Test
+    needs: install
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+  
+      - name: mvn test
+        run: mvn test --batch-mode
 
   # ─────────────────────────────────────────────────────────────────
-  # Stage 5 — Backend: Tests + Coverage + SonarQube Scan (disabled)
+  # Stage 6 — Backend: Tests + Coverage + SonarQube Scan
   # ─────────────────────────────────────────────────────────────────
-  # sonarqube-backend:
-  #   name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube (Backend)
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  # 
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  # 
-  #     - name: Run Tests + Generate JaCoCo Coverage Report + SonarQube Scan
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-  #       run: |
-  #         chmod +x mvnw
-  #         ./mvnw verify sonar:sonar \
-  #           -Dspring.profiles.active=test \
-  #           -Dsonar.host.url=$SONAR_HOST_URL \
-  #           -Dsonar.token=$SONAR_TOKEN \
-  #           -Dsonar.projectKey=gamefy-backend \
-  #           -Dsonar.projectName="gamefy-backend" \
-  #           -Dsonar.java.source=21 \
-  #           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-  #           --batch-mode
+  sonarqube-backend:
+    name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube (Backend)
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+  
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+  
+      - name: Run Tests + Generate JaCoCo Coverage Report + SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          chmod +x mvnw
+          ./mvnw verify sonar:sonar \
+            -Dspring.profiles.active=test \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.projectKey=gamefy-backend \
+            -Dsonar.projectName="gamefy-backend" \
+            -Dsonar.java.source=21 \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            --batch-mode
 
   # ─────────────────────────────────────────────────────────────────
   # Stage 6 — Frontend: SonarQube Scan (disabled)
   # ─────────────────────────────────────────────────────────────────
-  # sonarqube-frontend:
-  #   name: 🔍 SonarQube (Front Office + Back Office)
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  # 
-  #     - name: ⬢ Set up Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '22'
-  # 
-  #     # ── Front Office (React / JavaScript) ───────────────────────
-  #     - name: 🔍 Scan Front Office
-  #       uses: SonarSource/sonarqube-scan-action@v5
-  #       with:
-  #         projectBaseDir: front_office
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
-  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-  # 
-  #     # ── Back Office (React / TypeScript) ────────────────────────
-  #     - name: 🔍 Scan Back Office
-  #       uses: SonarSource/sonarqube-scan-action@v5
-  #       with:
-  #         projectBaseDir: back_office
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
-  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  sonarqube-frontend:
+    name: 🔍 SonarQube (Front Office + Back Office)
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+  
+      - name: ⬢ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+  
+      # ── Front Office (React / JavaScript) ───────────────────────
+      - name: 🔍 Scan Front Office
+        uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          projectBaseDir: front_office
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  
+      # ── Back Office (React / TypeScript) ────────────────────────
+      - name: 🔍 Scan Back Office
+        uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          projectBaseDir: back_office
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   # ─────────────────────────────────────────────────────────────────
   # Stage 7 — Docker: Pull & Run with Docker Compose (disabled)
@@ -222,82 +247,82 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   # Stage 8 — Security: Aqua Trivy Vulnerability Scan (disabled)
   # ─────────────────────────────────────────────────────────────────
-  # trivy-scan:
-  #   name: 🛡️ Aqua Trivy — Docker Image Scan
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: 📥 Prepare Trivy
-  #       run: |
-  #         sudo docker pull aquasec/trivy:latest
-  #         sudo rm -rf /tmp/trivy-cache
-  #         sudo mkdir -p /tmp/trivy-cache
-  #
-  #     - name: 🔍 Scan Front-Office Image
-  #       run: |
-  #         sudo docker run --rm \
-  #           -v /var/run/docker.sock:/var/run/docker.sock \
-  #           -v /tmp/trivy-cache:/root/.cache/ \
-  #           aquasec/trivy:latest image \
-  #           --scanners vuln \
-  #           --severity CRITICAL,HIGH \
-  #           --ignore-unfixed \
-  #           --format table \
-  #           --exit-code 0 \
-  #           mohamedoussemaboussida/gamefy-front-office:latest
-  #
-  #     - name: 🔍 Scan Back-Office Image
-  #       run: |
-  #         sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
-  #         sudo docker run --rm \
-  #           -v /var/run/docker.sock:/var/run/docker.sock \
-  #           -v /tmp/trivy-cache:/root/.cache/ \
-  #           aquasec/trivy:latest image \
-  #           --scanners vuln \
-  #           --severity CRITICAL,HIGH \
-  #           --ignore-unfixed \
-  #           --skip-db-update \
-  #           --skip-java-db-update \
-  #           --format table \
-  #           --exit-code 0 \
-  #           mohamedoussemaboussida/gamefy-back-office:latest
-  #
-  #     - name: 🔍 Scan Backend Image
-  #       run: |
-  #         sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
-  #         sudo docker run --rm \
-  #           -v /var/run/docker.sock:/var/run/docker.sock \
-  #           -v /tmp/trivy-cache:/root/.cache/ \
-  #           aquasec/trivy:latest image \
-  #           --scanners vuln \
-  #           --severity CRITICAL,HIGH \
-  #           --ignore-unfixed \
-  #           --skip-db-update \
-  #           --skip-java-db-update \
-  #           --timeout 30m \
-  #           --format table \
-  #           --exit-code 0 \
-  #           mohamedoussemaboussida/gamefy-backend:latest
+  trivy-scan:
+    name: 🛡️ Aqua Trivy — Docker Image Scan
+    runs-on: self-hosted
+    steps:
+      - name: 📥 Prepare Trivy
+        run: |
+          sudo docker pull aquasec/trivy:latest
+          sudo rm -rf /tmp/trivy-cache
+          sudo mkdir -p /tmp/trivy-cache
+  
+      - name: 🔍 Scan Front-Office Image
+        run: |
+          sudo docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /tmp/trivy-cache:/root/.cache/ \
+            aquasec/trivy:latest image \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --format table \
+            --exit-code 0 \
+            mohamedoussemaboussida/gamefy-front-office:latest
+  
+      - name: 🔍 Scan Back-Office Image
+        run: |
+          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
+          sudo docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /tmp/trivy-cache:/root/.cache/ \
+            aquasec/trivy:latest image \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --skip-db-update \
+            --skip-java-db-update \
+            --format table \
+            --exit-code 0 \
+            mohamedoussemaboussida/gamefy-back-office:latest
+  
+      - name: 🔍 Scan Backend Image
+        run: |
+          sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
+          sudo docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /tmp/trivy-cache:/root/.cache/ \
+            aquasec/trivy:latest image \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --skip-db-update \
+            --skip-java-db-update \
+            --timeout 30m \
+            --format table \
+            --exit-code 0 \
+            mohamedoussemaboussida/gamefy-backend:latest
 
   # ─────────────────────────────────────────────────────────────────
   # Stage 9 — Deploy to Production Server
   # SSHes into the remote server and deploys via docker-compose.
   # ─────────────────────────────────────────────────────────────────
-  deploy:
-    name: 🚀 Deploy to Production Server
-    runs-on: self-hosted
-    steps:
-      - name: 🚀 Deploy via SSH
-        run: |
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
-            ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "cd ~ && docker-compose pull && docker-compose up -d && docker image prune -f"
+  # deploy:
+  #   name: 🚀 Deploy to Production Server
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: 🚀 Deploy via SSH
+  #       run: |
+  #         sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
+  #           ssh -o StrictHostKeyChecking=no \
+  #           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+  #           "cd ~ && docker-compose pull && docker-compose up -d && docker image prune -f"
 
-      - name: ✅ Verify Deployment
-        run: |
-          echo "⏳ Waiting 30s for services to start..."
-          sleep 30
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
-            ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "docker-compose ps"
+  #     - name: ✅ Verify Deployment
+  #       run: |
+  #         echo "⏳ Waiting 30s for services to start..."
+  #         sleep 30
+  #         sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
+  #           ssh -o StrictHostKeyChecking=no \
+  #           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+  #           "docker-compose ps"
