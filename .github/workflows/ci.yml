@@ -9,12 +9,10 @@ on:
 jobs:
 
   # ──────────────────────────────────────────────────────────────
-  # Job 1 — Build + Test + JaCoCo Coverage (Backend)
-  # Single checkout, single JDK setup, one Maven invocation.
-  # `mvn clean verify` = clean → compile → test → package → JaCoCo
+  # Stage 1 — Install
   # ──────────────────────────────────────────────────────────────
-  build-and-test:
-    name: Build + Test + Coverage (Backend)
+  install:
+    name: Maven clean + Install
     runs-on: self-hosted
     defaults:
       run:
@@ -31,19 +29,48 @@ jobs:
           cache: maven
           cache-dependency-path: gamefy_back/pom.xml
 
-      - name: mvn clean verify (compile + test + JaCoCo in one shot)
+      - name: mvn install
         run: |
           chmod +x mvnw
-          ./mvnw clean verify -Dspring.profiles.active=test --batch-mode
+          ./mvnw clean install -DskipTests --batch-mode
 
   # ──────────────────────────────────────────────────────────────
-  # Job 2 — SonarQube Scan (Backend + Front Office + Back Office)
-  # Quick compile (cached, takes seconds) + sonar scan.
+  # Stage 2 — Test
   # ──────────────────────────────────────────────────────────────
-  sonarqube:
-    name: SonarQube (Backend + Frontends)
-    needs: build-and-test
+  test:
+    name: Maven Test
+    needs: install
     runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+
+      - name: mvn test
+        run: |
+          chmod +x mvnw
+          ./mvnw test --batch-mode
+
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 3 — Backend: Tests + Coverage + SonarQube Scan
+  # ─────────────────────────────────────────────────────────────────
+  sonarqube-backend:
+    name: SonarQube (Backend)
+    needs: test
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,19 +85,14 @@ jobs:
           cache: maven
           cache-dependency-path: gamefy_back/pom.xml
 
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: SonarQube — Backend (compile + scan)
-        working-directory: gamefy_back
+      - name: Run Tests + Generate JaCoCo Coverage Report + SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           chmod +x mvnw
-          ./mvnw compile sonar:sonar \
+          ./mvnw verify sonar:sonar \
+            -Dspring.profiles.active=test \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.projectKey=gamefy-backend \
@@ -80,8 +102,26 @@ jobs:
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             --batch-mode
 
-      # ── Front Office (React / JavaScript) ──────────────────
-      - name: SonarQube — Front Office
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 4 — Frontend: SonarQube Scan
+  # ─────────────────────────────────────────────────────────────────
+  sonarqube-frontend:
+    name: SonarQube (Front Office + Back Office)
+    needs: sonarqube-backend
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⬢ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # ── Front Office (React / JavaScript) ───────────────────────
+      - name: 🔍 Scan Front Office
         uses: SonarSource/sonarqube-scan-action@v5
         with:
           projectBaseDir: front_office
@@ -89,8 +129,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      # ── Back Office (React / TypeScript) ───────────────────
-      - name: SonarQube — Back Office
+      # ── Back Office (React / TypeScript) ────────────────────────
+      - name: 🔍 Scan Back Office
         uses: SonarSource/sonarqube-scan-action@v5
         with:
           projectBaseDir: back_office
@@ -98,14 +138,12 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-  # ──────────────────────────────────────────────────────────────
-  # Job 3 — Smart Deploy to Production Server
-  # Checks if services are already running with latest images.
-  # Only redeploys if new images are available.
-  # ──────────────────────────────────────────────────────────────
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 5 — Deploy to Production Server
+  # ─────────────────────────────────────────────────────────────────
   deploy:
-    name: Deploy to Server
-    needs: sonarqube
+    name: Deploy to Production Server
+    needs: sonarqube-frontend
     runs-on: self-hosted
     steps:
       - name: Check & Deploy (skip if already up-to-date)
@@ -116,41 +154,40 @@ jobs:
 
           cd ~
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Checking current deployment status..."
+          echo " Checking current deployment status..."
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
           # Pull latest images and capture output
           PULL_OUTPUT=$(docker-compose pull 2>&1)
           echo "$PULL_OUTPUT"
 
-          # Check if any image was actually updated (i.e. a new layer was downloaded)
+          # Check if any image was actually updated
           if echo "$PULL_OUTPUT" | grep -q "Downloaded newer image\|Pull complete"; then
             echo ""
-            echo "New images detected — redeploying..."
+            echo "🆕 New images detected — redeploying..."
             docker-compose up -d
             docker image prune -f
-            echo "Deployment updated successfully!"
+            echo "✅ Deployment updated successfully!"
           else
-            # Also check if all containers are running
             RUNNING=$(docker-compose ps --services --filter "status=running" 2>/dev/null | wc -l)
             TOTAL=$(docker-compose ps --services 2>/dev/null | wc -l)
 
             if [ "$RUNNING" -eq "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
               echo ""
-              echo "All $RUNNING services already running with latest images."
-              echo "Skipping deployment — nothing to do!"
+              echo "✅ All $RUNNING services already running with latest images."
+              echo "⏭️  Skipping deployment — nothing to do!"
             else
               echo ""
-              echo "Some services are not running ($RUNNING/$TOTAL). Restarting..."
+              echo "⚠️  Some services are not running ($RUNNING/$TOTAL). Restarting..."
               docker-compose up -d
               docker image prune -f
-              echo "Services restarted!"
+              echo "✅ Services restarted!"
             fi
           fi
 
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Current service status:"
+          echo "📋 Current service status:"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           docker-compose ps
           DEPLOY_SCRIPT
