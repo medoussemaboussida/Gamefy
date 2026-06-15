@@ -36,22 +36,12 @@ jobs:
           chmod +x mvnw
           ./mvnw clean verify -Dspring.profiles.active=test --batch-mode
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-build
-          path: |
-            gamefy_back/target/*.jar
-            gamefy_back/target/classes/
-            gamefy_back/target/site/jacoco/jacoco.xml
-          retention-days: 1
-
   # ──────────────────────────────────────────────────────────────
   # Job 2 — SonarQube Scan (Backend + Front Office + Back Office)
-  # Reuses the JaCoCo report from Job 1 — no rebuild needed.
+  # Quick compile (cached, takes seconds) + sonar scan.
   # ──────────────────────────────────────────────────────────────
   sonarqube:
-    name: 🔍 SonarQube (Backend + Frontends)
+    name: SonarQube (Backend + Frontends)
     needs: build-and-test
     runs-on: self-hosted
     steps:
@@ -68,35 +58,30 @@ jobs:
           cache: maven
           cache-dependency-path: gamefy_back/pom.xml
 
-      - name: ⬢ Set up Node.js 22
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: 📥 Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-build
-          path: gamefy_back
-
-      - name: 🔍 SonarQube — Backend
+      - name: SonarQube — Backend (compile + scan)
         working-directory: gamefy_back
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           chmod +x mvnw
-          ./mvnw sonar:sonar \
+          ./mvnw compile sonar:sonar \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.projectKey=gamefy-backend \
             -Dsonar.projectName="gamefy-backend" \
             -Dsonar.java.source=21 \
+            -Dsonar.java.binaries=target/classes \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             --batch-mode
 
       # ── Front Office (React / JavaScript) ──────────────────
-      - name: 🔍 SonarQube — Front Office
+      - name: SonarQube — Front Office
         uses: SonarSource/sonarqube-scan-action@v5
         with:
           projectBaseDir: front_office
@@ -105,7 +90,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       # ── Back Office (React / TypeScript) ───────────────────
-      - name: 🔍 SonarQube — Back Office
+      - name: SonarQube — Back Office
         uses: SonarSource/sonarqube-scan-action@v5
         with:
           projectBaseDir: back_office
@@ -131,7 +116,7 @@ jobs:
 
           cd ~
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🔍 Checking current deployment status..."
+          echo "Checking current deployment status..."
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
           # Pull latest images and capture output
@@ -141,10 +126,10 @@ jobs:
           # Check if any image was actually updated (i.e. a new layer was downloaded)
           if echo "$PULL_OUTPUT" | grep -q "Downloaded newer image\|Pull complete"; then
             echo ""
-            echo "🆕 New images detected — redeploying..."
+            echo "New images detected — redeploying..."
             docker-compose up -d
             docker image prune -f
-            echo "✅ Deployment updated successfully!"
+            echo "Deployment updated successfully!"
           else
             # Also check if all containers are running
             RUNNING=$(docker-compose ps --services --filter "status=running" 2>/dev/null | wc -l)
@@ -152,20 +137,20 @@ jobs:
 
             if [ "$RUNNING" -eq "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
               echo ""
-              echo "✅ All $RUNNING services already running with latest images."
-              echo "⏭️  Skipping deployment — nothing to do!"
+              echo "All $RUNNING services already running with latest images."
+              echo "Skipping deployment — nothing to do!"
             else
               echo ""
-              echo "⚠️  Some services are not running ($RUNNING/$TOTAL). Restarting..."
+              echo "Some services are not running ($RUNNING/$TOTAL). Restarting..."
               docker-compose up -d
               docker image prune -f
-              echo "✅ Services restarted!"
+              echo "Services restarted!"
             fi
           fi
 
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📋 Current service status:"
+          echo "Current service status:"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           docker-compose ps
           DEPLOY_SCRIPT
