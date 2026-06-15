@@ -65,7 +65,7 @@ jobs:
   # Stage 3 — Backend: Tests + Coverage + SonarQube Scan
   # ─────────────────────────────────────────────────────────────────
   sonarqube-backend:
-    name: SonarQube (Backend)
+    name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube (Backend)
     needs: test
     runs-on: self-hosted
     defaults:
@@ -76,7 +76,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+  
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -84,7 +84,7 @@ jobs:
           java-version: '21'
           cache: maven
           cache-dependency-path: gamefy_back/pom.xml
-
+  
       - name: Run Tests + Generate JaCoCo Coverage Report + SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -98,10 +98,8 @@ jobs:
             -Dsonar.projectKey=gamefy-backend \
             -Dsonar.projectName="gamefy-backend" \
             -Dsonar.java.source=21 \
-            -Dsonar.java.binaries=target/classes \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             --batch-mode
-
   # ─────────────────────────────────────────────────────────────────
   # Stage 4 — Frontend: SonarQube Scan
   # ─────────────────────────────────────────────────────────────────
