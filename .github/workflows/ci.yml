@@ -8,326 +8,163 @@ on:
 
 jobs:
 
-  # ──────────────────────────────────────────────
-  # Stage 1 — Clean (temporarily disabled)
-  # ──────────────────────────────────────────────
-  # clean:
-  #   name: 🧹 Maven Clean
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  # 
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  # 
-  #     - name: mvn clean
-  #       run: mvn clean --batch-mode
+  # ──────────────────────────────────────────────────────────────
+  # Job 1 — Build + Test + JaCoCo Coverage (Backend)
+  # Single checkout, single JDK setup, one Maven invocation.
+  # `mvn clean verify` = clean → compile → test → package → JaCoCo
+  # ──────────────────────────────────────────────────────────────
+  build-and-test:
+    name: Build + Test + Coverage (Backend)
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: gamefy_back
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  # ──────────────────────────────────────────────
-  # Stage 2 — Compile (temporarily disabled)
-  # ──────────────────────────────────────────────
-  # compile:
-  #   name: 🔨 Maven Compile
-  #   needs: clean
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  # 
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  # 
-  #     - name: mvn compile
-  #       run: mvn compile --batch-mode
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
 
-  # ──────────────────────────────────────────────
-  # Stage 3 — Package (temporarily disabled)
-  # ──────────────────────────────────────────────
-  # package:
-  #   name: 📦 Maven Package
-  #   needs: compile
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  # 
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  # 
-  #     - name: mvn package
-  #       run: mvn package -DskipTests --batch-mode
+      - name: mvn clean verify (compile + test + JaCoCo in one shot)
+        run: |
+          chmod +x mvnw
+          ./mvnw clean verify -Dspring.profiles.active=test --batch-mode
 
-  # ──────────────────────────────────────────────
-  # Stage 4 — Install (temporarily disabled)
-  # ──────────────────────────────────────────────
-  # install:
-  #   name: 🚀 Maven Install
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  # 
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  # 
-  #     - name: mvn install
-  #       run: |
-  #         chmod +x mvnw
-  #         ./mvnw clean install -DskipTests --batch-mode
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: |
+            gamefy_back/target/*.jar
+            gamefy_back/target/site/jacoco/jacoco.xml
+          retention-days: 1
 
-  # ──────────────────────────────────────────────
-  # Stage 5 — Test
-  # ──────────────────────────────────────────────
-  # test:
-  #   name: 🧪 Maven Test
-  #   needs: install
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  # 
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  # 
-  #     - name: mvn test
-  #       run: |
-  #         chmod +x mvnw
-  #         ./mvnw test --batch-mode
-
-  # ─────────────────────────────────────────────────────────────────
-  # Stage 6 — Backend: Tests + Coverage + SonarQube Scan
-  # ─────────────────────────────────────────────────────────────────
-  # sonarqube-backend:
-  #   name: 🧪 Tests + 📊 Coverage + 🔍 SonarQube (Backend)
-  #   needs: test
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: gamefy_back
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  # 
-  #     - name: Set up JDK 21
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: temurin
-  #         java-version: '21'
-  #         cache: maven
-  #         cache-dependency-path: gamefy_back/pom.xml
-  # 
-  #     - name: Run Tests + Generate JaCoCo Coverage Report + SonarQube Scan
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-  #       run: |
-  #         chmod +x mvnw
-  #         ./mvnw verify sonar:sonar \
-  #           -Dspring.profiles.active=test \
-  #           -Dsonar.host.url=$SONAR_HOST_URL \
-  #           -Dsonar.token=$SONAR_TOKEN \
-  #           -Dsonar.projectKey=gamefy-backend \
-  #           -Dsonar.projectName="gamefy-backend" \
-  #           -Dsonar.java.source=21 \
-  #           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-  #           --batch-mode
-
-  # ─────────────────────────────────────────────────────────────────
-  # Stage 7 — Frontend: SonarQube Scan
-  # ─────────────────────────────────────────────────────────────────
-  # sonarqube-frontend:
-  #   name: 🔍 SonarQube (Front Office + Back Office)
-  #   needs: sonarqube-backend
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  # 
-  #     - name: ⬢ Set up Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '22'
-  # 
-  #     # ── Front Office (React / JavaScript) ───────────────────────
-  #     - name: 🔍 Scan Front Office
-  #       uses: SonarSource/sonarqube-scan-action@v5
-  #       with:
-  #         projectBaseDir: front_office
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
-  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-  # 
-  #     # ── Back Office (React / TypeScript) ────────────────────────
-  #     - name: 🔍 Scan Back Office
-  #       uses: SonarSource/sonarqube-scan-action@v5
-  #       with:
-  #         projectBaseDir: back_office
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
-  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-  # ─────────────────────────────────────────────────────────────────
-  # Stage 8 — Docker: Pull & Run with Docker Compose (disabled)
-  # ─────────────────────────────────────────────────────────────────
-  # docker-compose:
-  #   name: 🐳 Docker Compose Pull & Run
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: 🔧 Install docker-compose standalone
-  #       run: |
-  #         if ! command -v docker-compose &>/dev/null; then
-  #           echo "Installing docker-compose standalone..."
-  #           sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" \
-  #             -o /usr/local/bin/docker-compose
-  #           sudo chmod +x /usr/local/bin/docker-compose
-  #         fi
-  #         echo "✅ $(docker-compose version)"
-  #
-  #     - name: 🛑 Stop existing containers (if any)
-  #       run: sudo docker-compose down --remove-orphans || true
-  #
-  #     - name: 📋 Load production environment
-  #       run: cp .env.production .env
-  #
-  #     - name: 📥 Pull latest images from Docker Hub
-  #       run: sudo docker-compose pull
-  #
-  #     - name: 🚀 Start all services
-  #       run: sudo docker-compose up -d
-  #
-  #     - name: ✅ Verify services are running
-  #       run: |
-  #         echo "⏳ Waiting 30s for services to start..."
-  #         sleep 30
-  #         sudo docker-compose ps
-
-  # ─────────────────────────────────────────────────────────────────
-  # Stage 9  — Security: Aqua Trivy Vulnerability Scan (disabled)
-  # ─────────────────────────────────────────────────────────────────
-  # trivy-scan:
-  #   name: 🛡️ Aqua Trivy — Docker Image Scan
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: 📥 Prepare Trivy
-  #       run: |
-  #         sudo docker pull aquasec/trivy:latest
-  #         sudo rm -rf /tmp/trivy-cache
-  #         sudo mkdir -p /tmp/trivy-cache
-  #
-  #     - name: 🔍 Scan Front-Office Image
-  #       run: |
-  #         sudo docker run --rm \
-  #           -v /var/run/docker.sock:/var/run/docker.sock \
-  #           -v /tmp/trivy-cache:/root/.cache/ \
-  #           aquasec/trivy:latest image \
-  #           --scanners vuln \
-  #           --severity CRITICAL,HIGH \
-  #           --ignore-unfixed \
-  #           --format table \
-  #           --exit-code 0 \
-  #           mohamedoussemaboussida/gamefy-front-office:latest
-  #
-  #     - name: 🔍 Scan Back-Office Image
-  #       run: |
-  #         sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
-  #         sudo docker run --rm \
-  #           -v /var/run/docker.sock:/var/run/docker.sock \
-  #           -v /tmp/trivy-cache:/root/.cache/ \
-  #           aquasec/trivy:latest image \
-  #           --scanners vuln \
-  #           --severity CRITICAL,HIGH \
-  #           --ignore-unfixed \
-  #           --skip-db-update \
-  #           --skip-java-db-update \
-  #           --format table \
-  #           --exit-code 0 \
-  #           mohamedoussemaboussida/gamefy-back-office:latest
-  #
-  #     - name: 🔍 Scan Backend Image
-  #       run: |
-  #         sudo rm -f /tmp/trivy-cache/db/fadb.lock /tmp/trivy-cache/db/cache.lock
-  #         sudo docker run --rm \
-  #           -v /var/run/docker.sock:/var/run/docker.sock \
-  #           -v /tmp/trivy-cache:/root/.cache/ \
-  #           aquasec/trivy:latest image \
-  #           --scanners vuln \
-  #           --severity CRITICAL,HIGH \
-  #           --ignore-unfixed \
-  #           --skip-db-update \
-  #           --skip-java-db-update \
-  #           --timeout 30m \
-  #           --format table \
-  #           --exit-code 0 \
-  # mohamedoussemaboussida/gamefy-backend:latest
-
-  # ─────────────────────────────────────────────────────────────────
-  # Stage 10 — Deploy to Production Server
-  # SSHes into the remote server and deploys via docker-compose.
-  # ─────────────────────────────────────────────────────────────────
-  deploy:
-    name: 🚀 Deploy to Production Server
+  # ──────────────────────────────────────────────────────────────
+  # Job 2 — SonarQube Scan (Backend + Front Office + Back Office)
+  # Reuses the JaCoCo report from Job 1 — no rebuild needed.
+  # ──────────────────────────────────────────────────────────────
+  sonarqube:
+    name: 🔍 SonarQube (Backend + Frontends)
+    needs: build-and-test
     runs-on: self-hosted
     steps:
-      - name: 🚀 Deploy via SSH
-        run: |
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
-            ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "cd ~ && docker-compose pull && docker-compose up -d && docker image prune -f"
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: ✅ Verify Deployment
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: gamefy_back/pom.xml
+
+      - name: ⬢ Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 📥 Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: gamefy_back
+
+      - name: 🔍 SonarQube — Backend
+        working-directory: gamefy_back
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          echo "⏳ Waiting 30s for services to start..."
-          sleep 30
+          chmod +x mvnw
+          ./mvnw sonar:sonar \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.projectKey=gamefy-backend \
+            -Dsonar.projectName="gamefy-backend" \
+            -Dsonar.java.source=21 \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            --batch-mode
+
+      # ── Front Office (React / JavaScript) ──────────────────
+      - name: 🔍 SonarQube — Front Office
+        uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          projectBaseDir: front_office
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      # ── Back Office (React / TypeScript) ───────────────────
+      - name: 🔍 SonarQube — Back Office
+        uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          projectBaseDir: back_office
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  # ──────────────────────────────────────────────────────────────
+  # Job 3 — Smart Deploy to Production Server
+  # Checks if services are already running with latest images.
+  # Only redeploys if new images are available.
+  # ──────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Server
+    needs: sonarqube
+    runs-on: self-hosted
+    steps:
+      - name: Check & Deploy (skip if already up-to-date)
+        run: |
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "docker-compose ps"
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'DEPLOY_SCRIPT'
+
+          cd ~
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🔍 Checking current deployment status..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          # Pull latest images and capture output
+          PULL_OUTPUT=$(docker-compose pull 2>&1)
+          echo "$PULL_OUTPUT"
+
+          # Check if any image was actually updated (i.e. a new layer was downloaded)
+          if echo "$PULL_OUTPUT" | grep -q "Downloaded newer image\|Pull complete"; then
+            echo ""
+            echo "🆕 New images detected — redeploying..."
+            docker-compose up -d
+            docker image prune -f
+            echo "✅ Deployment updated successfully!"
+          else
+            # Also check if all containers are running
+            RUNNING=$(docker-compose ps --services --filter "status=running" 2>/dev/null | wc -l)
+            TOTAL=$(docker-compose ps --services 2>/dev/null | wc -l)
+
+            if [ "$RUNNING" -eq "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
+              echo ""
+              echo "✅ All $RUNNING services already running with latest images."
+              echo "⏭️  Skipping deployment — nothing to do!"
+            else
+              echo ""
+              echo "⚠️  Some services are not running ($RUNNING/$TOTAL). Restarting..."
+              docker-compose up -d
+              docker image prune -f
+              echo "✅ Services restarted!"
+            fi
+          fi
+
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 Current service status:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          docker-compose ps
+          DEPLOY_SCRIPT
