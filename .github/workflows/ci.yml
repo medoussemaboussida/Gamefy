@@ -42,6 +42,7 @@ jobs:
           name: backend-build
           path: |
             gamefy_back/target/*.jar
+            gamefy_back/target/classes/
             gamefy_back/target/site/jacoco/jacoco.xml
           retention-days: 1
 
