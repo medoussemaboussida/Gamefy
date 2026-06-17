@@ -34,7 +34,8 @@ const SignUp = () => {
         }
         break;
       case "email":
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // ReDoS-safe: uses {1,254} bounded quantifier instead of unbounded +
+        const emailRegex = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,63}$/;
         if (!emailRegex.test(value)) {
           error = "Invalid email format";
         }
@@ -42,7 +43,7 @@ const SignUp = () => {
       case "password":
         if (value.length < 8) {
           error = "Password must be at least 8 characters";
-        } else if (!/(?=.*[A-Z])(?=.*\d)/.test(value)) {
+        } else if (!/[A-Z]/.test(value) || !/\d/.test(value)) {
           error = "Password must contain at least one uppercase letter and one number";
         }
         break;
@@ -60,8 +61,9 @@ const SignUp = () => {
   const getPasswordStrength = (password) => {
     let strength = 0;
     if (password.length >= 8) strength++;
+    // ReDoS-safe: single character class checks (no quantifiers)
     if (/[A-Z]/.test(password)) strength++;
-    if (/\d/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
     if (/[^A-Za-z0-9]/.test(password)) strength++;
     return strength;
   };
@@ -102,10 +104,10 @@ const SignUp = () => {
         newErrors[key] = "Passwords do not match";
       } else if (key === "password") {
         if (formData[key].length < 8) newErrors[key] = "Password must be at least 8 characters";
-        else if (!/(?=.*[A-Z])(?=.*\d)/.test(formData[key])) newErrors[key] = "Password must contain at least one uppercase letter and one number";
+        else if (!/[A-Z]/.test(formData[key]) || !/\d/.test(formData[key])) newErrors[key] = "Password must contain at least one uppercase letter and one number";
       } else if ((key === "firstName" || key === "lastName") && formData[key].trim().length < 3) {
         newErrors[key] = "Minimum 3 characters required";
-      } else if (key === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData[key])) {
+      } else if (key === "email" && !/^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,63}$/.test(formData[key])) {
         newErrors[key] = "Invalid email format";
       }
     });

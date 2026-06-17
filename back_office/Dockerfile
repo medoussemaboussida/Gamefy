@@ -43,6 +43,9 @@ RUN npm run build
 # ─────────────────────────────────────────────────────────────
 FROM nginx:stable-alpine AS runtime
 
+# Upgrade all system packages to patch known vulnerabilities (e.g. libxml2)
+RUN apk upgrade --no-cache
+
 # ── Custom Nginx config for SPA routing ──
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

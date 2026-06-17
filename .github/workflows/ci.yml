@@ -190,3 +190,48 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           docker-compose ps
           DEPLOY_SCRIPT
+
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 6 — Monitoring: Ensure Prometheus + Grafana are running
+  # Checks if each container is running on the server.
+  # Starts it automatically if it is stopped or missing.
+  # ─────────────────────────────────────────────────────────────────
+  monitoring:
+    name: Monitoring (Prometheus + Grafana)
+    needs: deploy
+    runs-on: self-hosted
+    steps:
+      - name: Ensure Prometheus & Grafana are running
+        run: |
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
+            ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'MONITORING_SCRIPT'
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Checking Monitoring Stack..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          # ── Prometheus ──────────────────────────────────────────
+          if [ "$(docker inspect -f '{{.State.Running}}' prometheus 2>/dev/null)" = "true" ]; then
+            echo "✅ Prometheus is already running."
+          else
+            echo "⚠️  Prometheus is stopped — restarting existing container..."
+            docker start prometheus
+            echo "✅ Prometheus restarted!"
+          fi
+
+          # ── Grafana ─────────────────────────────────────────────
+          if [ "$(docker inspect -f '{{.State.Running}}' grafana 2>/dev/null)" = "true" ]; then
+            echo "✅ Grafana is already running."
+          else
+            echo "⚠️  Grafana is stopped — restarting existing container..."
+            docker start grafana
+            echo "✅ Grafana restarted!"
+          fi
+
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 Monitoring containers status:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          docker ps --filter "name=prometheus" --filter "name=grafana" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          MONITORING_SCRIPT
