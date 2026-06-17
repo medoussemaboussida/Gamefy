@@ -169,8 +169,11 @@ public class PackGamefyService {
     }
 
     public PlayerPackGamefyDetailsDto getMyPackDetails(User player) {
-        UserPackGamefy up = userPackGamefyRepository.findFirstByUserOrderByActivatedAtDesc(player)
-                .orElseThrow(() -> new RuntimeException("No active Gamefy pack found for this user"));
+        Optional<UserPackGamefy> upOpt = userPackGamefyRepository.findFirstByUserOrderByActivatedAtDesc(player);
+        if (upOpt.isEmpty()) {
+            return null;
+        }
+        UserPackGamefy up = upOpt.get();
 
         PackGamefy pack = up.getPackGamefy();
         List<GamefyPackBenefit> allBenefits = pack.getBenefits();

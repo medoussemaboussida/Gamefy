@@ -28,7 +28,11 @@ public class PackGamefyController {
     @GetMapping("/my-pack-details")
     @PreAuthorize("hasAuthority('PLAYER')")
     public ResponseEntity<PlayerPackGamefyDetailsDto> getMyPackDetails(@AuthenticationPrincipal User player) {
-        return ResponseEntity.ok(service.getMyPackDetails(player));
+        PlayerPackGamefyDetailsDto details = service.getMyPackDetails(player);
+        if (details == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(details);
     }
 
     @GetMapping("/{id}")

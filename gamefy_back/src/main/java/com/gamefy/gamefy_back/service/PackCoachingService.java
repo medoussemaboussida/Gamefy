@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -258,8 +259,11 @@ public class PackCoachingService {
     }
 
     public PlayerPackCoachingDetailsDto getMyCoachingPackDetails(User player) {
-        UserPackCoaching up = userPackCoachingRepository.findFirstByUserOrderByActivatedAtDesc(player)
-                .orElseThrow(() -> new RuntimeException("No coaching pack found for this user"));
+        Optional<UserPackCoaching> upOpt = userPackCoachingRepository.findFirstByUserOrderByActivatedAtDesc(player);
+        if (upOpt.isEmpty()) {
+            return null;
+        }
+        UserPackCoaching up = upOpt.get();
 
         PackCoaching pack = up.getPackCoaching();
         double totalHours = calculateHoursFromPack(pack);

@@ -28,7 +28,11 @@ public class PackCoachingController {
     @GetMapping("/my-pack-details")
     @PreAuthorize("hasAuthority('PLAYER')")
     public ResponseEntity<PlayerPackCoachingDetailsDto> getMyCoachingPackDetails(@AuthenticationPrincipal User player) {
-        return ResponseEntity.ok(service.getMyCoachingPackDetails(player));
+        PlayerPackCoachingDetailsDto details = service.getMyCoachingPackDetails(player);
+        if (details == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(details);
     }
 
     @GetMapping("/{id}")
