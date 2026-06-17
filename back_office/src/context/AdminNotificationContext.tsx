@@ -139,12 +139,10 @@ export const AdminNotificationProvider: React.FC<{ children: React.ReactNode }> 
             heartbeatIncoming: 10000,
             heartbeatOutgoing: 10000,
             onConnect: () => {
-                console.log("🔔 Admin WebSocket connected");
 
                 // Subscribe to admin broadcast topic
                 client.subscribe("/topic/admin-notifications", (message) => {
                     const notification = JSON.parse(message.body);
-                    console.log("📩 New admin notification:", notification);
 
                     setNotifications((prev) => [notification, ...prev]);
                     setUnreadCount((prev) => prev + 1);
@@ -156,7 +154,6 @@ export const AdminNotificationProvider: React.FC<{ children: React.ReactNode }> 
                 console.error("Admin STOMP error:", frame.headers["message"]);
             },
             onDisconnect: () => {
-                console.log("Admin WebSocket disconnected");
             },
         });
 

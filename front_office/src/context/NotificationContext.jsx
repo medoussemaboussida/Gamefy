@@ -178,11 +178,8 @@ export const NotificationProvider = ({ children }) => {
             heartbeatIncoming: 10000,
             heartbeatOutgoing: 10000,
             onConnect: () => {
-                console.log("🔔 WebSocket connected for notifications");
-
                 client.subscribe("/user/queue/notifications", (message) => {
                     const notification = JSON.parse(message.body);
-                    console.log("📩 New notification:", notification);
 
                     // Determine source from the type field
                     let source = "reservation";
@@ -258,7 +255,6 @@ export const NotificationProvider = ({ children }) => {
                 console.error("STOMP error:", frame.headers["message"]);
             },
             onDisconnect: () => {
-                console.log("WebSocket disconnected");
             },
         });
 

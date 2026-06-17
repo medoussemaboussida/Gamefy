@@ -95,35 +95,12 @@ public class UserController {
             @RequestParam("file") MultipartFile file) throws IOException {
         String fileName = fileService.saveProfilePhoto(file);
         
-        // Update user profile photo path to use the new serving endpoint
+        // Update user profile photo path to use the standard Spring uploads endpoint
         UpdateProfileDto dto = new UpdateProfileDto();
-        dto.setProfilePhoto("/gamefy/users/profile/photo/" + fileName);
+        dto.setProfilePhoto("/uploads/profile_photos/" + fileName);
         UserResponseDto updatedUser = service.updateProfile(user.getId(), dto);
         
         return ResponseEntity.ok(updatedUser);
     }
 
-    @GetMapping("/profile/photo/{fileName:.+}")
-    public ResponseEntity<Resource> serveFile(@PathVariable String fileName) {
-        try {
-            Path file = Paths.get("uploads/profile_photos").resolve(fileName);
-            Resource resource = new UrlResource(file.toUri());
-
-            if (resource.exists() || resource.isReadable()) {
-                String contentType = "image/jpeg"; // Default
-                if (fileName.toLowerCase().endsWith(".png")) {
-                    contentType = "image/png";
-                }
-
-                return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType(contentType))
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
-                        .body(resource);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (MalformedURLException e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
 }
