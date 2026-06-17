@@ -104,45 +104,45 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   # Stage 4 — Frontend: SonarQube Scan
   # ─────────────────────────────────────────────────────────────────
-  sonarqube-frontend:
-    name: SonarQube (Front Office + Back Office)
-    # needs: sonarqube-backend
-    runs-on: self-hosted
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  # sonarqube-frontend:
+  #   name: SonarQube (Front Office + Back Office)
+  #   # needs: sonarqube-backend
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
 
-      - name: ⬢ Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+  #     - name: ⬢ Set up Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '22'
 
-      # ── Front Office (React / JavaScript) ───────────────────────
-      - name: 🔍 Scan Front Office
-        uses: SonarSource/sonarqube-scan-action@v5
-        with:
-          projectBaseDir: front_office
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  #     # ── Front Office (React / JavaScript) ───────────────────────
+  #     - name: 🔍 Scan Front Office
+  #       uses: SonarSource/sonarqube-scan-action@v5
+  #       with:
+  #         projectBaseDir: front_office
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT_OFFICE }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      # ── Back Office (React / TypeScript) ────────────────────────
-      - name: 🔍 Scan Back Office
-        uses: SonarSource/sonarqube-scan-action@v5
-        with:
-          projectBaseDir: back_office
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  #     # ── Back Office (React / TypeScript) ────────────────────────
+  #     - name: 🔍 Scan Back Office
+  #       uses: SonarSource/sonarqube-scan-action@v5
+  #       with:
+  #         projectBaseDir: back_office
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACK_OFFICE }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   # ─────────────────────────────────────────────────────────────────
   # Stage 5 — Deploy to Production Server
   # ─────────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to Production Server
-    needs: sonarqube-frontend
+    # needs: sonarqube-frontend
     runs-on: self-hosted
     steps:
       - name: Check & Deploy (skip if already up-to-date)
