@@ -23,6 +23,5 @@ docker-compose*.yml
 
 # ── Misc ──
 *.md
-.env
 banner.png
 sonar-project.properties

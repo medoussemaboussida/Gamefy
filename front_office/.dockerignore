@@ -23,6 +23,5 @@ docker-compose*.yml
 
 # ── Misc ──
 *.md
-.env
 .vite/
 sonar-project.properties
