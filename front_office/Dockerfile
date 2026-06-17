@@ -30,11 +30,10 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source files
 COPY . .
 
-# ── Build-time env var (override at build with --build-arg) ──
-# Only VITE_API_BASE_URL is overridable (changes between localhost / production).
-# All other keys (Groq, Google, Stripe, reCAPTCHA) are read automatically
-# from .env.production by Vite during "npm run build".
-ARG VITE_API_BASE_URL=http://localhost:8080/api
+# ── Build-time env var ──
+# Uses relative /api path — Nginx proxies it to the backend container.
+# No need for --build-arg in production anymore!
+ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 # Build production bundle
