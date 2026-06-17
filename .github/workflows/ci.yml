@@ -106,7 +106,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   sonarqube-frontend:
     name: SonarQube (Front Office + Back Office)
-    needs: sonarqube-backend
+    # needs: sonarqube-backend
     runs-on: self-hosted
     steps:
       - name: Checkout code
